@@ -50,7 +50,7 @@
 **開発環境セットアップ**
 1. Node.js 18+ のインストール
 2. `npm create vite@latest city-sim --template react-ts`
-3. TailwindCSSのセットアップ：`npm install -D tailwindcss postcss autoprefixer && npx tailwindcss init -p`
+3. TailwindCSSのセットアップ：'npm install tailwindcss @tailwindcss/vite'
 
 **実装優先度**
 1. 基本的なグリッドシステムとタイル表示
