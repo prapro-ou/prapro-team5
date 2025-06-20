@@ -1,12 +1,14 @@
 import React from "react";
 import type { Position, GridSize } from "../types/grid";
 
+// Gridコンポーネントのプロパティ
 interface GridProps {
   size: GridSize;
   onTileClick?: (position: Position) => void;
   selectedPosition?: Position | null;
 }
 
+// Gridコンポーネント
 export const Grid: React.FC<GridProps> = ({ 
   size, 
   onTileClick, 
@@ -42,7 +44,7 @@ export const Grid: React.FC<GridProps> = ({
               ${isSelected(x, y) ? 'bg-blue-500' : 'bg-gray-700'}
             `}
             onClick={() => handleTileClick(x, y)}
-            title={`位置: (${x}, ${y})`}
+            // title={`位置: (${x}, ${y})`} // ツールチップ
           />
         ))
       )}
