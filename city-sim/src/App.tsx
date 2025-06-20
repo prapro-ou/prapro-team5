@@ -1,34 +1,24 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Grid } from './components/grid'
+import type { Position } from './types/grid'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [selectedTile, setSelectedTile] = useState<Position | null>(null);
+
+  const handleTileClick = (position: Position) => {
+    setSelectedTile(position);
+    console.log(`click: (${position.x}, ${position.y})`);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="min-h-screen bg-gray-900 p-8">
+      <Grid 
+        size={{ width: 20, height: 15 }}
+        onTileClick={handleTileClick}
+        selectedPosition={selectedTile}
+      />
+    </div>
   )
 }
 
