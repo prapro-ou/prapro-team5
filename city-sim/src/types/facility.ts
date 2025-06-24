@@ -17,3 +17,36 @@ export interface Facility {
   type: FacilityType;
   position: Position;
 }
+
+// 施設のマスターデータ
+// cost, maintenanceCost, description は仮の値
+export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
+  residential: {
+    type: 'residential',
+    name: '住宅区画',
+    cost: 100,
+    maintenanceCost: 5,
+    description: '住宅地'
+  },
+  commercial: {
+    type: 'commercial', 
+    name: '商業区画',
+    cost: 150,
+    maintenanceCost: 8,
+    description: '商業地'
+  },
+  industrial: {
+    type: 'industrial',
+    name: '工業区画',
+    cost: 200,
+    maintenanceCost: 10,
+    description: '工業地'
+  },
+  road: {
+    type: 'road',
+    name: '道路',
+    cost: 50,
+    maintenanceCost: 2,
+    description: '道路'
+  }
+}
