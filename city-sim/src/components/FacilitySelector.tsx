@@ -15,8 +15,8 @@ export function FacilitySelector({ selectedType, onSelectType}: FacilitySelector
         onClick={() => onSelectType(null)}
         className={`w-full mb-2 p-2 rounded ${
           selectedType === null
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            ? 'bg-blue-600 text-gray-800'
+            : 'bg-gray-600 text-gray-500 hover:bg-gray-500'
         }`}
       >
         選択解除
@@ -31,7 +31,7 @@ export function FacilitySelector({ selectedType, onSelectType}: FacilitySelector
               key={facility.type}
               onClick={() => onSelectType(facility.type)}
               className={`w-full p-3 rounded text-left transition-colors ${
-                isSelected ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                isSelected ? 'bg-green-600 text-gray-800' : 'bg-gray-700 text-gray-500 hover:bg-gray-600'
               }`}
             >
               <div className="font-semibold">{facility.name}</div>
