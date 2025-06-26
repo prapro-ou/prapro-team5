@@ -17,6 +17,7 @@ export interface Facility {
   id: string;
   type: FacilityType;
   position: Position;
+  occupiedTiles: Position[]; // 施設が占有するタイル
 }
 
 // 施設のマスターデータ
