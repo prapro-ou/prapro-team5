@@ -13,7 +13,7 @@ export function FacilitySelector({ selectedType, onSelectType}: FacilitySelector
 
       <button
         onClick={() => onSelectType(null)}
-        className={`w-full mb-2 p-2 rounded ${
+        className={`w-full mb-2 px-2 py-1 text-xs rounded ${
           selectedType === null
             ? 'bg-blue-600 text-gray-800'
             : 'bg-gray-600 text-gray-500 hover:bg-gray-500'
@@ -30,7 +30,7 @@ export function FacilitySelector({ selectedType, onSelectType}: FacilitySelector
             <button
               key={facility.type}
               onClick={() => onSelectType(facility.type)}
-              className={`w-full p-3 rounded text-left transition-colors ${
+              className={`w-full px-2 py-1 text-xs rounded text-left transition-colors ${
                 isSelected ? 'bg-green-600 text-gray-800' : 'bg-gray-700 text-gray-500 hover:bg-gray-600'
               }`}
             >
