@@ -16,40 +16,42 @@ function App() {
     const facilityData = FACILITY_DATA[type];
     // 施設のタイル半径
     const radius = Math.floor(facilityData.size / 2);
-
+    const occupiedTiles: Position[] = [];
     // 範囲外チェック
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
         const x = position.x + dx;
         const y = position.y + dy;
         
+        // 範囲外チェック
         if (x < 0 || x >= 40 || y < 0 || y >= 30) {
-          console.warn(`施設の配置が範囲外です: (${x}, ${y})`);
+          console.warn(`施設の配置が範囲外です`);
           return;
         }
+        occupiedTiles.push({ x, y });
       }
     }
     
     // 既存の施設をチェック
-    for (let dx = -radius; dx <= radius; dx++) {
-      for (let dy = -radius; dy <= radius; dy++) {
-        const checkPos = { x: position.x + dx, y: position.y + dy };
-        const existingFacility = facilities.find(f => 
-          f.position.x === checkPos.x && f.position.y === checkPos.y
-        );
-        
-        if (existingFacility) {
-          console.warn(`エリア内に既存施設があります: (${checkPos.x}, ${checkPos.y})`);
-          return;
-        }
-      }
+    const existingFacility = facilities.some(facility =>
+      facility.occupiedTiles.some(occupied =>
+        occupiedTiles.some(newTile =>
+          newTile.x === occupied.x && newTile.y === occupied.y
+        )
+      )
+    );
+
+    if (existingFacility) {
+      console.warn(`エリア内に既存施設があります`);
+      return;
     }
 
     // 施設の配置
     const newFacility: Facility = {
       id: `${type}_${position.x}_${position.y}_${Date.now()}`,
       type,
-      position
+      position: position,
+      occupiedTiles
     };
 
     setFacilities(prev => [...prev, newFacility]);
