@@ -27,8 +27,24 @@ export const Grid: React.FC<GridProps> = ({
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
 
-  const getFacilityPos = (x: number, y: number) => {
+  const getFacilityAt = (x: number, y: number) => {
     return facilities.find(facility => facility.position.x === x && facility.position.y === y);
+  }
+
+  const getFacilityColor = (facility?: Facility) => {
+    if (!facility) return 'bg-gray-700'; // デフォルトの色
+    switch (facility.type) {
+      case 'residential':
+        return 'bg-green-500';
+      case 'commercial':
+        return 'bg-yellow-500';
+      case 'industrial':
+        return 'bg-red-500';
+      case 'road':
+        return 'bg-gray-600';
+      default:
+        return 'bg-gray-700';
+    }
   }
 
   return (
