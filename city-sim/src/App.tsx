@@ -14,6 +14,21 @@ function App() {
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
+    // 施設のタイル半径
+    const radius = Math.floor(facilityData.size / 2);
+
+    // 範囲外チェック
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = position.x + dx;
+        const y = position.y + dy;
+        
+        if (x < 0 || x >= 40 || y < 0 || y >= 30) {
+          console.warn(`施設の配置が範囲外です: (${x}, ${y})`);
+          return;
+        }
+      }
+    }
     
     // 既存の施設をチェック
     const existingFacility = facilities.find(f => f.position.x === position.x && f.position.y === position.y);
@@ -38,7 +53,8 @@ function App() {
     setSelectedTile(position);
     if (selectedFacilityType) {
       placeFacility(position, selectedFacilityType);
-    } else {
+    } 
+    else {
       console.log(`click: (${position.x}, ${position.y})`);
     }
   };
