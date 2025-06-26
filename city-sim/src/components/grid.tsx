@@ -1,11 +1,13 @@
 import React from "react";
 import type { Position, GridSize } from "../types/grid";
+import type { Facility } from "../types/facility";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
   size: GridSize;
   onTileClick?: (position: Position) => void;
   selectedPosition?: Position | null;
+  facilities?: Facility[]; // 施設配置
 }
 
 // Gridコンポーネント
