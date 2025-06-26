@@ -37,11 +37,11 @@ export const Grid: React.FC<GridProps> = ({
       case 'residential':
         return 'bg-green-500';
       case 'commercial':
-        return 'bg-yellow-500';
+        return 'bg-blue-500';
       case 'industrial':
-        return 'bg-red-500';
+        return 'bg-yellow-500';
       case 'road':
-        return 'bg-gray-600';
+        return 'bg-gray-900';
       default:
         return 'bg-gray-700';
     }
