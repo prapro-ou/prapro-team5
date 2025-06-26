@@ -67,9 +67,10 @@ export const Grid: React.FC<GridProps> = ({
               key={`${x}-${y}`}
               className={`
                 w-4 h-4 border border-gray-600 cursor-pointer
-                hover:bg-gray-600 transition-colors
-                ${isSelected(x, y) ? 'ring-2 ring-white' : ''}
+                transition-colors relative
                 ${facilityColor}
+                ${!facility ? 'hover:bg-gray-600' : 'hover:brightness-110'}
+                ${isSelected(x, y) ? 'ring-2 ring-white z-10' : ''}
               `}
               onClick={() => handleTileClick(x, y)}
               title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
