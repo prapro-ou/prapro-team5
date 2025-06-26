@@ -31,11 +31,18 @@ function App() {
     }
     
     // 既存の施設をチェック
-    const existingFacility = facilities.find(f => f.position.x === position.x && f.position.y === position.y);
-
-    if (existingFacility) {
-      console.warn(`すでに施設が配置されています (${position.x}, ${position.y})`);
-      return;
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const checkPos = { x: position.x + dx, y: position.y + dy };
+        const existingFacility = facilities.find(f => 
+          f.position.x === checkPos.x && f.position.y === checkPos.y
+        );
+        
+        if (existingFacility) {
+          console.warn(`エリア内に既存施設があります: (${checkPos.x}, ${checkPos.y})`);
+          return;
+        }
+      }
     }
 
     // 施設の配置
