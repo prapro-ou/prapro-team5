@@ -10,6 +10,7 @@ function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [money, setMoney] = useState<number>(100000); // 初期資金
   
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
