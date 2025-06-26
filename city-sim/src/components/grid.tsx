@@ -14,7 +14,8 @@ interface GridProps {
 export const Grid: React.FC<GridProps> = ({ 
   size, 
   onTileClick, 
-  selectedPosition 
+  selectedPosition,
+  facilities = []
 }) => {
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
@@ -25,6 +26,10 @@ export const Grid: React.FC<GridProps> = ({
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
+
+  const getFacilityPos = (x: number, y: number) => {
+    return facilities.find(facility => facility.position.x === x && facility.position.y === y);
+  }
 
   return (
     <div 
