@@ -58,18 +58,24 @@ export const Grid: React.FC<GridProps> = ({
       }}
     >
       {Array.from({ length: size.height }, (_, y) =>
-        Array.from({ length: size.width }, (_, x) => (
-          <div
-            key={`${x}-${y}`}
-            className={`
-              w-4 h-4 border border-gray-600 cursor-pointer
-              hover:bg-gray-600 transition-colors
-              ${isSelected(x, y) ? 'bg-blue-500' : 'bg-gray-700'}
-            `}
-            onClick={() => handleTileClick(x, y)}
-            // title={`位置: (${x}, ${y})`} // ツールチップ
-          />
-        ))
+        Array.from({ length: size.width }, (_, x) => {
+          const facility = getFacilityAt(x, y);
+          const facilityColor = getFacilityColor(facility);
+          
+          return (
+            <div
+              key={`${x}-${y}`}
+              className={`
+                w-4 h-4 border border-gray-600 cursor-pointer
+                hover:bg-gray-600 transition-colors
+                ${isSelected(x, y) ? 'ring-2 ring-white' : ''}
+                ${facilityColor}
+              `}
+              onClick={() => handleTileClick(x, y)}
+              title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
+            />            
+          );
+        })
       )}
     </div>
   );
