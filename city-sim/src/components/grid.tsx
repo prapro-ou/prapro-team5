@@ -1,6 +1,7 @@
 import React from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility } from "../types/facility";
+import { FACILITY_DATA } from "../types/facility";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -27,9 +28,18 @@ export const Grid: React.FC<GridProps> = ({
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
 
-  const getFacilityAt = (x: number, y: number) => {
-    return facilities.find(facility => facility.position.x === x && facility.position.y === y);
-  }
+const getFacilityAt = (x: number, y: number) => {
+  return facilities.find(facility => {
+    const facilityInfo = FACILITY_DATA[facility.type];
+    const radius = Math.floor(facilityInfo.size / 2);
+    
+    // 施設の中心からの距離をチェック
+    const dx = Math.abs(x - facility.position.x);
+    const dy = Math.abs(y - facility.position.y);
+    
+    return dx <= radius && dy <= radius;
+  });
+}
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
