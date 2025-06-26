@@ -36,18 +36,44 @@ function App() {
 
   const handleTileClick = (position: Position) => {
     setSelectedTile(position);
-    console.log(`click: (${position.x}, ${position.y})`);
+    if (selectedFacilityType) {
+      placeFacility(position, selectedFacilityType);
+    } else {
+      console.log(`click: (${position.x}, ${position.y})`);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      <Grid 
-        size={{ width: 20, height: 15 }}
-        onTileClick={handleTileClick}
-        selectedPosition={selectedTile}
-      />
+      <div className="flex gap-8">
+        {/* 左側: 操作パネル */}
+        <div className="w-80 bg-gray-800 p-4 rounded-lg">
+          
+          <FacilitySelector 
+            selectedType={selectedFacilityType}
+            onSelectType={setSelectedFacilityType}
+          />
+          
+          {selectedTile && (
+            <div className="mt-4 text-white">
+              <h3 className="text-lg">選択位置</h3>
+              <p>({selectedTile.x}, {selectedTile.y})</p>
+            </div>
+          )}
+        </div>
+
+        {/* 右側: ゲームグリッド */}
+        <div className="flex-1">
+          <Grid 
+            size={{ width: 20, height: 15 }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+          />
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 export default App
