@@ -65,7 +65,7 @@ function App() {
         {/* 右側: ゲームグリッド */}
         <div className="flex-1">
           <Grid 
-            size={{ width: 20, height: 15 }}
+            size={{ width: 40, height: 30 }}
             onTileClick={handleTileClick}
             selectedPosition={selectedTile}
             facilities={facilities}
