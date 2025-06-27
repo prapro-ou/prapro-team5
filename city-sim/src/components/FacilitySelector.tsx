@@ -4,13 +4,14 @@ import { FACILITY_DATA } from "../types/facility";
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
   onSelectType: (type: FacilityType | null) => void;  // 選択を変更する関数
+  money: number;  // 資金
 }
 
-export function FacilitySelector({ selectedType, onSelectType}: FacilitySelectorProps) {
+export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
   return (
     <div>
       <h3 className="text-white text-lg mb-3">施設</h3>
-
+      <h3 className="text-white text-s mb-3">資金：\{money.toLocaleString()}</h3>
       <button
         onClick={() => onSelectType(null)}
         className={`w-full mb-2 px-2 py-1 text-xs rounded ${

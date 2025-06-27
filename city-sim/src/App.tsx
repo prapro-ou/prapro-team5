@@ -87,6 +87,7 @@ function App() {
           <FacilitySelector 
             selectedType={selectedFacilityType}
             onSelectType={setSelectedFacilityType}
+            money={money}
           />
           
           {selectedTile && (
