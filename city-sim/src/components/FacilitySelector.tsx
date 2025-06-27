@@ -11,7 +11,7 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
   return (
     <div>
       <h3 className="text-white text-lg mb-3">施設</h3>
-      <h3 className="text-white text-s mb-3">資金：\{money.toLocaleString()}</h3>
+      <h3 className="text-white text-sm mb-3">資金：\{money.toLocaleString()}</h3>
       <button
         onClick={() => onSelectType(null)}
         className={`w-full mb-2 px-2 py-1 text-xs rounded ${

@@ -12,7 +12,7 @@ function App() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [money, setMoney] = useState<number>(1000); // 初期資金
 
-  const GRID_WIDTH = 40; // グリッドの幅
+  const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
   
   // 施設配置処理
