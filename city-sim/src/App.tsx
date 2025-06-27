@@ -10,7 +10,7 @@ function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [money, setMoney] = useState<number>(100000); // 初期資金
+  const [money, setMoney] = useState<number>(1000); // 初期資金
   
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -46,6 +46,15 @@ function App() {
       console.warn(`エリア内に既存施設があります`);
       return;
     }
+
+    // 資金チェック
+    if (money < facilityData.cost) {
+      console.warn(`資金が不足しています: ¥${facilityData.cost}`);
+      return;
+    }
+
+    // 資金を減らす
+    setMoney(prev => prev - facilityData.cost);
 
     // 施設の配置
     const newFacility: Facility = {
