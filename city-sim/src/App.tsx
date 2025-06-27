@@ -105,6 +105,8 @@ function App() {
             onTileClick={handleTileClick}
             selectedPosition={selectedTile}
             facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={money}
           />
         </div>
       </div>
