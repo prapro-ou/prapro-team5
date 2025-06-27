@@ -11,6 +11,9 @@ function App() {
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [money, setMoney] = useState<number>(1000); // 初期資金
+
+  const GRID_WIDTH = 40; // グリッドの幅
+  const GRID_HEIGHT = 30; // グリッドの高さ
   
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -25,7 +28,7 @@ function App() {
         const y = position.y + dy;
         
         // 範囲外チェック
-        if (x < 0 || x >= 40 || y < 0 || y >= 30) {
+        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
           console.warn(`施設の配置が範囲外です`);
           return;
         }
@@ -101,7 +104,7 @@ function App() {
         {/* 右側: ゲームグリッド */}
         <div className="flex-1">
           <Grid 
-            size={{ width: 40, height: 30 }}
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
             selectedPosition={selectedTile}
             facilities={facilities}
