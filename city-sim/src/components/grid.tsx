@@ -9,6 +9,8 @@ interface GridProps {
   onTileClick?: (position: Position) => void;
   selectedPosition?: Position | null;
   facilities?: Facility[]; // 施設配置
+  slectedFacilityType?: string | null; // 選択中の施設タイプ
+  money?: number; 
 }
 
 // Gridコンポーネント
@@ -16,8 +18,11 @@ export const Grid: React.FC<GridProps> = ({
   size, 
   onTileClick, 
   selectedPosition,
-  facilities = []
+  facilities = [],
+  slectedFacilityType = null,
+  money = 0,
 }) => {
+  const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
       onTileClick({ x, y });
@@ -28,18 +33,11 @@ export const Grid: React.FC<GridProps> = ({
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
 
-const getFacilityAt = (x: number, y: number) => {
-  return facilities.find(facility => {
-    const facilityInfo = FACILITY_DATA[facility.type];
-    const radius = Math.floor(facilityInfo.size / 2);
-    
-    // 施設の中心からの距離をチェック
-    const dx = Math.abs(x - facility.position.x);
-    const dy = Math.abs(y - facility.position.y);
-    
-    return dx <= radius && dy <= radius;
-  });
-}
+  const getFacilityAt = (x: number, y: number) => {
+    return facilities.find(facility =>
+      facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
+    );
+  };
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
