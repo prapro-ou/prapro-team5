@@ -44,13 +44,13 @@
 **開発環境**
 - フロントエンド：React + TypeScript
 - ビルドツール：Vite
-- スタイリング：CSS Modules または Styled Components
+- スタイリング：TailwindCSS
 - プラットフォーム：Webブラウザ（モダンブラウザ対応）
 
 **開発環境セットアップ**
 1. Node.js 18+ のインストール
 2. `npm create vite@latest city-sim --template react-ts`
-3. 必要な追加ライブラリのインストール
+3. TailwindCSSのセットアップ：`npm install tailwindcss @tailwindcss/vite`
 
 **実装優先度**
 1. 基本的なグリッドシステムとタイル表示
