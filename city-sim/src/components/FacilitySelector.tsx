@@ -1,5 +1,6 @@
-import type { FacilityType } from "../types/facility";
-import { FACILITY_DATA } from "../types/facility";
+import type { CategoryKey, FacilityType } from "../types/facility";
+import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
+import { useState } from "react";
 
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
@@ -8,6 +9,15 @@ interface FacilitySelectorProps {
 }
 
 export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
+  const [category, setCategory] = useState<FacilityType | null>(null);
+
+  const categorizedFacilities = Object.values(FACILITY_DATA).reduce((acc, facility) => {
+    const category = facility.category;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(facility);
+    return acc;
+  }, {} as Record<CategoryKey, typeof FACILITY_DATA[keyof typeof FACILITY_DATA][]>);
+
   return (
     <div>
       <h3 className="text-white text-lg mb-3">施設</h3>
