@@ -2,6 +2,17 @@ import type { Position } from "./grid";
 
 export type FacilityType = "residential" | "commercial" | "industrial" | "road";
 
+// カテゴリ定義
+export const FACILITY_CATEGORIES = {
+  residential: "住宅",
+  commercial: "商業",
+  industrial: "工業",
+  infrastructure: "インフラ",
+  others: "その他"
+} as const;
+
+export type CategoryKey = keyof typeof FACILITY_CATEGORIES;
+
 // 施設の基本情報
 export interface FacilityInfo {
   type: FacilityType;
