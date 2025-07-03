@@ -4,11 +4,11 @@ export type FacilityType = "residential" | "commercial" | "industrial" | "road";
 
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
-  residential: "住宅",
-  commercial: "商業",
-  industrial: "工業",
-  infrastructure: "インフラ",
-  others: "その他"
+  residential: { name: "住宅" },
+  commercial: { name: "商業" },
+  industrial: { name: "工業" },
+  infrastructure: { name: "インフラ" },
+  others: { name: "その他" }
 } as const;
 
 export type CategoryKey = keyof typeof FACILITY_CATEGORIES;
