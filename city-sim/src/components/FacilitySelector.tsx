@@ -9,7 +9,7 @@ interface FacilitySelectorProps {
 }
 
 export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
-  const [category, setCategory] = useState<FacilityType | null>(null);
+  const [category, setCategory] = useState<CategoryKey>("residential");
 
   const categorizedFacilities = Object.values(FACILITY_DATA).reduce((acc, facility) => {
     const category = facility.category;
@@ -20,37 +20,50 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
 
   return (
     <div>
-      <h3 className="text-white text-lg mb-3">施設</h3>
-      <h3 className="text-white text-sm mb-3">資金：\{money.toLocaleString()}</h3>
-      <button
-        onClick={() => onSelectType(null)}
-        className={`w-full mb-2 px-2 py-1 text-xs rounded ${
-          selectedType === null
-            ? 'bg-blue-600 text-gray-800'
-            : 'bg-gray-600 text-gray-500 hover:bg-gray-500'
-        }`}
-      >
-        選択解除
-      </button>
+      {/* タブグループ */}
+      <div className="flex space-x-1">
+        {Object.entries(FACILITY_CATEGORIES).map(([key, categoryInfo]) => (
+          <button
+            key={key}
+            onClick={() => setCategory(key as CategoryKey)}
+            className={`px-3 py-1 text-xs rounded-t-lg transition-colors ${
+              category === key
+                ? 'bg-white text-gray-600 border-b-2 border-green-500 hover:bg-gray-300'
+                : 'bg-white text-gray-800 hover:text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            {categoryInfo.name}
+          </button>
+        ))}
+      </div>
 
-      <div className="space-y-2">
-        {Object.values(FACILITY_DATA).map((facility) => {
-          const isSelected = selectedType === facility.type;
-          
-          return (
-            <button
-              key={facility.type}
-              onClick={() => onSelectType(facility.type)}
-              className={`w-full px-2 py-1 text-xs rounded text-left transition-colors ${
-                isSelected ? 'bg-green-600 text-gray-800' : 'bg-gray-700 text-gray-500 hover:bg-gray-600'
-              }`}
-            >
-              <div className="font-semibold">{facility.name}</div>
-              <div className="text-sm">¥{facility.cost}</div>
-              <div className="text-xs opacity-75">{facility.description}</div>
-            </button>
-          );
-        })}
+      {/* リストエリア */}
+      <div className="bg-gray-700 rounded-lg rounded-tl-none p-3">
+        <div className="flex flex-wrap gap-2">
+          {categorizedFacilities[category]?.map((facility) => {
+            const isSelected = selectedType === facility.type;
+            const canAfford = money >= facility.cost;
+            
+            return (
+              <button
+                key={facility.type}
+                onClick={() => onSelectType(facility.type)}
+                disabled={!canAfford}
+                className={`px-3 py-2 text-xs rounded text-left transition-colors ${
+                  isSelected 
+                    ? 'bg-white text-gray-900 shadow-lg' 
+                    : canAfford
+                      ? 'bg-white text-gray-800 hover:bg-gray-300'
+                      : 'bg-white text-gray-800 cursor-not-allowed'
+                }`}
+              >
+                <div className="font-semibold">{facility.name}</div>
+                <div className="text-sm">¥{facility.cost.toLocaleString()}</div>
+                <div className="text-xs opacity-75">{facility.description}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   )
