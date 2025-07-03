@@ -10,7 +10,7 @@ interface FacilitySelectorProps {
 export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
   return (
     <div>
-      <h3 className="text-white text-lg mb-3">施設</h3>
+      <h3 className="text-white text-lg mb-3">施設!!!</h3>
       <h3 className="text-white text-sm mb-3">資金：\{money.toLocaleString()}</h3>
       <button
         onClick={() => onSelectType(null)}
