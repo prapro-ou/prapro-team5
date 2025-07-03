@@ -83,25 +83,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      <div className="flex gap-8">
-        {/* 左側: 操作パネル */}
-        <div className="w-80 bg-gray-800 p-4 rounded-lg">
-          
-          <FacilitySelector 
-            selectedType={selectedFacilityType}
-            onSelectType={setSelectedFacilityType}
-            money={money}
-          />
-          
-          {selectedTile && (
-            <div className="mt-4 text-white">
-              <h3 className="text-lg">選択位置</h3>
-              <p>({selectedTile.x}, {selectedTile.y})</p>
-            </div>
-          )}
-        </div>
-
-        {/* 右側: ゲームグリッド */}
+      <div className="flex flex-col gap-8">
+        {/* 上側: ゲームグリッド */}
         <div className="flex-1">
           <Grid 
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
@@ -111,6 +94,26 @@ function App() {
             selectedFacilityType={selectedFacilityType}
             money={money}
           />
+        </div>
+
+        {/* 下側: 操作パネル */}
+        <div className="w-full bg-gray-800 p-4 rounded-lg">
+          <div className="flex gap-8">
+            <div className="flex-1">
+              <FacilitySelector 
+                selectedType={selectedFacilityType}
+                onSelectType={setSelectedFacilityType}
+                money={money}
+              />
+            </div>
+            
+            {selectedTile && (
+              <div className="w-48 text-white">
+                <h3 className="text-lg">選択位置</h3>
+                <p>({selectedTile.x}, {selectedTile.y})</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
