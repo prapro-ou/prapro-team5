@@ -21,6 +21,7 @@ export interface FacilityInfo {
   cost: number;             // 建設コスト
   maintenanceCost: number;  // 維持費
   description: string;
+  category: CategoryKey; // カテゴリ
 }
 
 // 配置された施設
@@ -40,7 +41,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     size: 3,
     cost: 100,
     maintenanceCost: 5,
-    description: '住宅地'
+    description: '住宅地',
+    category: 'residential'
   },
   commercial: {
     type: 'commercial', 
@@ -48,7 +50,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     size: 3,
     cost: 150,
     maintenanceCost: 8,
-    description: '商業地'
+    description: '商業地',
+    category: 'commercial'
   },
   industrial: {
     type: 'industrial',
@@ -56,7 +59,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     size: 3,
     cost: 200,
     maintenanceCost: 10,
-    description: '工業地'
+    description: '工業地',
+    category: 'industrial'
   },
   road: {
     type: 'road',
@@ -64,6 +68,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     size: 1,
     cost: 50,
     maintenanceCost: 2,
-    description: '道路'
+    description: '道路',
+    category: 'infrastructure'
   }
 }
