@@ -51,10 +51,10 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
                 disabled={!canAfford}
                 className={`px-3 py-2 text-xs rounded text-left transition-colors ${
                   isSelected 
-                    ? 'bg-white text-gray-900 shadow-lg' 
+                    ? 'bg-gray-200 text-gray-900 shadow-lg' 
                     : canAfford
                       ? 'bg-white text-gray-800 hover:bg-gray-300'
-                      : 'bg-white text-gray-800 cursor-not-allowed'
+                      : 'bg-gray-500 text-gray-800 cursor-not-allowed'
                 }`}
               >
                 <div className="font-semibold">{facility.name}</div>
