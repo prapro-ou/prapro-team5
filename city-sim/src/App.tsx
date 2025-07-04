@@ -85,8 +85,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="flex flex-col gap-8">
-        {/* 上側: ゲームグリッド */}
-        <div className="flex-1">
+        {/* ゲームグリッド */}
+        <div className="h-full">
           <Grid 
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
@@ -96,26 +96,13 @@ function App() {
             money={money}
           />
         </div>
-
-        {/* 下側: 操作パネル */}
-        <div className="w-full bg-gray-800 p-4 rounded-lg">
-          <div className="flex gap-8">
-            <div className="flex-1">
-              <FacilitySelector 
-                selectedType={selectedFacilityType}
-                onSelectType={setSelectedFacilityType}
-                money={money}
-              />
-            </div>
-            
-            {selectedTile && (
-              <div className="w-48 text-white">
-                <h3 className="text-lg">選択位置</h3>
-                <p>({selectedTile.x}, {selectedTile.y})</p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* パネル切り替えボタン */}
+        <button 
+          onClick={() => setShowPanel(!showPanel)}
+          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors z-20"
+        >
+          {showPanel ? '施設建設を閉じる' : '施設建設を開く'}
+        </button>
       </div>
     </div>
   );
