@@ -106,7 +106,7 @@ function App() {
 
         {/* 施設建設パネル */}
         {showPanel && (
-          <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
               <div className="flex-1">
                 <FacilitySelector 
                   selectedType={selectedFacilityType}
