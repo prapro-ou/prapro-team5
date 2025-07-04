@@ -99,7 +99,7 @@ function App() {
         {/* パネル切り替えボタン */}
         <button 
           onClick={() => setShowPanel(!showPanel)}
-          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors z-20"
+          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
         >
           {showPanel ? <TbCraneOff/> : <TbCrane/>}
         </button>
