@@ -106,7 +106,6 @@ function App() {
         {/* 施設建設パネル */}
         {showPanel && (
           <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-95 p-4 shadow-2xl z-10 backdrop-blur-sm">
-            <div className="flex gap-8">
               <div className="flex-1">
                 <FacilitySelector 
                   selectedType={selectedFacilityType}
@@ -114,14 +113,6 @@ function App() {
                   money={money}
                 />
               </div>
-              
-              {selectedTile && (
-                <div className="w-48 text-white">
-                  <h3 className="text-lg">選択位置</h3>
-                  <p>({selectedTile.x}, {selectedTile.y})</p>
-                </div>
-              )}
-            </div>
           </div>
         )}
     </div>
