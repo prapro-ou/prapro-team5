@@ -11,6 +11,7 @@ function App() {
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [money, setMoney] = useState<number>(1000); // 初期資金
+  const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
 
   const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
