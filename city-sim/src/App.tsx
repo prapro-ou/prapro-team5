@@ -84,7 +84,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      <div className="flex flex-col gap-8">
         {/* ゲームグリッド */}
         <div className="h-full">
           <Grid 
@@ -125,7 +124,6 @@ function App() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }
