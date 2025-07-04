@@ -5,6 +5,7 @@ import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
+import { TbCrane ,TbCraneOff } from "react-icons/tb";
 
 function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
@@ -100,7 +101,7 @@ function App() {
           onClick={() => setShowPanel(!showPanel)}
           className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors z-20"
         >
-          {showPanel ? '施設建設を閉じる' : '施設建設を開く'}
+          {showPanel ? <TbCraneOff/> : <TbCrane/>}
         </button>
 
         {/* 施設建設パネル */}
