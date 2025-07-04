@@ -39,7 +39,7 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
 
       {/* リストエリア */}
       <div className="bg-gray-700 rounded-lg rounded-tl-none p-3">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto" style={{width: '100%', maxWidth: '900px'}}>
           {categorizedFacilities[category]?.map((facility) => {
             const isSelected = selectedType === facility.type;
             const canAfford = money >= facility.cost;
