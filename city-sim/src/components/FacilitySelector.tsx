@@ -19,7 +19,7 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
   }, {} as Record<CategoryKey, typeof FACILITY_DATA[keyof typeof FACILITY_DATA][]>);
 
   return (
-    <div>
+    <div className="w-full max-w-4x1">
       {/* タブグループ */}
       <div className="flex space-x-1">
         {Object.entries(FACILITY_CATEGORIES).map(([key, categoryInfo]) => (
@@ -49,7 +49,7 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
                 key={facility.type}
                 onClick={() => onSelectType(facility.type)}
                 disabled={!canAfford}
-                className={`px-3 py-2 text-xs rounded text-left transition-colors ${
+                className={`px-3 py-2 text-xs rounded text-left transition-colors flex-shrink-0 min-w-[140px] ${
                   isSelected 
                     ? 'bg-gray-200 text-gray-900 shadow-lg' 
                     : canAfford
