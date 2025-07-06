@@ -95,37 +95,40 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-        {/* ゲームグリッド */}
-        <div className="h-full">
-          <Grid 
-            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-            onTileClick={handleTileClick}
-            selectedPosition={selectedTile}
-            facilities={facilities}
-            selectedFacilityType={selectedFacilityType}
-            money={money}
-          />
-        </div>
-        {/* パネル切り替えボタン */}
-        <button 
-          onClick={() => setShowPanel(!showPanel)}
-          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
-        >
-          {showPanel ? <TbCraneOff/> : <TbCrane/>}
-        </button>
+      {/* 情報パネル */}
+      <InfoPanel stats={gameStats} />
+      
+      {/* ゲームグリッド */}
+      <div className="h-full">
+        <Grid 
+          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+          onTileClick={handleTileClick}
+          selectedPosition={selectedTile}
+          facilities={facilities}
+          selectedFacilityType={selectedFacilityType}
+          money={money}
+        />
+      </div>
+      {/* パネル切り替えボタン */}
+      <button 
+        onClick={() => setShowPanel(!showPanel)}
+        className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
+      >
+        {showPanel ? <TbCraneOff/> : <TbCrane/>}
+      </button>
 
-        {/* 施設建設パネル */}
-        {showPanel && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
-              <div className="flex-1">
-                <FacilitySelector 
-                  selectedType={selectedFacilityType}
-                  onSelectType={setSelectedFacilityType}
-                  money={money}
-                />
-              </div>
-          </div>
-        )}
+      {/* 施設建設パネル */}
+      {showPanel && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
+            <div className="flex-1">
+              <FacilitySelector 
+                selectedType={selectedFacilityType}
+                onSelectType={setSelectedFacilityType}
+                money={money}
+              />
+            </div>
+        </div>
+      )}
     </div>
   );
 }
