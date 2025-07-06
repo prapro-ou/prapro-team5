@@ -13,7 +13,6 @@ function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [money, setMoney] = useState<number>(1000); // 初期資金
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
 
   // ゲーム統計情報
@@ -63,13 +62,16 @@ function App() {
     }
 
     // 資金チェック
-    if (money < facilityData.cost) {
+    if (gameStats.money < facilityData.cost) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
 
     // 資金を減らす
-    setMoney(prev => prev - facilityData.cost);
+    setGameStats(prev => ({
+      ...prev,
+      money: prev.money - facilityData.cost
+    }));
 
     // 施設の配置
     const newFacility: Facility = {
@@ -107,7 +109,7 @@ function App() {
             selectedPosition={selectedTile}
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
-            money={money}
+            money={gameStats.money}
           />
         </div>
       </div>
@@ -126,7 +128,7 @@ function App() {
               <FacilitySelector 
                 selectedType={selectedFacilityType}
                 onSelectType={setSelectedFacilityType}
-                money={money}
+                money={gameStats.money}
               />
             </div>
         </div>
