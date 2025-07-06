@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Grid } from './components/grid'
 import { FacilitySelector } from './components/FacilitySelector'
+import { InfoPanel } from './components/InfoPanel'
 import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
+import type { GameStats } from './types/game'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff } from "react-icons/tb";
@@ -13,6 +15,14 @@ function App() {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [money, setMoney] = useState<number>(1000); // 初期資金
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
+
+  // ゲーム統計情報
+  const [gameStats, setGameStats] = useState<GameStats>({
+    money: 10000,
+    population: 0,
+    satisfaction: 50,
+    date: { year: 2024, month: 1 }
+  });
 
   const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
