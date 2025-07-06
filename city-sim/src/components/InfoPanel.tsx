@@ -13,7 +13,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
 					{/* 資金 */}
 					<div className="flex items-center gap-2">
 							<div>
-									<div className="text-sm text-gray-400">資金</div>
 									<div className="text-lg font-bold text-white">
 										<TbCash/>{stats.money.toLocaleString()}
 									</div>
