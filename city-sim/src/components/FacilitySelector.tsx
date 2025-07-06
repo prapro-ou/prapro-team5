@@ -1,5 +1,7 @@
-import type { FacilityType } from "../types/facility";
-import { FACILITY_DATA } from "../types/facility";
+import type { CategoryKey, FacilityType } from "../types/facility";
+import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
+import { useState } from "react";
+import { TbCash } from "react-icons/tb";
 
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
@@ -8,39 +10,61 @@ interface FacilitySelectorProps {
 }
 
 export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
-  return (
-    <div>
-      <h3 className="text-white text-lg mb-3">施設</h3>
-      <h3 className="text-white text-sm mb-3">資金：\{money.toLocaleString()}</h3>
-      <button
-        onClick={() => onSelectType(null)}
-        className={`w-full mb-2 px-2 py-1 text-xs rounded ${
-          selectedType === null
-            ? 'bg-blue-600 text-gray-800'
-            : 'bg-gray-600 text-gray-500 hover:bg-gray-500'
-        }`}
-      >
-        選択解除
-      </button>
+  const [category, setCategory] = useState<CategoryKey>("residential");
 
-      <div className="space-y-2">
-        {Object.values(FACILITY_DATA).map((facility) => {
-          const isSelected = selectedType === facility.type;
-          
-          return (
-            <button
-              key={facility.type}
-              onClick={() => onSelectType(facility.type)}
-              className={`w-full px-2 py-1 text-xs rounded text-left transition-colors ${
-                isSelected ? 'bg-green-600 text-gray-800' : 'bg-gray-700 text-gray-500 hover:bg-gray-600'
-              }`}
-            >
-              <div className="font-semibold">{facility.name}</div>
-              <div className="text-sm">¥{facility.cost}</div>
-              <div className="text-xs opacity-75">{facility.description}</div>
-            </button>
-          );
-        })}
+  const categorizedFacilities = Object.values(FACILITY_DATA).reduce((acc, facility) => {
+    const category = facility.category;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(facility);
+    return acc;
+  }, {} as Record<CategoryKey, typeof FACILITY_DATA[keyof typeof FACILITY_DATA][]>);
+
+  return (
+    <div className="w-full max-w-4x1">
+      {/* タブグループ */}
+      <div className="flex space-x-1">
+        {Object.entries(FACILITY_CATEGORIES).map(([key, categoryInfo]) => (
+          <button
+            key={key}
+            onClick={() => setCategory(key as CategoryKey)}
+            className={`px-3 py-1 text-xs rounded-t-lg transition-colors ${
+              category === key
+                ? 'bg-white text-gray-600 border-b-2 border-green-500 hover:bg-gray-300'
+                : 'bg-white text-gray-800 hover:text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            {categoryInfo.name}
+          </button>
+        ))}
+      </div>
+
+      {/* リストエリア */}
+      <div className="bg-gray-500/30 rounded-lg rounded-tl-none p-3">
+        <div className="flex gap-2 overflow-x-auto" style={{width: '100%', maxWidth: '900px'}}>
+          {categorizedFacilities[category]?.map((facility) => {
+            const isSelected = selectedType === facility.type;
+            const canAfford = money >= facility.cost;
+            
+            return (
+              <button
+                key={facility.type}
+                onClick={() => onSelectType(facility.type)}
+                disabled={!canAfford}
+                className={`px-3 py-2 text-xs rounded text-left transition-colors flex-shrink-0 min-w-[140px] ${
+                  isSelected 
+                    ? 'bg-gray-200 text-gray-900 shadow-lg' 
+                    : canAfford
+                      ? 'bg-white text-gray-800 hover:bg-gray-300'
+                      : 'bg-gray-500 text-gray-800 cursor-not-allowed'
+                }`}
+              >
+                <div className="font-semibold">{facility.name}</div>
+                 <div className="text-sm flex items-center gap-1"><TbCash/>{facility.cost.toLocaleString()}</div>
+                <div className="text-xs opacity-75">{facility.description}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   )

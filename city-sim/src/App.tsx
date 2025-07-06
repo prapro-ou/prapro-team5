@@ -5,12 +5,14 @@ import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
+import { TbCrane ,TbCraneOff } from "react-icons/tb";
 
 function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [money, setMoney] = useState<number>(1000); // 初期資金
+  const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
 
   const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
@@ -83,26 +85,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      <div className="flex gap-8">
-        {/* 左側: 操作パネル */}
-        <div className="w-80 bg-gray-800 p-4 rounded-lg">
-          
-          <FacilitySelector 
-            selectedType={selectedFacilityType}
-            onSelectType={setSelectedFacilityType}
-            money={money}
-          />
-          
-          {selectedTile && (
-            <div className="mt-4 text-white">
-              <h3 className="text-lg">選択位置</h3>
-              <p>({selectedTile.x}, {selectedTile.y})</p>
-            </div>
-          )}
-        </div>
-
-        {/* 右側: ゲームグリッド */}
-        <div className="flex-1">
+        {/* ゲームグリッド */}
+        <div className="h-full">
           <Grid 
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
@@ -112,7 +96,26 @@ function App() {
             money={money}
           />
         </div>
-      </div>
+        {/* パネル切り替えボタン */}
+        <button 
+          onClick={() => setShowPanel(!showPanel)}
+          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
+        >
+          {showPanel ? <TbCraneOff/> : <TbCrane/>}
+        </button>
+
+        {/* 施設建設パネル */}
+        {showPanel && (
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
+              <div className="flex-1">
+                <FacilitySelector 
+                  selectedType={selectedFacilityType}
+                  onSelectType={setSelectedFacilityType}
+                  money={money}
+                />
+              </div>
+          </div>
+        )}
     </div>
   );
 }
