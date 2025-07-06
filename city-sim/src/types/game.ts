@@ -7,3 +7,9 @@ export interface GameStats {
     month: number;
   };
 }
+
+export interface GameState {
+  stats: GameStats;
+  isPaused: boolean;
+  gameSpeed: number;
+}
