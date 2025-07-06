@@ -59,7 +59,7 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
                 }`}
               >
                 <div className="font-semibold">{facility.name}</div>
-                 <div className="text-sm flex items-center gap-1"><TbCash/>{facility.cost.toLocaleString()}</div>
+                  <div className="text-sm flex items-center gap-1"><TbCash/>{facility.cost.toLocaleString()}</div>
                 <div className="text-xs opacity-75">{facility.description}</div>
               </button>
             );
