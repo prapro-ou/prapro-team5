@@ -9,7 +9,7 @@ interface InfoPanelProps {
 export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
 	return (
 		<div className="fixed top-0 left-0 right-0 z-50 bg-gray-800 p-4 shadow-lg border-b border-gray-700">
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-10">
 					{/* 資金 */}
 					<div className="flex items-center gap-2">
 							<div>
