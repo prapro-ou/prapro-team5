@@ -98,16 +98,18 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel stats={gameStats} />
       
-      {/* ゲームグリッド */}
-      <div className="h-full">
-        <Grid 
-          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-          onTileClick={handleTileClick}
-          selectedPosition={selectedTile}
-          facilities={facilities}
-          selectedFacilityType={selectedFacilityType}
-          money={money}
-        />
+      <div className="pt-20 p-8">
+        {/* ゲームグリッド */}
+        <div className="h-full">
+          <Grid 
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={money}
+          />
+        </div>
       </div>
       {/* パネル切り替えボタン */}
       <button 
