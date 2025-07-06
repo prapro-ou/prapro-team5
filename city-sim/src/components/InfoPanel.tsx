@@ -12,20 +12,28 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
 				<div className="flex items-center gap-10">
 					{/* 資金 */}
 					<div className="flex items-center gap-2">
-							<div>
-									<div className="text-lg font-bold text-white">
-										<TbCash/>{stats.money.toLocaleString()}
-									</div>
+						<div>
+							<div className="text-lg font-bold text-white">
+								<TbCash/>{stats.money.toLocaleString()}
 							</div>
-					</div>
-						{/* 人口 */}
-						<div className="flex items-center gap-2">
-								<div>
-										<div className="text-lg font-bold text-white">
-											<TbUsers/>{stats.population.toLocaleString()}
-										</div>
-								</div>
 						</div>
+					</div>
+					{/* 人口 */}
+					<div className="flex items-center gap-2">
+						<div>
+							<div className="text-lg font-bold text-white">
+								<TbUsers/>{stats.population.toLocaleString()}
+							</div>
+						</div>
+					</div>
+					{/* 満足度 */}
+					<div className="flex items-center gap-2">
+						<div>
+							<div className="text-lg font-bold text-white">
+								<TbMoodHappy/>{stats.satisfaction.toLocaleString()}%
+							</div>
+						</div>
+					</div>
 				</div>
 		</div>
 	)
