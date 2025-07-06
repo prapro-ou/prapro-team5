@@ -34,6 +34,14 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
 							</div>
 						</div>
 					</div>
+					{/* 日付 */}
+					<div className="flex items-center gap-2">
+						<div>
+							<div className="text-lg font-bold text-white">
+                <TbCalendar/>{stats.date.year}年{stats.date.month}月
+							</div>
+						</div>
+					</div>
 				</div>
 		</div>
 	)
