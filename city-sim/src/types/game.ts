@@ -13,3 +13,9 @@ export interface GameState {
   isPaused: boolean;
   gameSpeed: number;
 }
+
+export interface GameConfig {
+  initialMoney: number;
+  maxPopulation: number;
+  gameSpeedOptions: number[];
+}
