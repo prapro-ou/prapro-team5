@@ -18,6 +18,14 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
 									</div>
 							</div>
 					</div>
+						{/* 人口 */}
+						<div className="flex items-center gap-2">
+								<div>
+										<div className="text-lg font-bold text-white">
+											<TbUsers/>{stats.population.toLocaleString()}
+										</div>
+								</div>
+						</div>
 				</div>
 		</div>
 	)
