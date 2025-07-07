@@ -12,31 +12,31 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
       <div className="flex items-center gap-10">
         {/* 資金 */}
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
-            <TbCash className="text-green-400 text-xl" />
-            <div className="text-lg font-bold text-white">
-                {stats.money.toLocaleString()}
-            </div>
+          <TbCash className="text-green-400 text-xl" />
+          <div className="text-lg font-bold text-white">
+            {stats.money.toLocaleString()}
+          </div>
         </div>
         {/* 人口 */}
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
-            <TbUsers className="text-blue-400 text-xl" />
-            <div className="text-lg font-bold text-white">
-                {stats.population.toLocaleString()}
-            </div>
+          <TbUsers className="text-blue-400 text-xl" />
+          <div className="text-lg font-bold text-white">
+            {stats.population.toLocaleString()}
+          </div>
         </div>
         {/* 満足度 */}
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
-            <TbMoodHappy className="text-yellow-400 text-xl" />
-            <div className="text-lg font-bold text-white">
-                {stats.satisfaction.toLocaleString()}%
-            </div>
+          <TbMoodHappy className="text-yellow-400 text-xl" />
+          <div className="text-lg font-bold text-white">
+            {stats.satisfaction.toLocaleString()}%
+          </div>
         </div>
         {/* 日付 */}
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
-            <TbCalendar className="text-gray-300 text-xl" />
-            <div className="text-lg font-bold text-white">
-                {stats.date.year}年{stats.date.month}月
-            </div>
+          <TbCalendar className="text-gray-300 text-xl" />
+          <div className="text-lg font-bold text-white">
+            {stats.date.year}年{stats.date.month}月
+          </div>
         </div>
       </div>
     </div>
