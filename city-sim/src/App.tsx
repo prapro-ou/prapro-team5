@@ -100,12 +100,16 @@ function App() {
   };
 
   const handleTileClick = (position: Position) => {
-    setSelectedTile(position);
+    const correctedPosition = {
+      x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
+      y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
+    };
+
     if (selectedFacilityType) {
-      placeFacility(position, selectedFacilityType);
+      placeFacility(correctedPosition, selectedFacilityType);
     } 
     else {
-      console.log(`click: (${position.x}, ${position.y})`);
+      console.log(`click: (${correctedPosition.x}, ${correctedPosition.y})`);
     }
   };
 
