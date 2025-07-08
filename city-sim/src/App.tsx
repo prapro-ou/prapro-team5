@@ -23,8 +23,8 @@ function App() {
     date: { year: 2024, month: 1 }
   });
 
-  const GRID_WIDTH = 40;  // グリッドの幅
-  const GRID_HEIGHT = 30; // グリッドの高さ
+  const GRID_WIDTH = 20;  // グリッドの幅
+  const GRID_HEIGHT = 20; // グリッドの高さ
 
   // アイソメトリック座標変換
   const toIsometric = (x: number, y: number) => {
@@ -105,6 +105,8 @@ function App() {
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
 
+    setSelectedTile(correctedPosition);
+
     if (selectedFacilityType) {
       placeFacility(correctedPosition, selectedFacilityType);
     } 
@@ -118,30 +120,30 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel stats={gameStats} />
       
-      <div className="pt-20 p-8">
         {/* ゲームグリッド */}
-        <div className="h-full">
-          <Grid 
-            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-            onTileClick={handleTileClick}
-            selectedPosition={selectedTile}
-            facilities={facilities}
-            selectedFacilityType={selectedFacilityType}
-            money={gameStats.money}
-          />
+        <div className="pt-20 flex justify-center items-center">
+          <div className="relative z-[100]">
+            <Grid 
+              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+              onTileClick={handleTileClick}
+              selectedPosition={selectedTile}
+              facilities={facilities}
+              selectedFacilityType={selectedFacilityType}
+              money={gameStats.money}
+            />
+          </div>
         </div>
-      </div>
       {/* パネル切り替えボタン */}
       <button 
         onClick={() => setShowPanel(!showPanel)}
-        className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
+        className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
       </button>
 
       {/* 施設建設パネル */}
       {showPanel && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-[800] backdrop-blur-sm w-2xl">
             <div className="flex-1">
               <FacilitySelector 
                 selectedType={selectedFacilityType}

@@ -119,7 +119,6 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div className="flex justify-center items-center p-8 bg-gray-900 min-h-screen">
       <div 
         className="relative"
         style={{
@@ -206,6 +205,5 @@ export const Grid: React.FC<GridProps> = ({
         })
       )}
       </div>
-    </div>
   );
 };
