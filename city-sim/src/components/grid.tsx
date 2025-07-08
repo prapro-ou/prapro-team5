@@ -29,6 +29,13 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // タイル座標をアイソメトリック座標に変換
+  const toIsometric = (x: number, y: number) => {
+    const isoX = (x - y) * 32;
+    const isoY = (x + y) * 16;
+    return { x: isoX, y: isoY };
+  }
+
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
