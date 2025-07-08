@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Grid } from './components/grid'
 import { FacilitySelector } from './components/FacilitySelector'
+import { InfoPanel } from './components/InfoPanel'
 import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
+import type { GameStats } from './types/game'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff } from "react-icons/tb";
@@ -11,8 +13,15 @@ function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [money, setMoney] = useState<number>(1000); // 初期資金
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
+
+  // ゲーム統計情報
+  const [gameStats, setGameStats] = useState<GameStats>({
+    money: 10000,
+    population: 0,
+    satisfaction: 50,
+    date: { year: 2024, month: 1 }
+  });
 
   const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
@@ -53,13 +62,16 @@ function App() {
     }
 
     // 資金チェック
-    if (money < facilityData.cost) {
+    if (gameStats.money < facilityData.cost) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
 
     // 資金を減らす
-    setMoney(prev => prev - facilityData.cost);
+    setGameStats(prev => ({
+      ...prev,
+      money: prev.money - facilityData.cost
+    }));
 
     // 施設の配置
     const newFacility: Facility = {
@@ -85,6 +97,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+      {/* 情報パネル */}
+      <InfoPanel stats={gameStats} />
+      
+      <div className="pt-20 p-8">
         {/* ゲームグリッド */}
         <div className="h-full">
           <Grid 
@@ -93,29 +109,30 @@ function App() {
             selectedPosition={selectedTile}
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
-            money={money}
+            money={gameStats.money}
           />
         </div>
-        {/* パネル切り替えボタン */}
-        <button 
-          onClick={() => setShowPanel(!showPanel)}
-          className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
-        >
-          {showPanel ? <TbCraneOff/> : <TbCrane/>}
-        </button>
+      </div>
+      {/* パネル切り替えボタン */}
+      <button 
+        onClick={() => setShowPanel(!showPanel)}
+        className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-20"
+      >
+        {showPanel ? <TbCraneOff/> : <TbCrane/>}
+      </button>
 
-        {/* 施設建設パネル */}
-        {showPanel && (
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
-              <div className="flex-1">
-                <FacilitySelector 
-                  selectedType={selectedFacilityType}
-                  onSelectType={setSelectedFacilityType}
-                  money={money}
-                />
-              </div>
-          </div>
-        )}
+      {/* 施設建設パネル */}
+      {showPanel && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-10 backdrop-blur-sm w-2xl">
+            <div className="flex-1">
+              <FacilitySelector 
+                selectedType={selectedFacilityType}
+                onSelectType={setSelectedFacilityType}
+                money={gameStats.money}
+              />
+            </div>
+        </div>
+      )}
     </div>
   );
 }
