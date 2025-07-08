@@ -25,6 +25,20 @@ function App() {
 
   const GRID_WIDTH = 40;  // グリッドの幅
   const GRID_HEIGHT = 30; // グリッドの高さ
+
+  // アイソメトリック座標変換
+  const toIsometric = (x: number, y: number) => {
+    const isoX = (x - y) * 32;
+    const isoY = (x + y) * 16;
+    return { x: isoX, y: isoY };
+  };
+
+  // アイソメトリック座標逆変換
+  const fromIsometric = (isoX: number, isoY: number) => {
+    const x = Math.round((isoX / 32 + isoY / 16) / 2);
+    const y = Math.round((isoY / 16 - isoX / 32) / 2);
+    return { x, y };
+  };
   
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
