@@ -134,6 +134,23 @@ export const Grid: React.FC<GridProps> = ({
           const facilityColor = getFacilityColor(facility);
           const previewStatus = getPreviewStatus(x, y);
           const previewColor = getPreviewColor(previewStatus);
+          const isoPos = toIsometric(x, y);
+
+          // 施設の高さ（仮）
+          const getHeight = () => {
+            if (facility) {
+              switch (facility.type) {
+                case 'residential': return 30;
+                case 'commercial': return 40;
+                case 'industrial': return 25;
+                case 'road': return 5;
+                default: return 10;
+              }
+            }
+            return 10;
+          };
+
+          const height = getHeight();
           
           return (
             <div
