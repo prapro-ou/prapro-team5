@@ -119,15 +119,14 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div 
-      className="grid bg-gray-800 p-4 rounded-lg justify-center items-center"
-      style={{
-        display: 'grid',
-        gap: '0.5px',
-        gridTemplateColumns: `repeat(${size.width}, 16px)`,
-        gridTemplateRows: `repeat(${size.height}, 16px)`,
-      }}
-    >
+    <div className="flex justify-center items-center p-8 bg-gray-900 min-h-screen">
+      <div 
+        className="relative"
+        style={{
+          width: `${(size.width + size.height) * 32 + 200}px`,
+          height: `${(size.width + size.height) * 16 + 300}px`,
+        }}
+      >
       {Array.from({ length: size.height }, (_, y) =>
         Array.from({ length: size.width }, (_, x) => {
           const facility = getFacilityAt(x, y);
@@ -143,33 +142,70 @@ export const Grid: React.FC<GridProps> = ({
                 case 'residential': return 30;
                 case 'commercial': return 40;
                 case 'industrial': return 25;
-                case 'road': return 5;
-                default: return 10;
+                case 'road': return 0;
+                default: return 0;
               }
             }
-            return 10;
+            return 0;
           };
 
           const height = getHeight();
           
           return (
-            <div
-              key={`${x}-${y}`}
-              className={`
-                w-4 h-4 border border-gray-600 cursor-pointer
-                transition-colors relative
-                ${previewColor || facilityColor}
-                ${!facility && !previewStatus ? 'hover:bg-gray-600' : ''}
-                ${isSelected(x, y) ? 'ring-2 ring-white z-10' : ''}
-              `}
-              onClick={() => handleTileClick(x, y)}
-              onMouseEnter={() => selectedFacilityType && setHoveredTile({ x, y })}
-              onMouseLeave={() => setHoveredTile(null)}
-              title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
-            />            
+            <div key={`${x}-${y}`} className="absolute">
+              {/* トップ面 */}
+              <div
+                className={`
+                  absolute cursor-pointer border border-gray-500
+                  transition-all duration-200
+                  ${previewColor || facilityColor}
+                  ${!facility && !previewStatus ? 'hover:brightness-110' : ''}
+                  ${isSelected(x, y) ? 'ring-2 ring-yellow-400 z-50' : ''}
+                `}
+                style={{
+                  left: `${isoPos.x + (size.width + size.height) * 16}px`,
+                  top: `${isoPos.y + 150 - height}px`,
+                  width: '64px',
+                  height: '32px',
+                  clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                  zIndex: (size.height - y) * 100 + x + 20,
+                }}
+                onClick={() => handleTileClick(x, y)}
+                onMouseEnter={() => selectedFacilityType && setHoveredTile({ x, y })}
+                onMouseLeave={() => setHoveredTile(null)}
+                title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
+              />
+              {/* 左側面 */}
+              <div
+                className={`absolute border-r border-gray-600 ${facilityColor.replace('bg-', 'bg-opacity-80 bg-')}`}
+                style={{
+                  left: `${isoPos.x + (size.width + size.height) * 16}px`,
+                  top: `${isoPos.y + 150 - height + 16}px`,
+                  width: '32px',
+                  height: `${height}px`,
+                  transform: 'skewY(30deg)',
+                  filter: 'brightness(0.7)',
+                  zIndex: (size.height - y) * 100 + x + 10,
+                }}
+              />
+              {/* 右側面 */}
+              <div
+                className={`absolute border-l border-gray-600 ${facilityColor.replace('bg-', 'bg-opacity-80 bg-')}`}
+                style={{
+                  left: `${isoPos.x + (size.width + size.height) * 16 + 32}px`,
+                  top: `${isoPos.y + 150 - height + 16}px`,
+                  width: '32px',
+                  height: `${height}px`,
+                  transform: 'skewY(-30deg)',
+                  filter: 'brightness(0.5)',
+                  zIndex: (size.height - y) * 100 + x + 10,
+                }}
+              />
+            </div>
           );
         })
       )}
+      </div>
     </div>
   );
 };
