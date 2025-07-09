@@ -2,6 +2,7 @@ import React from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility, FacilityType } from "../types/facility";
 import { FACILITY_DATA } from "../types/facility";
+import { toIsometric } from "../utils/coordinates";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -28,13 +29,6 @@ export const Grid: React.FC<GridProps> = ({
       onTileClick({ x, y });
     }
   };
-
-  // タイル座標をアイソメトリック座標に変換
-  const toIsometric = (x: number, y: number) => {
-    const isoX = (x - y) * 32;
-    const isoY = (x + y) * 16;
-    return { x: isoX, y: isoY };
-  }
 
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
