@@ -111,8 +111,8 @@ export const Grid: React.FC<GridProps> = ({
       <div 
         className="relative"
         style={{
-          width: `${(size.width + size.height) * 32 + 200}px`,
-          height: `${(size.width + size.height) * 16 + 300}px`,
+          width: `${(size.width + size.height) * 16 + 200}px`,
+          height: `${(size.width + size.height) * 8 + 300}px`,
         }}
       >
       {Array.from({ length: size.height }, (_, y) =>
@@ -138,10 +138,10 @@ export const Grid: React.FC<GridProps> = ({
                   ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
                 `}
                 style={{
-                  left: `${isoPos.x + (size.width + size.height) * 16}px`,
+                  left: `${isoPos.x + (size.width + size.height) * 8}px`,
                   top: `${isoPos.y + 150}px`,
-                  width: '64px',
-                  height: '32px',
+                  width: '32px',
+                  height: '16px',
                   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
                   zIndex: Math.floor(baseZ + 30), // トップ面が一番上
                 }}
