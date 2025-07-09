@@ -22,7 +22,7 @@ export interface FacilityInfo {
   maintenanceCost: number;  // 維持費
   description: string;
   category: CategoryKey;    // カテゴリ
-  imgPaath: string;         // 画像パス
+  imgPath: string;         // 画像パス
 }
 
 // 配置された施設
