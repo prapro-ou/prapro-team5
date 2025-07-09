@@ -21,7 +21,8 @@ export interface FacilityInfo {
   cost: number;             // 建設コスト
   maintenanceCost: number;  // 維持費
   description: string;
-  category: CategoryKey; // カテゴリ
+  category: CategoryKey;    // カテゴリ
+  imgPaath: string;         // 画像パス
 }
 
 // 配置された施設
