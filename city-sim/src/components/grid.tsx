@@ -134,21 +134,8 @@ export const Grid: React.FC<GridProps> = ({
           const previewColor = getPreviewColor(previewStatus);
           const isoPos = toIsometric(x, y);
 
-          // 施設の高さ（仮）
-          const getHeight = () => {
-            if (facility) {
-              switch (facility.type) {
-                case 'residential': return 30;
-                case 'commercial': return 40;
-                case 'industrial': return 25;
-                case 'road': return 0;
-                default: return 0;
-              }
-            }
-            return 0;
-          };
-
-          const height = getHeight();
+          // z-indexの計算
+          const baseZ = (y * 100) + x;
           
           return (
             <div key={`${x}-${y}`} className="absolute">
@@ -159,47 +146,22 @@ export const Grid: React.FC<GridProps> = ({
                   transition-all duration-200
                   ${previewColor || facilityColor}
                   ${!facility && !previewStatus ? 'hover:brightness-110' : ''}
-                  ${isSelected(x, y) ? 'ring-2 ring-yellow-400 z-50' : ''}
+                  ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
                 `}
                 style={{
                   left: `${isoPos.x + (size.width + size.height) * 16}px`,
-                  top: `${isoPos.y + 150 - height}px`,
+                  top: `${isoPos.y + 150}px`,
                   width: '64px',
                   height: '32px',
                   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                  zIndex: (size.height - y) * 100 + x + 20,
+                  zIndex: Math.floor(baseZ + 30), // トップ面が一番上
                 }}
                 onClick={() => handleTileClick(x, y)}
                 onMouseEnter={() => selectedFacilityType && setHoveredTile({ x, y })}
                 onMouseLeave={() => setHoveredTile(null)}
                 title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
               />
-              {/* 左側面 */}
-              <div
-                className={`absolute border-r border-gray-600 ${facilityColor.replace('bg-', 'bg-opacity-80 bg-')}`}
-                style={{
-                  left: `${isoPos.x + (size.width + size.height) * 16}px`,
-                  top: `${isoPos.y + 150 - height + 16}px`,
-                  width: '32px',
-                  height: `${height}px`,
-                  transform: 'skewY(30deg)',
-                  filter: 'brightness(0.7)',
-                  zIndex: (size.height - y) * 100 + x + 10,
-                }}
-              />
-              {/* 右側面 */}
-              <div
-                className={`absolute border-l border-gray-600 ${facilityColor.replace('bg-', 'bg-opacity-80 bg-')}`}
-                style={{
-                  left: `${isoPos.x + (size.width + size.height) * 16 + 32}px`,
-                  top: `${isoPos.y + 150 - height + 16}px`,
-                  width: '32px',
-                  height: `${height}px`,
-                  transform: 'skewY(-30deg)',
-                  filter: 'brightness(0.5)',
-                  zIndex: (size.height - y) * 100 + x + 10,
-                }}
-              />
+
             </div>
           );
         })
