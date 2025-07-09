@@ -89,16 +89,11 @@ export const Grid: React.FC<GridProps> = ({
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
     switch (facility.type) {
-      case 'residential':
-        return 'bg-green-500';
-      case 'commercial':
-        return 'bg-blue-500';
-      case 'industrial':
-        return 'bg-yellow-500';
-      case 'road':
-        return 'bg-gray-900';
-      default:
-        return 'bg-gray-700';
+      case 'residential': return 'bg-green-500';
+      case 'commercial': return 'bg-blue-500';
+      case 'industrial': return 'bg-yellow-500';
+      case 'road': return 'bg-gray-900';
+      default: return 'bg-gray-700';
     }
   }
 
