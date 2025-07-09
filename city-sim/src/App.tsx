@@ -8,6 +8,8 @@ import type { GameStats } from './types/game'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff } from "react-icons/tb";
+// 1. BGMPlayerを読み込む
+import { BGMPlayer } from './components/BGMPlayer'; // この行を追加
 
 function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
@@ -103,6 +105,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+
+      {/* 2. BGMPlayerを配置する */}
+      <BGMPlayer /> {/* この行を追加 */}
+      
       {/* 情報パネル */}
       <InfoPanel stats={gameStats} />
       
