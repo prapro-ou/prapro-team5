@@ -62,6 +62,17 @@ export const Grid: React.FC<GridProps> = ({
     );
   };
 
+  // 施設マップをメモ化
+  const facilityMap = React.useMemo(() => {
+    const map = new Map<string, Facility>();
+    facilities.forEach(facility => {
+      facility.occupiedTiles.forEach(tile => {
+        map.set(`${tile.x}-${tile.y}`, facility);
+      });
+    });
+    return map;
+  }, [facilities]);
+
   const getPreviewStatus = React.useCallback((x: number, y: number) => {
     if (!selectedFacilityType || !hoveredTile) return null;
     
