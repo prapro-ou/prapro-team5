@@ -49,7 +49,7 @@ export const Grid: React.FC<GridProps> = ({
       }
     }
     return tiles;
-  }, [selectedFacilityType, hoveredTile, size]);
+  }, [selectedFacilityType, hoveredTile, renderWidth, renderHeight]);
 
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
