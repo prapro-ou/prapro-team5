@@ -137,12 +137,12 @@ export const Grid: React.FC<GridProps> = ({
       <div 
         className="relative"
         style={{
-          width: `${(size.width + size.height) * 16 + 200}px`,
-          height: `${(size.width + size.height) * 8 + 300}px`,
+          width: `${(renderWidth + renderHeight) * 16 + 200}px`,
+          height: `${(renderWidth + renderHeight) * 8 + 300}px`,
         }}
       >
-      {Array.from({ length: size.height }, (_, y) =>
-        Array.from({ length: size.width }, (_, x) => {
+      {Array.from({ length: renderHeight }, (_, y) =>
+        Array.from({ length: renderWidth }, (_, x) => {
           const facility = facilityMap.get(`${x}-${y}`);
           const facilityColor = getFacilityColor(facility);
           const previewStatus = getPreviewStatus(x, y);
@@ -162,7 +162,7 @@ export const Grid: React.FC<GridProps> = ({
                   ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
                 `}
                 style={{
-                  left: `${isoPos.x + (size.width + size.height) * 8}px`,
+                  left: `${isoPos.x + (renderWidth + renderHeight) * 8}px`,
                   top: `${isoPos.y + 150}px`,
                   width: '32px',
                   height: '16px',
