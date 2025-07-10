@@ -25,6 +25,11 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
 
+  // レンダリング制限
+  const RENDER_LIMIT = 40;
+  const renderWidth = Math.min(size.width, RENDER_LIMIT);
+  const renderHeight = Math.min(size.height, RENDER_LIMIT);
+
   // プレビュー範囲の事前計算
   const previewTiles = React.useMemo(() => {
     if (!selectedFacilityType || !hoveredTile) return new Set<string>();
