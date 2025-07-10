@@ -153,7 +153,6 @@ export const Grid: React.FC<GridProps> = ({
               <div
                 className={`
                   absolute cursor-pointer border border-gray-500
-                  transition-all duration-200
                   ${previewColor || facilityColor}
                   ${!facility && !previewStatus ? 'hover:brightness-110' : ''}
                   ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
