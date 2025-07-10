@@ -164,11 +164,11 @@ export const Grid: React.FC<GridProps> = ({
                   width: '32px',
                   height: '16px',
                   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                  zIndex: Math.floor(baseZ + 30), // トップ面が一番上
+                  zIndex: Math.floor(baseZ + 30),
                 }}
                 onClick={() => handleTileClick(x, y)}
-                onMouseEnter={() => selectedFacilityType && setHoveredTile({ x, y })}
-                onMouseLeave={() => setHoveredTile(null)}
+                onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
+                onMouseLeave={() => debouncedSetHover(null)}
                 title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
               />
 
