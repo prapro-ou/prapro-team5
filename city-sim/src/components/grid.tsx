@@ -99,6 +99,14 @@ export const Grid: React.FC<GridProps> = ({
       return 'valid';
     }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
 
+    const debouncedSetHover = React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (position: Position | null) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => setHoveredTile(position), 16); // 8ms = 60fps
+      };
+    }, []);
+
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
     switch (facility.type) {
