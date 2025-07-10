@@ -76,10 +76,15 @@ export const Grid: React.FC<GridProps> = ({
   const getPreviewStatus = React.useCallback((x: number, y: number) => {
     if (!selectedFacilityType || !hoveredTile) return null;
     
+    // ホバー中心から離れすぎてたら計算しない
+    const distance = Math.abs(x - hoveredTile.x) + Math.abs(y - hoveredTile.y);
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const maxDistance = Math.floor(facilityData.size / 2) + 1;
+    
+    if (distance > maxDistance) return null;
+
     const tileKey = `${x}-${y}`;
     if (!previewTiles.has(tileKey)) return null;
-    
-    const facilityData = FACILITY_DATA[selectedFacilityType];
 
       // 資金不足チェック
       if (money < facilityData.cost) {
