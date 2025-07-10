@@ -17,7 +17,7 @@ function App() {
 
   // ゲーム統計情報
   const [gameStats, setGameStats] = useState<GameStats>({
-    Level: 1, 
+    level: 1, 
     money: 10000,
     population: 0,
     satisfaction: 50,

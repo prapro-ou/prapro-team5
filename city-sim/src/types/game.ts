@@ -1,5 +1,5 @@
 export interface GameStats {
-  Level: number; 
+  level: number; 
   money: number;
   population: number;
   satisfaction: number;

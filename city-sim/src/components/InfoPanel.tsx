@@ -14,7 +14,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
           <TbStar className="text-yellow-400 text-xl" />
           <div className="text-lg font-bold text-white">
-            Lv.{stats.Level}
+            Lv.{stats.level}
           </div>
         </div>
         {/* 資金 */}
