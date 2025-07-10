@@ -56,11 +56,11 @@ export const Grid: React.FC<GridProps> = ({
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
 
-  const getFacilityAt = (x: number, y: number) => {
-    return facilities.find(facility =>
-      facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
-    );
-  };
+  // const getFacilityAt = (x: number, y: number) => {
+  //   return facilities.find(facility =>
+  //     facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
+  //   );
+  // };
 
   // 施設マップをメモ化
   const facilityMap = React.useMemo(() => {
@@ -138,7 +138,7 @@ export const Grid: React.FC<GridProps> = ({
       >
       {Array.from({ length: size.height }, (_, y) =>
         Array.from({ length: size.width }, (_, x) => {
-          const facility = getFacilityAt(x, y);
+          const facility = facilityMap.get(`${x}-${y}`);
           const facilityColor = getFacilityColor(facility);
           const previewStatus = getPreviewStatus(x, y);
           const previewColor = getPreviewColor(previewStatus);
