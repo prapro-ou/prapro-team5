@@ -43,7 +43,7 @@ export const Grid: React.FC<GridProps> = ({
         const x = hoveredTile.x + dx;
         const y = hoveredTile.y + dy;
         
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+        if (x >= 0 && x < renderWidth && y >= 0 && y < renderHeight) {
           tiles.add(`${x}-${y}`);
         }
       }
