@@ -24,6 +24,28 @@ export const Grid: React.FC<GridProps> = ({
   money = 0,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
+
+  // プレビュー範囲の事前計算
+  const previewTiles = React.useMemo(() => {
+    if (!selectedFacilityType || !hoveredTile) return new Set<string>();
+    
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const radius = Math.floor(facilityData.size / 2);
+    const tiles = new Set<string>();
+    
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = hoveredTile.x + dx;
+        const y = hoveredTile.y + dy;
+        
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    return tiles;
+  }, [selectedFacilityType, hoveredTile, size]);
+
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
       onTileClick({ x, y });
