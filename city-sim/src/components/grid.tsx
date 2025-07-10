@@ -87,12 +87,12 @@ export const Grid: React.FC<GridProps> = ({
       }
       
       // 既存施設チェック
-      if (getFacilityAt(x, y)) {
+      if (facilityMap.has(tileKey)) {
         return 'occupied';
       }
 
       return 'valid';
-    }, [selectedFacilityType, hoveredTile, previewTiles, money]);
+    }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
