@@ -62,35 +62,13 @@ export const Grid: React.FC<GridProps> = ({
     );
   };
 
-  const getPreviewStatus = (x: number, y: number) => {
+  const getPreviewStatus = React.useCallback((x: number, y: number) => {
     if (!selectedFacilityType || !hoveredTile) return null;
     
+    const tileKey = `${x}-${y}`;
+    if (!previewTiles.has(tileKey)) return null;
+    
     const facilityData = FACILITY_DATA[selectedFacilityType];
-    const radius = Math.floor(facilityData.size / 2);
-    
-    // ホバー位置から相対位置を計算
-    const dx = x - hoveredTile.x;
-    const dy = y - hoveredTile.y;
-    
-    // 施設の範囲内かチェック
-    if (Math.abs(dx) <= radius && Math.abs(dy) <= radius) {
-      // 範囲外チェック
-      let hasOutOfBounds = false;
-      for (let checkDx = -radius; checkDx <= radius; checkDx++) {
-        for (let checkDy = -radius; checkDy <= radius; checkDy++) {
-          const checkX = hoveredTile.x + checkDx;
-          const checkY = hoveredTile.y + checkDy;
-          if (checkX < 0 || checkX >= size.width || checkY < 0 || checkY >= size.height) {
-            hasOutOfBounds = true;
-            break;
-          }
-        }
-        if (hasOutOfBounds) break;
-      }
-      
-      if (hasOutOfBounds) {
-        return 'out-of-bounds';
-      }
 
       // 資金不足チェック
       if (money < facilityData.cost) {
@@ -103,10 +81,7 @@ export const Grid: React.FC<GridProps> = ({
       }
 
       return 'valid';
-    }
-    
-    return null;
-  };
+    }, [selectedFacilityType, hoveredTile, previewTiles, money]);
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
