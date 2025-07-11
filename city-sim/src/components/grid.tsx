@@ -202,7 +202,7 @@ export const Grid: React.FC<GridProps> = ({
       let timeoutId: NodeJS.Timeout;
       return (position: Position | null) => {
         clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => setHoveredTile(position), 8); // 8ms = 120fps
+        timeoutId = setTimeout(() => setHoveredTile(position), 50);
       };
     }, []);
 
