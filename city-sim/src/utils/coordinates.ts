@@ -30,3 +30,17 @@ export const worldToScreen = (worldX: number, worldY: number, cameraX: number, c
   return { x: screenX, y: screenY };
 };
 
+// スクリーン座標からグリッド座標への変換
+export const screenToGrid = (
+  screenX: number, 
+  screenY: number, 
+  cameraX: number, 
+  cameraY: number,
+  offsetX: number = 0,
+  offsetY: number = 0
+) => {
+  const world = screenToWorld(screenX, screenY, cameraX, cameraY);
+  const adjustedX = world.x - offsetX;
+  const adjustedY = world.y - offsetY;
+  return fromIsometric(adjustedX, adjustedY);
+};
