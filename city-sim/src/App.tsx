@@ -24,8 +24,8 @@ function App() {
     date: { year: 2024, month: 1 }
   });
 
-  const GRID_WIDTH = 20;  // グリッドの幅
-  const GRID_HEIGHT = 20; // グリッドの高さ
+  const GRID_WIDTH = 60;  // グリッドの幅
+  const GRID_HEIGHT = 60; // グリッドの高さ
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {

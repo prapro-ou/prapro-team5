@@ -24,6 +24,33 @@ export const Grid: React.FC<GridProps> = ({
   money = 0,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
+
+  // レンダリング制限
+  const RENDER_LIMIT = 40;
+  const renderWidth = Math.min(size.width, RENDER_LIMIT);
+  const renderHeight = Math.min(size.height, RENDER_LIMIT);
+
+  // プレビュー範囲の事前計算
+  const previewTiles = React.useMemo(() => {
+    if (!selectedFacilityType || !hoveredTile) return new Set<string>();
+    
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const radius = Math.floor(facilityData.size / 2);
+    const tiles = new Set<string>();
+    
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = hoveredTile.x + dx;
+        const y = hoveredTile.y + dy;
+        
+        if (x >= 0 && x < renderWidth && y >= 0 && y < renderHeight) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    return tiles;
+  }, [selectedFacilityType, hoveredTile, renderWidth, renderHeight]);
+
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
       onTileClick({ x, y });
@@ -34,41 +61,35 @@ export const Grid: React.FC<GridProps> = ({
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
 
-  const getFacilityAt = (x: number, y: number) => {
-    return facilities.find(facility =>
-      facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
-    );
-  };
+  // const getFacilityAt = (x: number, y: number) => {
+  //   return facilities.find(facility =>
+  //     facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
+  //   );
+  // };
 
-  const getPreviewStatus = (x: number, y: number) => {
+  // 施設マップをメモ化
+  const facilityMap = React.useMemo(() => {
+    const map = new Map<string, Facility>();
+    facilities.forEach(facility => {
+      facility.occupiedTiles.forEach(tile => {
+        map.set(`${tile.x}-${tile.y}`, facility);
+      });
+    });
+    return map;
+  }, [facilities]);
+
+  const getPreviewStatus = React.useCallback((x: number, y: number) => {
     if (!selectedFacilityType || !hoveredTile) return null;
     
+    // ホバー中心から離れすぎてたら計算しない
+    const distance = Math.abs(x - hoveredTile.x) + Math.abs(y - hoveredTile.y);
     const facilityData = FACILITY_DATA[selectedFacilityType];
-    const radius = Math.floor(facilityData.size / 2);
+    const maxDistance = Math.floor(facilityData.size / 2) + 1;
     
-    // ホバー位置から相対位置を計算
-    const dx = x - hoveredTile.x;
-    const dy = y - hoveredTile.y;
-    
-    // 施設の範囲内かチェック
-    if (Math.abs(dx) <= radius && Math.abs(dy) <= radius) {
-      // 範囲外チェック
-      let hasOutOfBounds = false;
-      for (let checkDx = -radius; checkDx <= radius; checkDx++) {
-        for (let checkDy = -radius; checkDy <= radius; checkDy++) {
-          const checkX = hoveredTile.x + checkDx;
-          const checkY = hoveredTile.y + checkDy;
-          if (checkX < 0 || checkX >= size.width || checkY < 0 || checkY >= size.height) {
-            hasOutOfBounds = true;
-            break;
-          }
-        }
-        if (hasOutOfBounds) break;
-      }
-      
-      if (hasOutOfBounds) {
-        return 'out-of-bounds';
-      }
+    if (distance > maxDistance) return null;
+
+    const tileKey = `${x}-${y}`;
+    if (!previewTiles.has(tileKey)) return null;
 
       // 資金不足チェック
       if (money < facilityData.cost) {
@@ -76,15 +97,20 @@ export const Grid: React.FC<GridProps> = ({
       }
       
       // 既存施設チェック
-      if (getFacilityAt(x, y)) {
+      if (facilityMap.has(tileKey)) {
         return 'occupied';
       }
 
       return 'valid';
-    }
-    
-    return null;
-  };
+    }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
+
+    const debouncedSetHover = React.useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (position: Position | null) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => setHoveredTile(position), 8); // 8ms = 120fps
+      };
+    }, []);
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
@@ -111,13 +137,13 @@ export const Grid: React.FC<GridProps> = ({
       <div 
         className="relative"
         style={{
-          width: `${(size.width + size.height) * 16 + 200}px`,
-          height: `${(size.width + size.height) * 8 + 300}px`,
+          width: `${(renderWidth + renderHeight) * 16 + 200}px`,
+          height: `${(renderWidth + renderHeight) * 8 + 300}px`,
         }}
       >
-      {Array.from({ length: size.height }, (_, y) =>
-        Array.from({ length: size.width }, (_, x) => {
-          const facility = getFacilityAt(x, y);
+      {Array.from({ length: renderHeight }, (_, y) =>
+        Array.from({ length: renderWidth }, (_, x) => {
+          const facility = facilityMap.get(`${x}-${y}`);
           const facilityColor = getFacilityColor(facility);
           const previewStatus = getPreviewStatus(x, y);
           const previewColor = getPreviewColor(previewStatus);
@@ -132,22 +158,20 @@ export const Grid: React.FC<GridProps> = ({
               <div
                 className={`
                   absolute cursor-pointer border border-gray-500
-                  transition-all duration-200
                   ${previewColor || facilityColor}
-                  ${!facility && !previewStatus ? 'hover:brightness-110' : ''}
                   ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
                 `}
                 style={{
-                  left: `${isoPos.x + (size.width + size.height) * 8}px`,
+                  left: `${isoPos.x + (renderWidth + renderHeight) * 8}px`,
                   top: `${isoPos.y + 150}px`,
                   width: '32px',
                   height: '16px',
                   clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                  zIndex: Math.floor(baseZ + 30), // トップ面が一番上
+                  zIndex: Math.floor(baseZ + 30),
                 }}
                 onClick={() => handleTileClick(x, y)}
-                onMouseEnter={() => selectedFacilityType && setHoveredTile({ x, y })}
-                onMouseLeave={() => setHoveredTile(null)}
+                onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
+                onMouseLeave={() => debouncedSetHover(null)}
                 title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
               />
 
