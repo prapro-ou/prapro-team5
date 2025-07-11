@@ -70,13 +70,14 @@ export const Grid: React.FC<GridProps> = ({
         const x = hoveredTile.x + dx;
         const y = hoveredTile.y + dy;
         
-        if (x >= 0 && x < renderWidth && y >= 0 && y < renderHeight) {
+        // 全マップ範囲でチェック
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
           tiles.add(`${x}-${y}`);
         }
       }
     }
     return tiles;
-  }, [selectedFacilityType, hoveredTile, renderWidth, renderHeight]);
+  }, [selectedFacilityType, hoveredTile, size]);
 
   // カメラの移動処理
   React.useEffect(() => {
