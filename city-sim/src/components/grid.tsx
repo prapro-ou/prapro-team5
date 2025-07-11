@@ -24,7 +24,8 @@ export const Grid: React.FC<GridProps> = ({
   money = 0,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
-
+  const [camera, setCamera] = React.useState({ x: 0, y: 0 });
+  
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 600; // 表示領域の高さ
