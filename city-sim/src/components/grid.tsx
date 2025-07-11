@@ -25,6 +25,10 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
 
+  // ビューポート
+  const VIEWPORT_WIDTH = 800;  // 表示領域の幅
+  const VIEWPORT_HEIGHT = 600; // 表示領域の高さ
+
   // レンダリング制限
   const RENDER_LIMIT = 40;
   const renderWidth = Math.min(size.width, RENDER_LIMIT);
