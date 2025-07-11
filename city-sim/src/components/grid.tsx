@@ -2,7 +2,12 @@ import React from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility, FacilityType } from "../types/facility";
 import { FACILITY_DATA } from "../types/facility";
-import { toIsometric } from "../utils/coordinates";
+import { 
+  toIsometric, 
+  getViewportBounds, 
+  ISO_TILE_WIDTH, 
+  ISO_TILE_HEIGHT 
+} from "../utils/coordinates";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -24,31 +29,54 @@ export const Grid: React.FC<GridProps> = ({
   money = 0,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
-  const [camera, setCamera] = React.useState({ x: 0, y: 0 });
-
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
+  
+  // アイソメトリックマップ全体のオフセット
+  const MAP_OFFSET_X = (size.width + size.height) * (ISO_TILE_WIDTH / 2);
+  const MAP_OFFSET_Y = 150;
 
-  const ISO_TILE_WIDTH = 32;  // ダイヤ型の幅
-  const ISO_TILE_HEIGHT = 16; // ダイヤ型の高さ
-
-  // タイルの可視範囲を計算
-  const visibleTiles = React.useMemo(() => {
-    const bufferSize = 10;
-    const startX = Math.max(0, Math.floor(camera.x / ISO_TILE_WIDTH) - bufferSize);
-    const startY = Math.max(0, Math.floor(camera.y / ISO_TILE_HEIGHT) - bufferSize);
-    const endX = Math.min(size.width, startX + Math.ceil(VIEWPORT_WIDTH / ISO_TILE_WIDTH) + bufferSize * 2);
-    const endY = Math.min(size.height, startY + Math.ceil(VIEWPORT_HEIGHT / ISO_TILE_HEIGHT) + bufferSize * 2);
+  const [camera, setCamera] = React.useState(() => {
+    // マップの中心グリッド座標を計算
+    const centerGridX = size.width / 2;
+    const centerGridY = size.height / 2;
     
+    const centerIso = toIsometric(centerGridX, centerGridY);
+    
+    return {
+      x: centerIso.x + MAP_OFFSET_X - VIEWPORT_WIDTH / 2,
+      y: centerIso.y + MAP_OFFSET_Y - VIEWPORT_HEIGHT / 2
+    };
+  });
+
+  const visibleTiles = React.useMemo(() => {
     const tiles = [];
+    
+    // ビューポート四隅のグリッド座標を取得
+    const bounds = getViewportBounds(
+      VIEWPORT_WIDTH,
+      VIEWPORT_HEIGHT,
+      camera.x,
+      camera.y,
+      MAP_OFFSET_X,
+      MAP_OFFSET_Y
+    );
+    
+    // マップ境界内でクランプ
+    const startX = Math.max(0, bounds.minX - 1);
+    const endX = Math.min(size.width, bounds.maxX + 2);
+    const startY = Math.max(0, bounds.minY - 1);
+    const endY = Math.min(size.height, bounds.maxY + 2);
+    
     for (let y = startY; y < endY; y++) {
       for (let x = startX; x < endX; x++) {
         tiles.push({ x, y });
       }
     }
+    
     return tiles;
-  }, [camera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
+  }, [camera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   // プレビュー範囲の事前計算
   const previewTiles = React.useMemo(() => {
@@ -76,40 +104,44 @@ export const Grid: React.FC<GridProps> = ({
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const scrollSpeed = 32;
-      const maxCameraX = Math.max(0, (size.width + size.height) * ISO_TILE_WIDTH - VIEWPORT_WIDTH);
-      const maxCameraY = Math.max(0, (size.width + size.height) * ISO_TILE_HEIGHT - VIEWPORT_HEIGHT);
+      
+      const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
+      const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
+      
+      const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
+      const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
       
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
         case 'W':
           setCamera(prev => ({ 
-            x: Math.max(0, prev.x - scrollSpeed), 
-            y: Math.max(0, prev.y - scrollSpeed/2) 
+            ...prev,
+            y: Math.max(-MAP_OFFSET_Y, prev.y - scrollSpeed) 
           }));
           break;
         case 'ArrowDown':
         case 's':
         case 'S':
           setCamera(prev => ({ 
-            x: Math.min(maxCameraX, prev.x + scrollSpeed), 
-            y: Math.min(maxCameraY, prev.y + scrollSpeed/2) 
+            ...prev,
+            y: Math.min(maxCameraY, prev.y + scrollSpeed) 
           }));
           break;
         case 'ArrowLeft':
         case 'a':
         case 'A':
           setCamera(prev => ({ 
-            x: Math.max(0, prev.x - scrollSpeed), 
-            y: Math.min(maxCameraY, prev.y + scrollSpeed/2) 
+            ...prev,
+            x: Math.max(-MAP_OFFSET_X, prev.x - scrollSpeed) 
           }));
           break;
         case 'ArrowRight':
         case 'd':
         case 'D':
           setCamera(prev => ({ 
-            x: Math.min(maxCameraX, prev.x + scrollSpeed), 
-            y: Math.max(0, prev.y - scrollSpeed/2) 
+            ...prev,
+            x: Math.min(maxCameraX, prev.x + scrollSpeed) 
           }));
           break;
       }
@@ -117,7 +149,7 @@ export const Grid: React.FC<GridProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [size]);
+  }, [size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
@@ -128,12 +160,6 @@ export const Grid: React.FC<GridProps> = ({
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
-
-  // const getFacilityAt = (x: number, y: number) => {
-  //   return facilities.find(facility =>
-  //     facility.occupiedTiles.some(tile => tile.x === x && tile.y === y)
-  //   );
-  // };
 
   // 施設マップをメモ化
   const facilityMap = React.useMemo(() => {
@@ -212,12 +238,12 @@ export const Grid: React.FC<GridProps> = ({
     <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
       Camera: ({camera.x}, {camera.y})
     </div>
-    {/* カメラ */}
+    {/* カメラコンテナ */}
     <div
       className="absolute"
       style={{
-        width: `${(size.width + size.height) * ISO_TILE_WIDTH}px`, // アイソメトリック全体サイズ
-        height: `${(size.width + size.height) * ISO_TILE_HEIGHT + 300}px`,
+        width: `${(size.width + size.height) * ISO_TILE_WIDTH + MAP_OFFSET_X * 2}px`,
+        height: `${(size.width + size.height) * ISO_TILE_HEIGHT + MAP_OFFSET_Y * 2}px`,
         transform: `translate(-${camera.x}px, -${camera.y}px)`,
       }}
     >
@@ -241,8 +267,8 @@ export const Grid: React.FC<GridProps> = ({
                 ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
               `}
               style={{
-                left: `${isoPos.x + (size.width + size.height) * 8}px`,
-                top: `${isoPos.y + 150}px`,
+                left: `${isoPos.x + MAP_OFFSET_X}px`,
+                top: `${isoPos.y + MAP_OFFSET_Y}px`,
                 width: '32px',
                 height: '16px',
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
