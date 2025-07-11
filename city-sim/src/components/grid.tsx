@@ -138,13 +138,13 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-      <div 
-        className="relative"
-        style={{
-          width: `${(renderWidth + renderHeight) * 16 + 200}px`,
-          height: `${(renderWidth + renderHeight) * 8 + 300}px`,
-        }}
-      >
+    <div 
+      className="relative overflow-hidden border-2 border-blue-500" // ★枠線で表示領域を明確化★
+      style={{
+        width: `${VIEWPORT_WIDTH}px`,
+        height: `${VIEWPORT_HEIGHT}px`,
+      }}
+    >
       {Array.from({ length: renderHeight }, (_, y) =>
         Array.from({ length: renderWidth }, (_, x) => {
           const facility = facilityMap.get(`${x}-${y}`);
