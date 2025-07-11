@@ -25,7 +25,7 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
   const [camera, setCamera] = React.useState({ x: 0, y: 0 });
-  
+
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 600; // 表示領域の高さ
@@ -55,6 +55,39 @@ export const Grid: React.FC<GridProps> = ({
     }
     return tiles;
   }, [selectedFacilityType, hoveredTile, renderWidth, renderHeight]);
+
+  // カメラの移動処理
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const scrollSpeed = 20;
+      
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          setCamera(prev => ({ ...prev, y: Math.max(0, prev.y - scrollSpeed) }));
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          setCamera(prev => ({ ...prev, y: prev.y + scrollSpeed }));
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          setCamera(prev => ({ ...prev, x: Math.max(0, prev.x - scrollSpeed) }));
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          setCamera(prev => ({ ...prev, x: prev.x + scrollSpeed }));
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
@@ -146,6 +179,9 @@ export const Grid: React.FC<GridProps> = ({
         height: `${VIEWPORT_HEIGHT}px`,
       }}
     >
+      <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
+      Camera: ({camera.x}, {camera.y})
+      </div>
       {Array.from({ length: renderHeight }, (_, y) =>
         Array.from({ length: renderWidth }, (_, x) => {
           const facility = facilityMap.get(`${x}-${y}`);
