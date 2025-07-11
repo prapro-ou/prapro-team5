@@ -1,13 +1,18 @@
-// アイソメトリック座標変換
+// アイソメトリック座標変換の定数
+export const ISO_TILE_WIDTH = 32;
+export const ISO_TILE_HEIGHT = 16;
+
+// グリッド座標からアイソメトリック座標への変換
 export const toIsometric = (x: number, y: number) => {
-  const isoX = (x - y) * 16;
-  const isoY = (x + y) * 8;
+  const isoX = (x - y) * (ISO_TILE_WIDTH / 2);
+  const isoY = (x + y) * (ISO_TILE_HEIGHT / 2);
   return { x: isoX, y: isoY };
 };
 
-// アイソメトリック座標から通常座標への変換
+// アイソメトリック座標からグリッド座標への変換
 export const fromIsometric = (isoX: number, isoY: number) => {
-  const x = Math.round((isoX / 16 + isoY / 8) / 2);
-  const y = Math.round((isoY / 8 - isoX / 16) / 2);
+  const x = Math.round((isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2);
+  const y = Math.round((isoY / (ISO_TILE_HEIGHT / 2) - isoX / (ISO_TILE_WIDTH / 2)) / 2);
   return { x, y };
 };
+
