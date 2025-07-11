@@ -31,7 +31,7 @@ export const Grid: React.FC<GridProps> = ({
   const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
 
   const TILE_SIZE = 32; // タイルサイズを定義
-  
+
   // タイルの可視範囲を計算
   const visibleTiles = React.useMemo(() => {
     const tilesPerRow = Math.ceil(VIEWPORT_WIDTH / TILE_SIZE) + 4; // バッファ付き
@@ -82,6 +82,8 @@ export const Grid: React.FC<GridProps> = ({
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const scrollSpeed = 20;
+      const maxCameraX = Math.max(0, size.width * TILE_SIZE - VIEWPORT_WIDTH);
+      const maxCameraY = Math.max(0, size.height * TILE_SIZE - VIEWPORT_HEIGHT);
       
       switch (e.key) {
         case 'ArrowUp':
@@ -92,7 +94,7 @@ export const Grid: React.FC<GridProps> = ({
         case 'ArrowDown':
         case 's':
         case 'S':
-          setCamera(prev => ({ ...prev, y: prev.y + scrollSpeed }));
+          setCamera(prev => ({ ...prev, y: Math.min(maxCameraY, prev.y + scrollSpeed) }));
           break;
         case 'ArrowLeft':
         case 'a':
@@ -102,14 +104,14 @@ export const Grid: React.FC<GridProps> = ({
         case 'ArrowRight':
         case 'd':
         case 'D':
-          setCamera(prev => ({ ...prev, x: prev.x + scrollSpeed }));
+          setCamera(prev => ({ ...prev, x: Math.min(maxCameraX, prev.x + scrollSpeed) }));
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [size]);
 
   const handleTileClick = (x: number, y: number) => {
     if (onTileClick) {
