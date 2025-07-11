@@ -44,3 +44,28 @@ export const screenToGrid = (
   const adjustedY = world.y - offsetY;
   return fromIsometric(adjustedX, adjustedY);
 };
+
+// ビューポート四隅のグリッド座標を取得
+export const getViewportBounds = (
+  viewportWidth: number,
+  viewportHeight: number,
+  cameraX: number,
+  cameraY: number,
+  offsetX: number = 0,
+  offsetY: number = 0
+) => {
+  // ビューポートの四隅の座標
+  const corners = [
+    screenToGrid(0, 0, cameraX, cameraY, offsetX, offsetY),
+    screenToGrid(viewportWidth, 0, cameraX, cameraY, offsetX, offsetY),
+    screenToGrid(0, viewportHeight, cameraX, cameraY, offsetX, offsetY),
+    screenToGrid(viewportWidth, viewportHeight, cameraX, cameraY, offsetX, offsetY),
+  ];
+
+  const minX = Math.min(...corners.map(c => c.x));
+  const maxX = Math.max(...corners.map(c => c.x));
+  const minY = Math.min(...corners.map(c => c.y));
+  const maxY = Math.max(...corners.map(c => c.y));
+
+  return { minX, maxX, minY, maxY };
+};
