@@ -16,3 +16,17 @@ export const fromIsometric = (isoX: number, isoY: number) => {
   return { x, y };
 };
 
+// スクリーン座標からワールド座標への変換
+export const screenToWorld = (screenX: number, screenY: number, cameraX: number, cameraY: number) => {
+  const worldX = screenX + cameraX;
+  const worldY = screenY + cameraY;
+  return { x: worldX, y: worldY };
+};
+
+// ワールド座標からスクリーン座標への変換
+export const worldToScreen = (worldX: number, worldY: number, cameraX: number, cameraY: number) => {
+  const screenX = worldX - cameraX;
+  const screenY = worldY - cameraY;
+  return { x: screenX, y: screenY };
+};
+
