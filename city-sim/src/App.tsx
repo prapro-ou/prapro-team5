@@ -108,18 +108,16 @@ function App() {
       <InfoPanel stats={gameStats} />
       
         {/* ゲームグリッド */}
-        <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
-          <div className="relative z-[100] overflow-auto max-w-full max-h-full border border-gray-600 rounded-lg bg-gray-800/20 p-4">
-            <Grid 
-              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-              onTileClick={handleTileClick}
-              selectedPosition={selectedTile}
-              facilities={facilities}
-              selectedFacilityType={selectedFacilityType}
-              money={gameStats.money}
-            />
-          </div>
-        </div>
+      <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
+        <Grid 
+          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+          onTileClick={handleTileClick}
+          selectedPosition={selectedTile}
+          facilities={facilities}
+          selectedFacilityType={selectedFacilityType}
+          money={gameStats.money}
+        />
+      </div>
       {/* パネル切り替えボタン */}
       <button 
         onClick={() => setShowPanel(!showPanel)}

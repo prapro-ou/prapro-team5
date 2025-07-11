@@ -28,7 +28,7 @@ export const Grid: React.FC<GridProps> = ({
 
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
-  const VIEWPORT_HEIGHT = 600; // 表示領域の高さ
+  const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
 
   // レンダリング制限
   const RENDER_LIMIT = 40;
@@ -173,7 +173,7 @@ export const Grid: React.FC<GridProps> = ({
 
   return (
     <div 
-      className="relative overflow-hidden border-2 border-blue-500" // ★枠線で表示領域を明確化★
+      className="relative overflow-hidden border-2 border-blue-500"
       style={{
         width: `${VIEWPORT_WIDTH}px`,
         height: `${VIEWPORT_HEIGHT}px`,
@@ -188,7 +188,7 @@ export const Grid: React.FC<GridProps> = ({
       style={{
         width: `${(renderWidth + renderHeight) * 16 + 200}px`,
         height: `${(renderWidth + renderHeight) * 8 + 300}px`,
-        transform: `translate(-${camera.x}px, -${camera.y}px)`, // ★これが必要！★
+        transform: `translate(-${camera.x}px, -${camera.y}px)`,
       }}
     >
       {Array.from({ length: renderHeight }, (_, y) =>
