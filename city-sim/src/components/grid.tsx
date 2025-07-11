@@ -30,6 +30,28 @@ export const Grid: React.FC<GridProps> = ({
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
 
+  const TILE_SIZE = 32; // タイルサイズを定義
+  
+  // タイルの可視範囲を計算
+  const visibleTiles = React.useMemo(() => {
+    const tilesPerRow = Math.ceil(VIEWPORT_WIDTH / TILE_SIZE) + 4; // バッファ付き
+    const tilesPerCol = Math.ceil(VIEWPORT_HEIGHT / TILE_SIZE) + 4;
+    
+    // カメラ位置から開始タイルを計算
+    const startX = Math.max(0, Math.floor(camera.x / TILE_SIZE) - 2);
+    const startY = Math.max(0, Math.floor(camera.y / TILE_SIZE) - 2);
+    const endX = Math.min(size.width, startX + tilesPerRow);
+    const endY = Math.min(size.height, startY + tilesPerCol);
+    
+    const tiles = [];
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        tiles.push({ x, y });
+      }
+    }
+    return tiles;
+  }, [camera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
+
   // レンダリング制限
   const RENDER_LIMIT = 40;
   const renderWidth = Math.min(size.width, RENDER_LIMIT);
