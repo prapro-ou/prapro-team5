@@ -103,7 +103,7 @@ export const Grid: React.FC<GridProps> = ({
   // カメラの移動処理
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const scrollSpeed = 32;
+      const scrollSpeed = 64;
       
       const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
       const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
