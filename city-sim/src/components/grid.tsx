@@ -30,18 +30,16 @@ export const Grid: React.FC<GridProps> = ({
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
 
-  const TILE_SIZE = 32; // タイルサイズを定義
+  const ISO_TILE_WIDTH = 32;  // ダイヤ型の幅
+  const ISO_TILE_HEIGHT = 16; // ダイヤ型の高さ
 
   // タイルの可視範囲を計算
   const visibleTiles = React.useMemo(() => {
-    const tilesPerRow = Math.ceil(VIEWPORT_WIDTH / TILE_SIZE) + 4; // バッファ付き
-    const tilesPerCol = Math.ceil(VIEWPORT_HEIGHT / TILE_SIZE) + 4;
-    
-    // カメラ位置から開始タイルを計算
-    const startX = Math.max(0, Math.floor(camera.x / TILE_SIZE) - 2);
-    const startY = Math.max(0, Math.floor(camera.y / TILE_SIZE) - 2);
-    const endX = Math.min(size.width, startX + tilesPerRow);
-    const endY = Math.min(size.height, startY + tilesPerCol);
+    const bufferSize = 10;
+    const startX = Math.max(0, Math.floor(camera.x / ISO_TILE_WIDTH) - bufferSize);
+    const startY = Math.max(0, Math.floor(camera.y / ISO_TILE_HEIGHT) - bufferSize);
+    const endX = Math.min(size.width, startX + Math.ceil(VIEWPORT_WIDTH / ISO_TILE_WIDTH) + bufferSize * 2);
+    const endY = Math.min(size.height, startY + Math.ceil(VIEWPORT_HEIGHT / ISO_TILE_HEIGHT) + bufferSize * 2);
     
     const tiles = [];
     for (let y = startY; y < endY; y++) {
@@ -51,11 +49,6 @@ export const Grid: React.FC<GridProps> = ({
     }
     return tiles;
   }, [camera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
-
-  // レンダリング制限
-  const RENDER_LIMIT = 40;
-  const renderWidth = Math.min(size.width, RENDER_LIMIT);
-  const renderHeight = Math.min(size.height, RENDER_LIMIT);
 
   // プレビュー範囲の事前計算
   const previewTiles = React.useMemo(() => {
@@ -82,30 +75,42 @@ export const Grid: React.FC<GridProps> = ({
   // カメラの移動処理
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const scrollSpeed = 20;
-      const maxCameraX = Math.max(0, size.width * TILE_SIZE - VIEWPORT_WIDTH);
-      const maxCameraY = Math.max(0, size.height * TILE_SIZE - VIEWPORT_HEIGHT);
+      const scrollSpeed = 32;
+      const maxCameraX = Math.max(0, (size.width + size.height) * ISO_TILE_WIDTH - VIEWPORT_WIDTH);
+      const maxCameraY = Math.max(0, (size.width + size.height) * ISO_TILE_HEIGHT - VIEWPORT_HEIGHT);
       
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
         case 'W':
-          setCamera(prev => ({ ...prev, y: Math.max(0, prev.y - scrollSpeed) }));
+          setCamera(prev => ({ 
+            x: Math.max(0, prev.x - scrollSpeed), 
+            y: Math.max(0, prev.y - scrollSpeed/2) 
+          }));
           break;
         case 'ArrowDown':
         case 's':
         case 'S':
-          setCamera(prev => ({ ...prev, y: Math.min(maxCameraY, prev.y + scrollSpeed) }));
+          setCamera(prev => ({ 
+            x: Math.min(maxCameraX, prev.x + scrollSpeed), 
+            y: Math.min(maxCameraY, prev.y + scrollSpeed/2) 
+          }));
           break;
         case 'ArrowLeft':
         case 'a':
         case 'A':
-          setCamera(prev => ({ ...prev, x: Math.max(0, prev.x - scrollSpeed) }));
+          setCamera(prev => ({ 
+            x: Math.max(0, prev.x - scrollSpeed), 
+            y: Math.min(maxCameraY, prev.y + scrollSpeed/2) 
+          }));
           break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-          setCamera(prev => ({ ...prev, x: Math.min(maxCameraX, prev.x + scrollSpeed) }));
+          setCamera(prev => ({ 
+            x: Math.min(maxCameraX, prev.x + scrollSpeed), 
+            y: Math.max(0, prev.y - scrollSpeed/2) 
+          }));
           break;
       }
     };
@@ -211,49 +216,46 @@ export const Grid: React.FC<GridProps> = ({
     <div
       className="absolute"
       style={{
-        width: `${(renderWidth + renderHeight) * 16 + 200}px`,
-        height: `${(renderWidth + renderHeight) * 8 + 300}px`,
+        width: `${(size.width + size.height) * ISO_TILE_WIDTH}px`, // アイソメトリック全体サイズ
+        height: `${(size.width + size.height) * ISO_TILE_HEIGHT + 300}px`,
         transform: `translate(-${camera.x}px, -${camera.y}px)`,
       }}
     >
-      {Array.from({ length: renderHeight }, (_, y) =>
-        Array.from({ length: renderWidth }, (_, x) => {
-          const facility = facilityMap.get(`${x}-${y}`);
-          const facilityColor = getFacilityColor(facility);
-          const previewStatus = getPreviewStatus(x, y);
-          const previewColor = getPreviewColor(previewStatus);
-          const isoPos = toIsometric(x, y);
+      {visibleTiles.map(({ x, y }) => {
+        const facility = facilityMap.get(`${x}-${y}`);
+        const facilityColor = getFacilityColor(facility);
+        const previewStatus = getPreviewStatus(x, y);
+        const previewColor = getPreviewColor(previewStatus);
+        const isoPos = toIsometric(x, y);
 
-          // z-indexの計算
-          const baseZ = (y * 100) + x;
+        // z-indexの計算
+        const baseZ = (y * 100) + x;
           
-          return (
-            <div key={`${x}-${y}`} className="absolute">
-              {/* トップ面 */}
-              <div
-                className={`
-                  absolute cursor-pointer border border-gray-500
-                  ${previewColor || facilityColor}
-                  ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
-                `}
-                style={{
-                  left: `${isoPos.x + (renderWidth + renderHeight) * 8}px`,
-                  top: `${isoPos.y + 150}px`,
-                  width: '32px',
-                  height: '16px',
-                  clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                  zIndex: Math.floor(baseZ + 30),
-                }}
-                onClick={() => handleTileClick(x, y)}
-                onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
-                onMouseLeave={() => debouncedSetHover(null)}
-                title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
-              />
-
-            </div>
-          );
-        })
-      )}
+        return (
+          <div key={`${x}-${y}`} className="absolute">
+            {/* トップ面 */}
+            <div
+              className={`
+                absolute cursor-pointer border border-gray-500
+                ${previewColor || facilityColor}
+                ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
+              `}
+              style={{
+                left: `${isoPos.x + (size.width + size.height) * 8}px`,
+                top: `${isoPos.y + 150}px`,
+                width: '32px',
+                height: '16px',
+                clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                zIndex: Math.floor(baseZ + 30),
+              }}
+              onClick={() => handleTileClick(x, y)}
+              onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
+              onMouseLeave={() => debouncedSetHover(null)}
+              title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
+            />
+          </div>
+        );
+        })}
       </div>
     </div>
   );
