@@ -179,9 +179,18 @@ export const Grid: React.FC<GridProps> = ({
         height: `${VIEWPORT_HEIGHT}px`,
       }}
     >
-      <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
+    <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
       Camera: ({camera.x}, {camera.y})
-      </div>
+    </div>
+    {/* カメラ */}
+    <div
+      className="absolute"
+      style={{
+        width: `${(renderWidth + renderHeight) * 16 + 200}px`,
+        height: `${(renderWidth + renderHeight) * 8 + 300}px`,
+        transform: `translate(-${camera.x}px, -${camera.y}px)`, // ★これが必要！★
+      }}
+    >
       {Array.from({ length: renderHeight }, (_, y) =>
         Array.from({ length: renderWidth }, (_, x) => {
           const facility = facilityMap.get(`${x}-${y}`);
@@ -221,5 +230,6 @@ export const Grid: React.FC<GridProps> = ({
         })
       )}
       </div>
+    </div>
   );
 };
