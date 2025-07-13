@@ -116,6 +116,7 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel stats={gameStats} />
       
+      {/*ゲームグリッド*/}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
         <div className="relative z-[100] overflow-auto max-w-full max-h-full border border-gray-600 rounded-lg bg-gray-800/20 p-4">
           <Grid 
@@ -128,7 +129,7 @@ function App() {
           />
         </div>
       </div>
-      
+      {/*パネル切り替えボタン*/}
       <button 
         onClick={() => setShowPanel(!showPanel)}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
@@ -157,7 +158,6 @@ function App() {
         </div>
       )}
 
-      {/* ★★★ここが修正点★★★ */}
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
