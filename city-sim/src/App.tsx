@@ -1,65 +1,15 @@
-import { useState } from 'react';
-import { Grid } from './components/grid';
-import { FacilitySelector } from './components/FacilitySelector';
-import { InfoPanel } from './components/InfoPanel';
+import { useState } from 'react'
+import { Grid } from './components/grid'
+import { FacilitySelector } from './components/FacilitySelector'
+import { InfoPanel } from './components/InfoPanel'
+import type { Position } from './types/grid'
+import type { Facility, FacilityType } from './types/facility'
+import type { GameStats } from './types/game'
+import { FACILITY_DATA } from './types/facility'
+import './App.css'
 import { SettingsPanel } from './components/SettingsPanel';
 import { CreditsPanel } from './components/CreditsPanel';
-import { TbCrane, TbCraneOff, TbSettings } from "react-icons/tb";
-// --- 追加ここまで ---
-import './App.css';
-
-
-// --- ここから追加：型定義と施設データ ---
-// 本来は外部の型定義ファイル（./types/*.ts）に記述される内容です．
-// このファイルを単体で動作させるために，ここに必要な定義を追加しました．
-
-// グリッド上の位置を表す型
-export interface Position {
-  x: number;
-  y: number;
-}
-
-// 施設の種類を定義する型
-export type FacilityType = 'residential' | 'commercial' | 'industrial' | 'road';
-
-// 施設のカテゴリを定義する型
-export type CategoryKey = 'residential' | 'commercial' | 'industrial' | 'infrastructure';
-
-// 設置された施設を表す型
-export interface Facility {
-  id: string;
-  type: FacilityType;
-  position: Position;
-  occupiedTiles: Position[];
-}
-
-// ゲームの統計情報を表す型
-export interface GameStats {
-  money: number;
-  population: number;
-  satisfaction: number;
-  date: {
-    year: number;
-    month: number;
-  };
-}
-
-// 各施設の詳細データ
-export const FACILITY_DATA: Record<FacilityType, {
-  name: string;
-  description: string;
-  cost: number;
-  size: number;
-  category: CategoryKey;
-  type: FacilityType;
-}> = {
-  residential: { name: '住宅', description: '住民が住むための家', cost: 100, size: 1, category: 'residential', type: 'residential' },
-  commercial: { name: '商業施設', description: 'お店やオフィス', cost: 500, size: 1, category: 'commercial', type: 'commercial' },
-  industrial: { name: '工業地帯', description: '製品を生産する工場', cost: 1000, size: 1, category: 'industrial', type: 'industrial' },
-  road: { name: '道路', description: '施設と施設をつなぐ道', cost: 20, size: 1, category: 'infrastructure', type: 'road' },
-};
-
-// --- 追加ここまで ---
+import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 
 
 function App() {
@@ -67,10 +17,8 @@ function App() {
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
-  // --- ここから追加 ---
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
-  // --- 追加ここまで ---
 
   // ゲーム統計情報
   const [gameStats, setGameStats] = useState<GameStats>({
@@ -158,12 +106,10 @@ function App() {
     }
   };
 
-  // --- ここから追加 ---
   const handleShowCredits = () => {
     setIsSettingsOpen(false);
     setIsCreditsOpen(true);
   };
-  // --- 追加ここまで ---
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
@@ -191,14 +137,13 @@ function App() {
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
       </button>
 
-      {/* --- ここから追加 --- */}
+      {/* 設定パネルを開くボタン */}
       <button 
         onClick={() => setIsSettingsOpen(true)}
         className="fixed bottom-20 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[900]"
       >
         <TbSettings size={24} />
       </button>
-      {/* --- 追加ここまで --- */}
 
       {/* 施設建設パネル */}
       {showPanel && (
@@ -213,7 +158,7 @@ function App() {
         </div>
       )}
 
-      {/* --- ここから追加 --- */}
+      {/* 条件に応じて設定パネルやクレジットパネルを表示 */}
       {isSettingsOpen && (
         <SettingsPanel 
           onClose={() => setIsSettingsOpen(false)} 
@@ -222,10 +167,8 @@ function App() {
       )}
 
       {isCreditsOpen && <CreditsPanel onClose={() => setIsCreditsOpen(false)} />}
-      {/* --- 追加ここまで --- */}
     </div>
   );
 }
 
-export default App;
-
+export default App
