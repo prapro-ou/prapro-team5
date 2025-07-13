@@ -15,7 +15,7 @@ function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [showPanel, setShowPanel] = useState<boolean>(false);
+  const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
 
   // 設定パネルとクレジットパネルの表示状態を管理
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -29,8 +29,8 @@ function App() {
     date: { year: 2024, month: 1 }
   });
 
-  const GRID_WIDTH = 20;
-  const GRID_HEIGHT = 20;
+  const GRID_WIDTH = 20; // グリッドの幅
+  const GRID_HEIGHT = 20;// グリッドの高さ　
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -43,6 +43,8 @@ function App() {
       for (let dy = -radius; dy <= radius; dy++) {
         const x = position.x + dx;
         const y = position.y + dy;
+
+        // 範囲外チェック
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
           console.warn(`施設の配置が範囲外です`);
           return;
@@ -129,7 +131,7 @@ function App() {
           />
         </div>
       </div>
-      {/*パネル切り替えボタン*/}
+      {/*パネル切り替えボタン */}
       <button 
         onClick={() => setShowPanel(!showPanel)}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
