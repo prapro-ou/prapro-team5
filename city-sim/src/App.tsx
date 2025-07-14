@@ -142,7 +142,7 @@ function App() {
       {/* 設定パネルを開くボタン */}
       <button 
         onClick={() => setIsSettingsOpen(true)}
-        className="fixed bottom-20 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[900]"
+        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
       >
         <TbSettings size={24} />
       </button>
