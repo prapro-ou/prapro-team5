@@ -278,6 +278,7 @@ export const Grid: React.FC<GridProps> = ({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onContextMenu={(e) => e.preventDefault()} // 右クリックメニューを無効化
     >
     <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
       Camera: ({camera.x}, {camera.y})
