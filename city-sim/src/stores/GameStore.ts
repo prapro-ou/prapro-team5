@@ -5,6 +5,8 @@ interface GameStore {
   // ゲーム統計
   stats: GameStats;
 
+  // アクション
+  addMoney: (amount: number) => void;
 }
 
 const INITIAL_STATS: GameStats = {
@@ -14,3 +16,14 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     date: { year: 2024, month: 1 }
 }
+
+export const useGameStore = create<GameStore>((set) => ({
+  stats: INITIAL_STATS,
+
+  addMoney: (amount) => set((state) => ({
+    stats: {
+      ...state.stats,
+      money: state.stats.money + amount
+    }
+  }))
+}));
