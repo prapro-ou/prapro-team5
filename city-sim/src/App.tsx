@@ -23,14 +23,15 @@ function App() {
 
   // ゲーム統計情報
   const [gameStats, setGameStats] = useState<GameStats>({
+    level: 1, 
     money: 10000,
     population: 0,
     satisfaction: 50,
     date: { year: 2024, month: 1 }
   });
 
-  const GRID_WIDTH = 20; // グリッドの幅
-  const GRID_HEIGHT = 20;// グリッドの高さ　
+  const GRID_WIDTH = 60;  // グリッドの幅
+  const GRID_HEIGHT = 60; // グリッドの高さ
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
