@@ -2,18 +2,24 @@ import { useState } from 'react'
 import { Grid } from './components/grid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
+import { SettingsPanel } from './components/SettingsPanel'
+import { CreditsPanel } from './components/CreditsPanel'
 import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
 import type { GameStats } from './types/game'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 
 function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
   const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
+
+  // 設定パネルとクレジットパネルの表示状態を管理
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
   // ゲーム統計情報
   const [gameStats, setGameStats] = useState<GameStats>({
@@ -38,7 +44,7 @@ function App() {
       for (let dy = -radius; dy <= radius; dy++) {
         const x = position.x + dx;
         const y = position.y + dy;
-        
+
         // 範囲外チェック
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
           console.warn(`施設の配置が範囲外です`);
@@ -102,30 +108,44 @@ function App() {
     }
   };
 
+  // 設定パネルからクレジットパネルへ切り替える関数
+  const handleShowCredits = () => {
+    setIsSettingsOpen(false);
+    setIsCreditsOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 情報パネル */}
       <InfoPanel stats={gameStats} />
       
-        {/* ゲームグリッド */}
-        <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
-          <div className="relative z-[100] overflow-auto max-w-full max-h-full border border-gray-600 rounded-lg bg-gray-800/20 p-4">
-            <Grid 
-              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-              onTileClick={handleTileClick}
-              selectedPosition={selectedTile}
-              facilities={facilities}
-              selectedFacilityType={selectedFacilityType}
-              money={gameStats.money}
-            />
-          </div>
+      {/*ゲームグリッド*/}
+      <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
+        <div className="relative z-[100] overflow-auto max-w-full max-h-full border border-gray-600 rounded-lg bg-gray-800/20 p-4">
+          <Grid 
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={gameStats.money}
+          />
         </div>
-      {/* パネル切り替えボタン */}
+      </div>
+      {/*パネル切り替えボタン */}
       <button 
         onClick={() => setShowPanel(!showPanel)}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
+      </button>
+
+      {/* 設定パネルを開くボタン */}
+      <button 
+        onClick={() => setIsSettingsOpen(true)}
+        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
+      >
+        <TbSettings size={24} />
       </button>
 
       {/* 施設建設パネル */}
@@ -140,6 +160,17 @@ function App() {
             </div>
         </div>
       )}
+
+      {/* 設定パネルをCSSで非表示にする */}
+      <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
+        <SettingsPanel 
+          onClose={() => setIsSettingsOpen(false)} 
+          onShowCredits={handleShowCredits}
+        />
+      </div>
+
+      {/* クレジットパネルは状態を持たないので、従来通りでOK */}
+      {isCreditsOpen && <CreditsPanel onClose={() => setIsCreditsOpen(false)} />}
     </div>
   );
 }
