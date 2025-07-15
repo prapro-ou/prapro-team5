@@ -6,7 +6,6 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import type { Position } from './types/grid'
 import type { Facility, FacilityType } from './types/facility'
-import type { GameStats } from './types/game'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
@@ -24,13 +23,7 @@ function App() {
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
 
   // ゲーム統計情報
-  const [gameStats, setGameStats] = useState<GameStats>({
-    level: 1, 
-    money: 10000,
-    population: 0,
-    satisfaction: 50,
-    date: { year: 2024, month: 1 }
-  });
+  const { stats, addMoney } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -71,16 +64,13 @@ function App() {
     }
 
     // 資金チェック
-    if (gameStats.money < facilityData.cost) {
+    if (stats.money < facilityData.cost) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
 
     // 資金を減らす
-    setGameStats(prev => ({
-      ...prev,
-      money: prev.money - facilityData.cost
-    }));
+    addMoney(-facilityData.cost);
 
     // 施設の配置
     const newFacility: Facility = {
@@ -119,7 +109,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 情報パネル */}
-      <InfoPanel stats={gameStats} />
+      <InfoPanel stats={stats} />
       
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -129,7 +119,7 @@ function App() {
           selectedPosition={selectedTile}
           facilities={facilities}
           selectedFacilityType={selectedFacilityType}
-          money={gameStats.money}
+          money={stats.money}
         />
       </div>
       {/* パネル切り替えボタン */}
@@ -155,7 +145,7 @@ function App() {
               <FacilitySelector 
                 selectedType={selectedFacilityType}
                 onSelectType={setSelectedFacilityType}
-                money={gameStats.money}
+                money={stats.money}
               />
             </div>
         </div>
