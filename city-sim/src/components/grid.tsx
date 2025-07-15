@@ -238,13 +238,23 @@ export const Grid: React.FC<GridProps> = ({
       return 'valid';
     }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
 
-    const debouncedSetHover = React.useMemo(() => {
-      let timeoutId: NodeJS.Timeout;
-      return (position: Position | null) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => setHoveredTile(position), 50);
-      };
-    }, []);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedSetHover = React.useCallback((position: Position | null) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => setHoveredTile(position), 50);
+  }, []);
+
+  // クリーンアップ
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
