@@ -100,6 +100,11 @@ export const Grid: React.FC<GridProps> = ({
     return tiles;
   }, [selectedFacilityType, hoveredTile, size]);
 
+  // ドラッグ状態の管理
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
+  const [dragStartCamera, setDragStartCamera] = React.useState({ x: 0, y: 0 });
+
   // カメラの移動処理
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
