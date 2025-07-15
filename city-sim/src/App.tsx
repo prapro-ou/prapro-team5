@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Grid } from './components/grid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
@@ -12,14 +11,22 @@ import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
+import { useUIStore } from './stores/UIStore';
 
 function App() {
-  const [selectedTile, setSelectedTile] = useState<Position | null>(null);
-  const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
-
-  // 設定パネルとクレジットパネルの表示状態を管理
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+  // UI状態
+  const {
+    showPanel,
+    isSettingsOpen,
+    isCreditsOpen,
+    selectedTile,
+    togglePanel,
+    openSettings,
+    closeSettings,
+    closeCredits,
+    switchToCredits,
+    setSelectedTile
+  } = useUIStore();
 
   // ゲーム統計情報
   const { stats, addMoney } = useGameStore();
@@ -78,12 +85,6 @@ function App() {
     }
   };
 
-  // 設定パネルからクレジットパネルへ切り替える関数
-  const handleShowCredits = () => {
-    setIsSettingsOpen(false);
-    setIsCreditsOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 情報パネル */}
@@ -102,7 +103,7 @@ function App() {
       </div>
       {/* パネル切り替えボタン */}
       <button 
-        onClick={() => setShowPanel(!showPanel)}
+        onClick={togglePanel}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
@@ -110,7 +111,7 @@ function App() {
 
       {/* 設定パネルを開くボタン */}
       <button 
-        onClick={() => setIsSettingsOpen(true)}
+        onClick={openSettings}
         className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
       >
         <TbSettings size={24} />
@@ -132,13 +133,12 @@ function App() {
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
-          onClose={() => setIsSettingsOpen(false)} 
-          onShowCredits={handleShowCredits}
+          onClose={closeSettings} 
+          onShowCredits={switchToCredits}
         />
       </div>
-
-      {/* クレジットパネルは状態を持たないので、従来通りでOK */}
-      {isCreditsOpen && <CreditsPanel onClose={() => setIsCreditsOpen(false)} />}
+      {/* クレジットパネル */}
+      {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>
   );
 }
