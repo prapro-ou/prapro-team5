@@ -256,6 +256,39 @@ export const Grid: React.FC<GridProps> = ({
     };
   }, []);
 
+  // ドラッグ用のグローバルマウスイベント
+  React.useEffect(() => {
+    if (!isDragging) return;
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+
+      const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
+      const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
+      
+      const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
+      const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
+
+      const newCameraX = Math.max(-MAP_OFFSET_X, Math.min(maxCameraX, dragStartCamera.x - deltaX));
+      const newCameraY = Math.max(-MAP_OFFSET_Y, Math.min(maxCameraY, dragStartCamera.y - deltaY));
+
+      setCamera({ x: newCameraX, y: newCameraY });
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
+
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
     switch (facility.type) {
