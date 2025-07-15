@@ -162,6 +162,17 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // マウスドラッグ処理
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // 右クリックでドラッグ
+    if (e.button === 2) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setDragStartCamera({ x: camera.x, y: camera.y });
+    }
+  };
+
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
