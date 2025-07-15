@@ -273,7 +273,11 @@ export const Grid: React.FC<GridProps> = ({
       style={{
         width: `${VIEWPORT_WIDTH}px`,
         height: `${VIEWPORT_HEIGHT}px`,
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
     <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
       Camera: ({camera.x}, {camera.y})
