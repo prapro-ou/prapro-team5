@@ -9,5 +9,20 @@ interface FacilityStore {
 
   // アクション
   setSelectedFacilityType: (type: FacilityType | null) => void;
-  addFacility: (position: Position, type: FacilityType) => void;
+  addFacility: (facility: Facility) => void;
 }
+
+export const useFacilityStore = create<FacilityStore>((set, get) => ({
+  facilities: [],
+  selectedFacilityType: null,
+
+  setSelectedFacilityType: (type) => {
+    set({ selectedFacilityType: type });
+  },
+
+  addFacility: (facility) => {
+    set(state => ({
+      facilities: [...state.facilities, facility]
+    }));
+  }
+}));
