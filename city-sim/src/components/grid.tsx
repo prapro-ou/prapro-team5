@@ -173,6 +173,30 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // マウスムーブ処理
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+
+    const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
+    const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
+    
+    const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
+    const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
+
+    const newCameraX = Math.max(-MAP_OFFSET_X, Math.min(maxCameraX, dragStartCamera.x - deltaX));
+    const newCameraY = Math.max(-MAP_OFFSET_Y, Math.min(maxCameraY, dragStartCamera.y - deltaY));
+
+    setCamera({ x: newCameraX, y: newCameraY });
+  };
+
+  // マウスアップ処理
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };  
+
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
