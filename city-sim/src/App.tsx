@@ -5,17 +5,16 @@ import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import type { Position } from './types/grid'
-import type { Facility, FacilityType } from './types/facility'
+import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 
 import { useGameStore } from './stores/GameStore';
+import { useFacilityStore } from './stores/FacilityStore'
 
 function App() {
   const [selectedTile, setSelectedTile] = useState<Position | null>(null);
-  const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
-  const [facilities, setFacilities] = useState<Facility[]>([]);
   const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
 
   // 設定パネルとクレジットパネルの表示状態を管理
@@ -28,38 +27,23 @@ function App() {
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
 
+  // 施設状態
+  const { 
+    facilities, 
+    selectedFacilityType, 
+    setSelectedFacilityType, 
+    addFacility,
+    checkCanPlace,
+    createFacility 
+  } = useFacilityStore();
+
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
-    // 施設のタイル半径
-    const radius = Math.floor(facilityData.size / 2);
-    const occupiedTiles: Position[] = [];
-    // 範囲外チェック
-    for (let dx = -radius; dx <= radius; dx++) {
-      for (let dy = -radius; dy <= radius; dy++) {
-        const x = position.x + dx;
-        const y = position.y + dy;
-
-        // 範囲外チェック
-        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
-          console.warn(`施設の配置が範囲外です`);
-          return;
-        }
-        occupiedTiles.push({ x, y });
-      }
-    }
     
-    // 既存の施設をチェック
-    const existingFacility = facilities.some(facility =>
-      facility.occupiedTiles.some(occupied =>
-        occupiedTiles.some(newTile =>
-          newTile.x === occupied.x && newTile.y === occupied.y
-        )
-      )
-    );
-
-    if (existingFacility) {
-      console.warn(`エリア内に既存施設があります`);
+    // 配置可能かチェック
+    if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
+      console.warn(`施設を配置できません`);
       return;
     }
 
@@ -73,14 +57,8 @@ function App() {
     addMoney(-facilityData.cost);
 
     // 施設の配置
-    const newFacility: Facility = {
-      id: `${type}_${position.x}_${position.y}_${Date.now()}`,
-      type,
-      position: position,
-      occupiedTiles
-    };
-
-    setFacilities(prev => [...prev, newFacility]);
+    const newFacility = createFacility(position, type);
+    addFacility(newFacility);
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
   };
 
