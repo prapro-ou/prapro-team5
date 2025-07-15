@@ -10,6 +10,8 @@ interface FacilityStore {
   // アクション
   setSelectedFacilityType: (type: FacilityType | null) => void;
   addFacility: (facility: Facility) => void;
+  removeFacility: (id: string) => void;
+  clearFacilities: () => void;
 
   // ヘルパー
   getFacilityAt: (position: Position) => Facility | null;
@@ -30,6 +32,16 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       facilities: [...state.facilities, facility]
     }));
   },
+
+  removeFacility: (facilityId) => {
+    set(state => ({
+      facilities: state.facilities.filter(f => f.id !== facilityId)
+    }));
+  },
+  
+  clearFacilities: () => {
+    set({ facilities: [] });
+  },  
 
   getFacilityAt: (position) => {
     const { facilities } = get();
