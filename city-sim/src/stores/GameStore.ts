@@ -7,6 +7,7 @@ interface GameStore {
 
   // アクション
   addMoney: (amount: number) => void;
+  spendMoney: (amount: number) => boolean;
 }
 
 const INITIAL_STATS: GameStats = {
@@ -17,7 +18,7 @@ const INITIAL_STATS: GameStats = {
     date: { year: 2024, month: 1 }
 }
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
 
   addMoney: (amount) => set((state) => ({
@@ -25,5 +26,19 @@ export const useGameStore = create<GameStore>((set) => ({
       ...state.stats,
       money: state.stats.money + amount
     }
-  }))
+  })),
+
+  spendMoney: (amount) => {
+    const currentMoney = get().stats.money;
+    if (currentMoney >= amount) {
+      set((state) => ({
+        stats: {
+          ...state.stats,
+          money: currentMoney - amount
+        }
+      }));
+      return true;
+    }
+    return false;
+  }
 }));
