@@ -29,7 +29,7 @@ function App() {
   } = useUIStore();
 
   // ゲーム統計情報
-  const { stats, addMoney } = useGameStore();
+  const { stats, spendMoney } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -54,14 +54,10 @@ function App() {
       return;
     }
 
-    // 資金チェック
-    if (stats.money < facilityData.cost) {
+    if (!spendMoney(facilityData.cost)) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
-
-    // 資金を減らす
-    addMoney(-facilityData.cost);
 
     // 施設の配置
     const newFacility = createFacility(position, type);
