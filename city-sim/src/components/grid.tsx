@@ -5,6 +5,7 @@ import { FACILITY_DATA } from "../types/facility";
 import { 
   toIsometric, 
   getViewportBounds, 
+  screenToGrid,
   ISO_TILE_WIDTH, 
   ISO_TILE_HEIGHT 
 } from "../utils/coordinates";
@@ -184,8 +185,33 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // マウス座標からグリッド座標への変換
+  const mouseToGrid = (mouseX: number, mouseY: number, element: HTMLElement): Position | null => {
+    const rect = element.getBoundingClientRect();
+    const relativeX = mouseX - rect.left;
+    const relativeY = mouseY - rect.top;
+    
+    const gridPos = screenToGrid(
+      relativeX, 
+      relativeY, 
+      camera.x, 
+      camera.y,
+      MAP_OFFSET_X,
+      MAP_OFFSET_Y
+    );
+    
+    if (gridPos.x >= 0 && gridPos.x < size.width && 
+        gridPos.y >= 0 && gridPos.y < size.height) {
+      return gridPos;
+    }
+    
+    return null;
+  };
+
   // マウスムーブ処理
   const handleMouseMove = (e: React.MouseEvent) => {
+    // 施設敷設ドラッグ中
+
     if (!isDragging) return;
 
     const deltaX = e.clientX - dragStart.x;
@@ -206,7 +232,7 @@ export const Grid: React.FC<GridProps> = ({
   // マウスアップ処理
   const handleMouseUp = () => {
     setIsDragging(false);
-  };  
+  };
 
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
