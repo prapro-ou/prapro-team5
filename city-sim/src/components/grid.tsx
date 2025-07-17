@@ -168,6 +168,26 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // ドラッグ範囲の計算
+  const dragRange = React.useMemo(() => {
+    if (!isPlacingFacility || !dragStartTile || !dragEndTile) return new Set<string>();
+    
+    const startX = Math.min(dragStartTile.x, dragEndTile.x);
+    const endX = Math.max(dragStartTile.x, dragEndTile.x);
+    const startY = Math.min(dragStartTile.y, dragEndTile.y);
+    const endY = Math.max(dragStartTile.y, dragEndTile.y);
+    
+    const tiles = new Set<string>();
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    return tiles;
+  }, [isPlacingFacility, dragStartTile, dragEndTile, size]);
+
   // マウスドラッグ処理
   const handleMouseDown = (e: React.MouseEvent) => {
     // 左クリックで施設敷設
