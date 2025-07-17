@@ -319,6 +319,8 @@ export const Grid: React.FC<GridProps> = ({
       return 'valid';
     }
 
+    // ドラッグ中はホバーによるプレビューを無効にする
+    if (isPlacingFacility) return null;
 
     if (!selectedFacilityType || !hoveredTile) return null;
     
@@ -331,18 +333,16 @@ export const Grid: React.FC<GridProps> = ({
 
     if (!previewTiles.has(tileKey)) return null;
 
-      // 資金不足チェック
-      if (money < facilityData.cost) {
-        return 'insufficient-funds';
-      }
-      
-      // 既存施設チェック
-      if (facilityMap.has(tileKey)) {
-        return 'occupied';
-      }
-
-      return 'valid';
-    }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
+    // 資金不足チェック
+    if (money < facilityData.cost) {
+      return 'insufficient-funds';
+    }
+    // 既存施設チェック
+    if (facilityMap.has(tileKey)) {
+      return 'occupied';
+    }
+    return 'valid';
+  }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange]);
 
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
