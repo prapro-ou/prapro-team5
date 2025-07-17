@@ -172,19 +172,37 @@ export const Grid: React.FC<GridProps> = ({
   const dragRange = React.useMemo(() => {
     if (!isPlacingFacility || !dragStartTile || !dragEndTile) return new Set<string>();
     
-    const startX = Math.min(dragStartTile.x, dragEndTile.x);
-    const endX = Math.max(dragStartTile.x, dragEndTile.x);
-    const startY = Math.min(dragStartTile.y, dragEndTile.y);
-    const endY = Math.max(dragStartTile.y, dragEndTile.y);
-    
     const tiles = new Set<string>();
-    for (let y = startY; y <= endY; y++) {
+    
+    // 直線一列のみの敷設
+    const dx = Math.abs(dragEndTile.x - dragStartTile.x);
+    const dy = Math.abs(dragEndTile.y - dragStartTile.y);
+    
+    // X軸方向の直線
+    if (dx > dy) {
+      const startX = Math.min(dragStartTile.x, dragEndTile.x);
+      const endX = Math.max(dragStartTile.x, dragEndTile.x);
+      const y = dragStartTile.y;
+      
       for (let x = startX; x <= endX; x++) {
         if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
           tiles.add(`${x}-${y}`);
         }
       }
     }
+    // Y軸方向の直線
+    else {
+      const startY = Math.min(dragStartTile.y, dragEndTile.y);
+      const endY = Math.max(dragStartTile.y, dragEndTile.y);
+      const x = dragStartTile.x;
+      
+      for (let y = startY; y <= endY; y++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    
     return tiles;
   }, [isPlacingFacility, dragStartTile, dragEndTile, size]);
 
@@ -264,13 +282,28 @@ export const Grid: React.FC<GridProps> = ({
   const handleMouseUp = (e: React.MouseEvent) => {
     // 施設敷設の確定
     if (isPlacingFacility && dragStartTile && dragEndTile) {
-      const startX = Math.min(dragStartTile.x, dragEndTile.x);
-      const endX = Math.max(dragStartTile.x, dragEndTile.x);
-      const startY = Math.min(dragStartTile.y, dragEndTile.y);
-      const endY = Math.max(dragStartTile.y, dragEndTile.y);
+      const dx = Math.abs(dragEndTile.x - dragStartTile.x);
+      const dy = Math.abs(dragEndTile.y - dragStartTile.y);
       
-      for (let y = startY; y <= endY; y++) {
+      // X軸方向
+      if (dx > dy) {
+        const startX = Math.min(dragStartTile.x, dragEndTile.x);
+        const endX = Math.max(dragStartTile.x, dragEndTile.x);
+        const y = dragStartTile.y;
+        
         for (let x = startX; x <= endX; x++) {
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            handleTileClick(x, y);
+          }
+        }
+      }
+      // Y軸方向
+      else {
+        const startY = Math.min(dragStartTile.y, dragEndTile.y);
+        const endY = Math.max(dragStartTile.y, dragEndTile.y);
+        const x = dragStartTile.x;
+        
+        for (let y = startY; y <= endY; y++) {
           if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
             handleTileClick(x, y);
           }
