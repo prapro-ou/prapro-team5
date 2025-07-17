@@ -6,6 +6,7 @@ export interface GameStats {
   date: {
     year: number;
     month: number;
+    week: number;
   };
 }
 
