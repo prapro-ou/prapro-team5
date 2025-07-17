@@ -261,7 +261,29 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   // マウスアップ処理
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    // 施設敷設の確定
+    if (isPlacingFacility && dragStartTile && dragEndTile) {
+      const startX = Math.min(dragStartTile.x, dragEndTile.x);
+      const endX = Math.max(dragStartTile.x, dragEndTile.x);
+      const startY = Math.min(dragStartTile.y, dragEndTile.y);
+      const endY = Math.max(dragStartTile.y, dragEndTile.y);
+      
+      for (let y = startY; y <= endY; y++) {
+        for (let x = startX; x <= endX; x++) {
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            handleTileClick(x, y);
+          }
+        }
+      }
+      
+      setIsPlacingFacility(false);
+      setDragStartTile(null);
+      setDragEndTile(null);
+      return;
+    }
+    
+    // カメラドラッグの終了（既存の処理）
     setIsDragging(false);
   };
 
