@@ -1,94 +1,67 @@
-import { useState } from 'react'
 import { Grid } from './components/grid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import type { Position } from './types/grid'
-import type { Facility, FacilityType } from './types/facility'
-import type { GameStats } from './types/game'
+import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 
-function App() {
-  const [selectedTile, setSelectedTile] = useState<Position | null>(null);
-  const [selectedFacilityType, setSelectedFacilityType] = useState<FacilityType | null>(null);
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [showPanel, setShowPanel] = useState<boolean>(false); // パネルの表示状態
+import { useGameStore } from './stores/GameStore';
+import { useFacilityStore } from './stores/FacilityStore'
+import { useUIStore } from './stores/UIStore';
 
-  // 設定パネルとクレジットパネルの表示状態を管理
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+function App() {
+  // UI状態
+  const {
+    showPanel,
+    isSettingsOpen,
+    isCreditsOpen,
+    selectedTile,
+    togglePanel,
+    openSettings,
+    closeSettings,
+    closeCredits,
+    switchToCredits,
+    setSelectedTile
+  } = useUIStore();
 
   // ゲーム統計情報
-  const [gameStats, setGameStats] = useState<GameStats>({
-    level: 1, 
-    money: 10000,
-    population: 0,
-    satisfaction: 50,
-    date: { year: 2024, month: 1 }
-  });
+  const { stats, spendMoney } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
 
+  // 施設状態
+  const { 
+    facilities, 
+    selectedFacilityType, 
+    setSelectedFacilityType, 
+    addFacility,
+    checkCanPlace,
+    createFacility 
+  } = useFacilityStore();
+
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
-    // 施設のタイル半径
-    const radius = Math.floor(facilityData.size / 2);
-    const occupiedTiles: Position[] = [];
-    // 範囲外チェック
-    for (let dx = -radius; dx <= radius; dx++) {
-      for (let dy = -radius; dy <= radius; dy++) {
-        const x = position.x + dx;
-        const y = position.y + dy;
-
-        // 範囲外チェック
-        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) {
-          console.warn(`施設の配置が範囲外です`);
-          return;
-        }
-        occupiedTiles.push({ x, y });
-      }
-    }
     
-    // 既存の施設をチェック
-    const existingFacility = facilities.some(facility =>
-      facility.occupiedTiles.some(occupied =>
-        occupiedTiles.some(newTile =>
-          newTile.x === occupied.x && newTile.y === occupied.y
-        )
-      )
-    );
-
-    if (existingFacility) {
-      console.warn(`エリア内に既存施設があります`);
+    // 配置可能かチェック
+    if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
+      console.warn(`施設を配置できません`);
       return;
     }
 
-    // 資金チェック
-    if (gameStats.money < facilityData.cost) {
+    if (!spendMoney(facilityData.cost)) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
 
-    // 資金を減らす
-    setGameStats(prev => ({
-      ...prev,
-      money: prev.money - facilityData.cost
-    }));
-
     // 施設の配置
-    const newFacility: Facility = {
-      id: `${type}_${position.x}_${position.y}_${Date.now()}`,
-      type,
-      position: position,
-      occupiedTiles
-    };
-
-    setFacilities(prev => [...prev, newFacility]);
+    const newFacility = createFacility(position, type);
+    addFacility(newFacility);
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
   };
 
@@ -108,16 +81,10 @@ function App() {
     }
   };
 
-  // 設定パネルからクレジットパネルへ切り替える関数
-  const handleShowCredits = () => {
-    setIsSettingsOpen(false);
-    setIsCreditsOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 情報パネル */}
-      <InfoPanel stats={gameStats} />
+      <InfoPanel stats={stats} />
       
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -127,12 +94,12 @@ function App() {
           selectedPosition={selectedTile}
           facilities={facilities}
           selectedFacilityType={selectedFacilityType}
-          money={gameStats.money}
+          money={stats.money}
         />
       </div>
       {/* パネル切り替えボタン */}
       <button 
-        onClick={() => setShowPanel(!showPanel)}
+        onClick={togglePanel}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
@@ -140,7 +107,7 @@ function App() {
 
       {/* 設定パネルを開くボタン */}
       <button 
-        onClick={() => setIsSettingsOpen(true)}
+        onClick={openSettings}
         className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
       >
         <TbSettings size={24} />
@@ -153,7 +120,7 @@ function App() {
               <FacilitySelector 
                 selectedType={selectedFacilityType}
                 onSelectType={setSelectedFacilityType}
-                money={gameStats.money}
+                money={stats.money}
               />
             </div>
         </div>
@@ -162,13 +129,12 @@ function App() {
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
-          onClose={() => setIsSettingsOpen(false)} 
-          onShowCredits={handleShowCredits}
+          onClose={closeSettings} 
+          onShowCredits={switchToCredits}
         />
       </div>
-
-      {/* クレジットパネルは状態を持たないので、従来通りでOK */}
-      {isCreditsOpen && <CreditsPanel onClose={() => setIsCreditsOpen(false)} />}
+      {/* クレジットパネル */}
+      {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>
   );
 }
