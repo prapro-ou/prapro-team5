@@ -8,6 +8,7 @@ interface GameStore {
   // アクション
   addMoney: (amount: number) => void;
   spendMoney: (amount: number) => boolean;
+  advanceTime: () => void; // 時間を進めるアクションを追加
 }
 
 const INITIAL_STATS: GameStats = {
@@ -15,7 +16,7 @@ const INITIAL_STATS: GameStats = {
     money: 10000,
     population: 0,
     satisfaction: 50,
-    date: { year: 2024, month: 1 }
+    date: { year: 2024, month: 1, week: 1 }
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -40,5 +41,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return true;
     }
     return false;
-  }
+  },
+
+  // 時間を1週間進める関数にロジックを変更
+  advanceTime: () => {
+    set((state) => {
+      const newDate = { ...state.stats.date };
+      newDate.week += 1;
+
+      // 4週目を超えたら月を進める
+      if (newDate.week > 4) {
+        newDate.week = 1;
+        newDate.month += 1;
+        
+        // 12月を超えたら年を繰り上げる
+        if (newDate.month > 12) {
+          newDate.month = 1;
+          newDate.year += 1;
+        }
+      }
+
+      return {
+        stats: {
+          ...state.stats,
+          date: newDate,
+        },
+      };
+    });
+  },
 }));

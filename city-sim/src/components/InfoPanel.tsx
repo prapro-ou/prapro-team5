@@ -42,7 +42,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
           <TbCalendar className="text-gray-300 text-xl" />
           <div className="text-lg font-bold text-white">
-            {stats.date.year}年{stats.date.month}月
+            {stats.date.year}年{stats.date.month}月{stats.date.week}週目
           </div>
         </div>
       </div>
