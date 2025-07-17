@@ -50,6 +50,10 @@ export const Grid: React.FC<GridProps> = ({
     };
   });
 
+  const [isPlacingFacility, setIsPlacingFacility] = React.useState(false);
+  const [dragStartTile, setDragStartTile] = React.useState<Position | null>(null);
+  const [dragEndTile, setDragEndTile] = React.useState<Position | null>(null);
+
   const visibleTiles = React.useMemo(() => {
     const tiles = [];
     
