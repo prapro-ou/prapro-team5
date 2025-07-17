@@ -193,10 +193,14 @@ export const Grid: React.FC<GridProps> = ({
     // 左クリックで施設敷設
     if (e.button === 0 && selectedFacilityType) {
       e.preventDefault();
-      setIsPlacingFacility(true);
-      setDragStartTile({ x: e.clientX, y: e.clientY });
+      const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+      if (gridPos) {
+        setIsPlacingFacility(true);
+        setDragStartTile(gridPos);
+        setDragEndTile(gridPos);
+      }
     }
-    // 右クリックでドラッグ
+    // 右クリックでカメラドラッグ
     else if (e.button === 2) {
       e.preventDefault();
       setIsDragging(true);
