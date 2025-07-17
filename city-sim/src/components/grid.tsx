@@ -50,6 +50,7 @@ export const Grid: React.FC<GridProps> = ({
     };
   });
 
+  // 施設敷設用の状態管理
   const [isPlacingFacility, setIsPlacingFacility] = React.useState(false);
   const [dragStartTile, setDragStartTile] = React.useState<Position | null>(null);
   const [dragEndTile, setDragEndTile] = React.useState<Position | null>(null);
@@ -168,8 +169,14 @@ export const Grid: React.FC<GridProps> = ({
 
   // マウスドラッグ処理
   const handleMouseDown = (e: React.MouseEvent) => {
+    // 左クリックで施設敷設
+    if (e.button === 0 && selectedFacilityType) {
+      e.preventDefault();
+      setIsPlacingFacility(true);
+      setDragStartTile({ x: e.clientX, y: e.clientY });
+    }
     // 右クリックでドラッグ
-    if (e.button === 2) {
+    else if (e.button === 2) {
       e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
