@@ -303,6 +303,23 @@ export const Grid: React.FC<GridProps> = ({
   }, [facilities]);
 
   const getPreviewStatus = React.useCallback((x: number, y: number) => {
+    const tileKey = `${x}-${y}`;
+  
+    // ドラッグ範囲内のプレビュー
+    if (isPlacingFacility && dragRange.has(tileKey)) {
+      if (!selectedFacilityType) return null;
+      
+      const facilityData = FACILITY_DATA[selectedFacilityType];
+      if (money < facilityData.cost) {
+        return 'insufficient-funds';
+      }
+      if (facilityMap.has(tileKey)) {
+        return 'occupied';
+      }
+      return 'valid';
+    }
+
+
     if (!selectedFacilityType || !hoveredTile) return null;
     
     // ホバー中心から離れすぎてたら計算しない
@@ -312,7 +329,6 @@ export const Grid: React.FC<GridProps> = ({
     
     if (distance > maxDistance) return null;
 
-    const tileKey = `${x}-${y}`;
     if (!previewTiles.has(tileKey)) return null;
 
       // 資金不足チェック
