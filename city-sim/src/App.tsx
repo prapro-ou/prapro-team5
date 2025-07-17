@@ -8,6 +8,7 @@ import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
+import { useEffect } from 'react';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -29,7 +30,7 @@ function App() {
   } = useUIStore();
 
   // ゲーム統計情報
-  const { stats, spendMoney } = useGameStore();
+  const { stats, spendMoney, advanceTime } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -43,6 +44,18 @@ function App() {
     checkCanPlace,
     createFacility 
   } = useFacilityStore();
+
+
+  // 時間経過を処理するuseEffect
+  useEffect(() => {
+    // 5000ミリ秒（5秒）ごとに1ヶ月進めるタイマーを設定
+    const timerId = setInterval(() => {
+      advanceTime();
+    }, 5000);
+
+    // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
+    return () => clearInterval(timerId);
+  }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
