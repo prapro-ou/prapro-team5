@@ -235,6 +235,13 @@ export const Grid: React.FC<GridProps> = ({
   // マウスムーブ処理
   const handleMouseMove = (e: React.MouseEvent) => {
     // 施設敷設ドラッグ中
+    if (isPlacingFacility && dragStartTile) {
+      const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+      if (gridPos) {
+        setDragEndTile(gridPos);
+      }
+      return;
+    }
 
     if (!isDragging) return;
 
