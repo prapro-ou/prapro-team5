@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Position } from "../types/grid";
+import { useFacilityStore } from "./FacilityStore"; 
 
 export interface UIStore {
   // パネルの表示状態
@@ -27,7 +28,10 @@ export const useUIStore = create<UIStore>((set) => ({
   isCreditsOpen: false,
   selectedTile: null,
 
-  togglePanel: () => set((state) => ({ showPanel: !state.showPanel })),
+  togglePanel: () => {
+    set((state) => ({ showPanel: !state.showPanel }));
+    useFacilityStore.getState().setSelectedFacilityType(null);
+  },
   setShowPanel: (show) => set({ showPanel: show }),
   openSettings: () => set({ isSettingsOpen: true }),
   closeSettings: () => set({ isSettingsOpen: false }),
