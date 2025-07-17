@@ -30,7 +30,7 @@ function App() {
   } = useUIStore();
 
   // ゲーム統計情報
-  const { stats, spendMoney, advanceTime } = useGameStore();
+  const { stats, spendMoney, advanceTime, addPopulation } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -48,7 +48,7 @@ function App() {
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
-    // 5000ミリ秒（5秒）ごとに1ヶ月進めるタイマーを設定
+    // 5000ミリ秒（5秒）ごとに1週間進めるタイマーを設定
     const timerId = setInterval(() => {
       advanceTime();
     }, 5000);
@@ -56,6 +56,8 @@ function App() {
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
   }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
+
+   
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -75,6 +77,10 @@ function App() {
     // 施設の配置
     const newFacility = createFacility(position, type);
     addFacility(newFacility);
+     // もし設置した施設が住宅なら、人口を100人増やす
+    if (type === 'residential') {
+      addPopulation(100);
+    }
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
   };
 

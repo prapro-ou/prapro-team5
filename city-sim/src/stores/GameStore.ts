@@ -9,6 +9,7 @@ interface GameStore {
   addMoney: (amount: number) => void;
   spendMoney: (amount: number) => boolean;
   advanceTime: () => void; // 時間を進めるアクションを追加
+  addPopulation: (count: number) => void; // 追加
 }
 
 const INITIAL_STATS: GameStats = {
@@ -69,4 +70,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
   },
+  // 人口を増やすアクションの定義
+  addPopulation: (amount: number) => set((state) => ({
+    stats: {
+      ...state.stats,
+      population: state.stats.population + amount
+    }
+  })),
 }));
