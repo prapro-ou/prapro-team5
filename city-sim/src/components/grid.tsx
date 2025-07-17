@@ -218,8 +218,13 @@ export const Grid: React.FC<GridProps> = ({
         setDragEndTile(gridPos);
       }
     }
-    // 右クリックでカメラドラッグ
+    // 右クリックでカメラドラッグ&敷設キャンセル
     else if (e.button === 2) {
+      if (isPlacingFacility) {
+        setIsPlacingFacility(false);
+        setDragStartTile(null);
+        setDragEndTile(null);
+      }
       e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
