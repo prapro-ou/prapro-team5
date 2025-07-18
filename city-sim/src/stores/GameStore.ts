@@ -91,6 +91,28 @@ const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
     console.log(`Population ${populationChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(populationChange)} due to satisfaction (${stats.satisfaction})`);
   }
 };
+// --- 月次処理の具体的なロジックを独立した関数として定義 ---
+
+/**
+ * 人口が一定数を超えたらレベルアップするタスク
+ */
+const levelUpByPopulation: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  // レベルごとの人口閾値（例：1→2は100人、2→3は300人、3→4は1000人…）
+  const levelThresholds = [0, 100, 300, 1000, 3000, 10000];
+  const currentLevel = stats.level;
+  const nextLevel = currentLevel + 1;
+  if (nextLevel < levelThresholds.length && stats.population >= levelThresholds[nextLevel]) {
+    set({
+      stats: {
+        ...stats,
+        level: nextLevel
+      }
+    });
+    console.log(`Level Up! 都市レベル${currentLevel} → ${nextLevel}`);
+    // ここでボーナスやアンロック処理も追加可能
+  }
+};
 // --- ストアの作成 ---
 
 const INITIAL_STATS: GameStats = {
@@ -107,6 +129,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
+    levelUpByPopulation,
     // 他の月次タスクをここに追加可能
   ],
 
