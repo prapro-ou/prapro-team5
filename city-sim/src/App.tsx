@@ -29,8 +29,8 @@ function App() {
     setSelectedTile
   } = useUIStore();
 
-  // ゲーム統計情報
-  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction } = useGameStore();
+  // ゲーム統計情報・レベルアップ通知
+  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -45,7 +45,6 @@ function App() {
     createFacility 
   } = useFacilityStore();
 
-
   // 時間経過を処理するuseEffect
   useEffect(() => {
     // 5000ミリ秒（5秒）ごとに1週間進めるタイマーを設定
@@ -57,56 +56,62 @@ function App() {
     return () => clearInterval(timerId);
   }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
 
-   
-
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
-    
     // 配置可能かチェック
     if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
       console.warn(`施設を配置できません`);
       return;
     }
-
     if (!spendMoney(facilityData.cost)) {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
-
     // 施設の配置
     const newFacility = createFacility(position, type);
     addFacility(newFacility);
-     // もし設置した施設が住宅なら、人口を100人増やす
+    // もし設置した施設が住宅なら、人口を100人増やす
     if (type === 'residential') {
       addPopulation(100);
     }
-     // 施設を設置した後に満足度を再計算する
+    // 施設を設置した後に満足度を再計算する
     // この時、更新後の施設リストを取得して渡す
     recalculateSatisfaction(useFacilityStore.getState().facilities);
-    
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
   };
-
 
   const handleTileClick = (position: Position) => {
     const correctedPosition = {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
-
     setSelectedTile(correctedPosition);
-
     if (selectedFacilityType) {
       placeFacility(correctedPosition, selectedFacilityType);
-    } 
-    else {
+    } else {
       console.log(`click: (${correctedPosition.x}, ${correctedPosition.y})`);
     }
   };
 
+  // レベルアップ通知を一定時間で消す
+  useEffect(() => {
+    if (levelUpMessage) {
+      const timer = setTimeout(() => {
+        setLevelUpMessage(null);
+      }, 3000); // 3秒で自動消去
+      return () => clearTimeout(timer);
+    }
+  }, [levelUpMessage, setLevelUpMessage]);
+
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+      {/* レベルアップ通知 */}
+      {levelUpMessage && (
+        <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black text-xl font-bold px-8 py-4 rounded-lg shadow-lg z-[2000] animate-bounce">
+          {levelUpMessage}
+        </div>
+      )}
       {/* 情報パネル */}
       <InfoPanel stats={stats} />
       

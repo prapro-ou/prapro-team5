@@ -15,6 +15,8 @@ interface GameStore {
   addPopulation: (count: number) => void;
   recalculateSatisfaction: (facilities: Facility[]) => void;
   monthlyTasks: MonthlyTask[];
+  levelUpMessage: string | null;
+  setLevelUpMessage: (msg: string | null) => void;
 }
 
 // --- 月次処理の具体的なロジックを独立した関数として定義 ---
@@ -107,13 +109,15 @@ const levelUpByPopulation: MonthlyTask = (get, set) => {
       stats: {
         ...stats,
         level: nextLevel
-      }
+      },
+      levelUpMessage: `レベル${nextLevel}にアップしました！`
     });
     console.log(`Level Up! 都市レベル${currentLevel} → ${nextLevel}`);
     // ここでボーナスやアンロック処理も追加可能
   }
 };
 // --- ストアの作成 ---
+
 
 const INITIAL_STATS: GameStats = {
     level: 1, 
@@ -132,6 +136,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     levelUpByPopulation,
     // 他の月次タスクをここに追加可能
   ],
+  levelUpMessage: null,
+  setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
 
   addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: state.stats.money + amount }})),
   
@@ -148,7 +154,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     return false;
   },
-
+  
   // 人口を増やす処理
   addPopulation: (amount) => set((state) => ({ stats: { ...state.stats, population: state.stats.population + amount }})),
 
