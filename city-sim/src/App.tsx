@@ -30,7 +30,7 @@ function App() {
   } = useUIStore();
 
   // ゲーム統計情報
-  const { stats, spendMoney, advanceTime, addPopulation } = useGameStore();
+  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction} = useGameStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -81,6 +81,10 @@ function App() {
     if (type === 'residential') {
       addPopulation(100);
     }
+
+    // 施設を設置した後に満足度を再計算する
+    recalculateSatisfaction(facilities);
+    
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
   };
 

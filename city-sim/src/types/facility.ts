@@ -23,6 +23,7 @@ export interface FacilityInfo {
   description: string;
   category: CategoryKey;    // カテゴリ
   imgPath?: string;         // 画像パス
+  satisfaction: number;
 }
 
 // 配置された施設
@@ -44,7 +45,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 5,
     description: '住宅地',
     category: 'residential',
-    imgPath: 'images/buildings/residential.png'
+    imgPath: 'images/buildings/residential.png',
+    satisfaction: 0,
   },
   commercial: {
     type: 'commercial', 
@@ -54,7 +56,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 8,
     description: '商業地',
     category: 'commercial',
-    imgPath: 'images/buildings/commercial.png'
+    imgPath: 'images/buildings/commercial.png',
+    satisfaction: 10,
   },
   industrial: {
     type: 'industrial',
@@ -64,7 +67,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 10,
     description: '工業地',
     category: 'industrial',
-    imgPath: 'images/buildings/industrial.png'
+    imgPath: 'images/buildings/industrial.png',
+    satisfaction: -10,
   },
   road: {
     type: 'road',
@@ -73,6 +77,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     cost: 50,
     maintenanceCost: 2,
     description: '道路',
-    category: 'infrastructure'
+    category: 'infrastructure',
+    satisfaction: 0,
   }
 }

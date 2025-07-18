@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
+import type { Facility } from '../types/facility'; // Facility型をインポート
+import { FACILITY_DATA } from '../types/facility'; // FACILITY_DATAをインポート
 
 interface GameStore {
   // ゲーム統計
@@ -10,6 +12,7 @@ interface GameStore {
   spendMoney: (amount: number) => boolean;
   advanceTime: () => void; // 時間を進めるアクションを追加
   addPopulation: (count: number) => void; // 追加
+  recalculateSatisfaction: (facilities: Facility[]) => void; // 満足度を再計算するアクションを追加
 }
 
 const INITIAL_STATS: GameStats = {
@@ -77,4 +80,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
       population: state.stats.population + amount
     }
   })),
+
+
+
+  // 満足度を再計算するアクション
+  recalculateSatisfaction: (facilities) => { // 引数で施設リストを受け取る
+    let totalSatisfaction = 50; // 基本満足度
+
+    facilities.forEach(facility => {
+      const facilityData = FACILITY_DATA[facility.type];
+      if (facilityData) {
+        totalSatisfaction += facilityData.satisfaction;
+      }
+    });
+
+    const newSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
+
+    set(state => ({
+      stats: {
+        ...state.stats,
+        satisfaction: newSatisfaction
+      }
+    }));
+  }
+
 }));
