@@ -68,7 +68,29 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
     console.log(`Maintenance Cost: -$${totalCost}`);
   }
 };
-
+/**
+ * 満足度に応じて人口を増減させるタスク
+ */
+const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  let populationChange = 0;
+  if (stats.satisfaction >= 80) {
+    // 満足度が高い場合、人口増加
+    populationChange = Math.max(1, Math.floor(stats.population * 0.05)); // 5%増加、最低1人
+  } else if (stats.satisfaction < 20) {
+    // 満足度が低い場合、人口減少
+    populationChange = -Math.max(1, Math.floor(stats.population * 0.05)); // 5%減少、最低1人
+  }
+  if (populationChange !== 0) {
+    set({
+      stats: {
+        ...stats,
+        population: Math.max(0, stats.population + populationChange)
+      }
+    });
+    console.log(`Population ${populationChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(populationChange)} due to satisfaction (${stats.satisfaction})`);
+  }
+};
 // --- ストアの作成 ---
 
 const INITIAL_STATS: GameStats = {
@@ -84,6 +106,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   monthlyTasks: [
     calculateTaxRevenue,
     payMaintenanceCost,
+    adjustPopulationBySatisfaction,
     // 他の月次タスクをここに追加可能
   ],
 
