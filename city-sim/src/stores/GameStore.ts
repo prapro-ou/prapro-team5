@@ -44,6 +44,31 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
   }
 };
 
+/**
+ * 施設の維持費を合計し、資金から差し引くタスク
+ */
+const payMaintenanceCost: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  let totalCost = 0;
+  facilities.forEach(facility => {
+    const data = FACILITY_DATA[facility.type];
+    if (data && data.maintenanceCost) {
+      totalCost += data.maintenanceCost;
+    }
+  });
+  if (totalCost > 0) {
+    const currentMoney = get().stats.money;
+    set({
+      stats: {
+        ...stats,
+        money: currentMoney - totalCost
+      }
+    });
+    console.log(`Maintenance Cost: -$${totalCost}`);
+  }
+};
+
 // --- ストアの作成 ---
 
 const INITIAL_STATS: GameStats = {
@@ -58,7 +83,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
   monthlyTasks: [
     calculateTaxRevenue,
-    // 将来、維持費などの新しい月次タスクをここに追加する
+    payMaintenanceCost,
+    // 他の月次タスクをここに追加可能
   ],
 
   addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: state.stats.money + amount }})),
@@ -76,7 +102,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     return false;
   },
-  
+
   // 人口を増やす処理
   addPopulation: (amount) => set((state) => ({ stats: { ...state.stats, population: state.stats.population + amount }})),
 
