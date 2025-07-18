@@ -3,7 +3,8 @@ import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
-
+// 修正されたEconomyStoreから計算関数をインポート
+import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 // --- 月次処理の型定義 ---
 type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -93,7 +94,34 @@ const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
     console.log(`Population ${populationChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(populationChange)} due to satisfaction (${stats.satisfaction})`);
   }
 };
-// --- 月次処理の具体的なロジックを独立した関数として定義 ---
+/**
+ * 新しい経済サイクルを処理するタスク
+ */
+const processEconomicCycle: MonthlyTask = (get, set) => {
+  const facilities = useFacilityStore.getState().facilities;
+  let currentStats = get().stats;
+
+  // 1. 製品を生産する
+  const producedGoods = calculateProduction(currentStats, facilities);
+  if (producedGoods > 0) {
+    currentStats = { ...currentStats, goods: currentStats.goods + producedGoods };
+    console.log(`Produced goods: +${producedGoods}`);
+  }
+
+  // 2. 製品を消費して収益を得る
+  const { consumed, revenue } = calculateConsumptionAndRevenue(currentStats, facilities);
+  if (consumed > 0) {
+    currentStats = {
+      ...currentStats,
+      goods: currentStats.goods - consumed,
+      money: currentStats.money + revenue
+    };
+    console.log(`Consumed goods: -${consumed}, Revenue from commerce: +${revenue}`);
+  }
+  
+  // 最終的な状態を更新
+  set({ stats: currentStats });
+};
 
 /**
  * 人口が一定数を超えたらレベルアップするタスク
@@ -132,6 +160,8 @@ const INITIAL_STATS: GameStats = {
     money: 10000,
     population: 0,
     satisfaction: 50,
+    workforce: 0, // 労働力（初期値0、人口から計算する場合は後で上書き）
+    goods: 0,     // 製品（初期値0）
     date: { year: 2024, month: 1, week: 1 }
 }
 
@@ -141,6 +171,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
+    processEconomicCycle, // 新しい経済サイクルタスクを登録
+    
     // 他の月次タスクをここに追加可能
   ],
   levelUpMessage: null,
@@ -162,17 +194,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return false;
   },
   
-  // 人口を増やす処理（レベルアップ判定呼び出し）
+  // 人口を増やす処理（レベルアップ判定呼び出し＆労働力自動計算）
   addPopulation: (amount) => {
     set((state) => {
+      const newPopulation = state.stats.population + amount;
+      // 労働力は人口の50%とする（今後調整可）
+      const newWorkforce = Math.floor(newPopulation * 0.5);
       const newStats = {
         ...state.stats,
-        population: state.stats.population + amount
+        population: newPopulation,
+        workforce: newWorkforce
       };
       return { stats: newStats };
     });
     // setの直後にgetで最新statsを取得し、レベルアップ判定
-    const updatedStats = { ...get().stats, population: get().stats.population };
+    const updatedStats = { ...get().stats, population: get().stats.population, workforce: get().stats.workforce };
     checkLevelUp(updatedStats, set);
   },
 

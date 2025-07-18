@@ -25,7 +25,12 @@ export interface FacilityInfo {
   category: CategoryKey;    // カテゴリ
   imgPath?: string;         // 画像パス
   satisfaction: number;
+  // --- 経済サイクル用プロパティ ---
+  requiredWorkforce?: number; // 必要労働力（工業・商業用）
+  produceGoods?: number;      // 生産量（工業用）
+  consumeGoods?: number;      // 消費量（商業用）
 }
+
 
 // 配置された施設
 export interface Facility {
@@ -59,6 +64,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     category: 'commercial',
     imgPath: 'images/buildings/commercial.png',
     satisfaction: 7,
+    requiredWorkforce: 5, // 仮値
+    consumeGoods: 5,      // 1週で消費する製品数（仮値）
   },
   industrial: {
     type: 'industrial',
@@ -70,6 +77,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     category: 'industrial',
     imgPath: 'images/buildings/industrial.png',
     satisfaction: -5,
+    requiredWorkforce: 10, // 仮値
+    produceGoods: 10,      // 1週で生産する製品数（仮値）
   },
   road: {
     type: 'road',
