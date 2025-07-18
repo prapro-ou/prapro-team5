@@ -48,7 +48,13 @@ export function FacilitySelector({ selectedType, onSelectType, money}: FacilityS
             return (
               <button
                 key={facility.type}
-                onClick={() => onSelectType(facility.type)}
+                onClick={() => {
+                  if (isSelected) {
+                    onSelectType(null); // すでに選択されていれば選択解除
+                  } else {
+                    onSelectType(facility.type); // 通常の選択
+              }
+            }}  
                 disabled={!canAfford}
                 className={`px-3 py-2 text-xs rounded text-left transition-colors flex-shrink-0 min-w-[140px] ${
                   isSelected 
