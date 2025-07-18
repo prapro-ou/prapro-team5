@@ -98,24 +98,32 @@ const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
 /**
  * 人口が一定数を超えたらレベルアップするタスク
  */
-const levelUpByPopulation: MonthlyTask = (get, set) => {
-  const { stats } = get();
-  // レベルごとの人口閾値（例：1→2は100人、2→3は300人、3→4は1000人…）
+// レベルアップ判定関数（人口や満足度など複数条件に対応可能）
+function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => void) {
+  // レベルごとの人口閾値
   const levelThresholds = [0, 100, 300, 1000, 3000, 10000];
-  const currentLevel = stats.level;
-  const nextLevel = currentLevel + 1;
-  if (nextLevel < levelThresholds.length && stats.population >= levelThresholds[nextLevel]) {
+  let newLevel = stats.level;
+  let levelUpMsg = null;
+  // 例：今後は満足度条件も追加可能
+  while (
+    newLevel + 1 < levelThresholds.length &&
+    stats.population >= levelThresholds[newLevel + 1]
+    // && stats.satisfaction >= 50  // 例：満足度条件を追加したい場合
+  ) {
+    newLevel++;
+    levelUpMsg = `レベル${newLevel}にアップしました！`;
+  }
+  if (newLevel !== stats.level) {
     set({
       stats: {
         ...stats,
-        level: nextLevel
+        level: newLevel
       },
-      levelUpMessage: `レベル${nextLevel}にアップしました！`
+      levelUpMessage: levelUpMsg
     });
-    console.log(`Level Up! 都市レベル${currentLevel} → ${nextLevel}`);
-    // ここでボーナスやアンロック処理も追加可能
+    console.log(`Level Up! 都市レベル${stats.level} → ${newLevel}`);
   }
-};
+}
 // --- ストアの作成 ---
 
 
@@ -133,7 +141,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
-    levelUpByPopulation,
     // 他の月次タスクをここに追加可能
   ],
   levelUpMessage: null,
@@ -155,8 +162,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return false;
   },
   
-  // 人口を増やす処理
-  addPopulation: (amount) => set((state) => ({ stats: { ...state.stats, population: state.stats.population + amount }})),
+  // 人口を増やす処理（レベルアップ判定呼び出し）
+  addPopulation: (amount) => {
+    set((state) => {
+      const newStats = {
+        ...state.stats,
+        population: state.stats.population + amount
+      };
+      return { stats: newStats };
+    });
+    // setの直後にgetで最新statsを取得し、レベルアップ判定
+    const updatedStats = { ...get().stats, population: get().stats.population };
+    checkLevelUp(updatedStats, set);
+  },
 
 
   // 満足度を再計算する処理
