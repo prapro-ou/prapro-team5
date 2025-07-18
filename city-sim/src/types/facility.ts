@@ -1,6 +1,6 @@
 import type { Position } from "./grid";
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road";
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall";
 
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
@@ -8,6 +8,7 @@ export const FACILITY_CATEGORIES = {
   commercial: { name: "商業" },
   industrial: { name: "工業" },
   infrastructure: { name: "インフラ" },
+  government: { name: "公共" }, // 新しいカテゴリ
   others: { name: "その他" }
 } as const;
 
@@ -79,5 +80,16 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '道路',
     category: 'infrastructure',
     satisfaction: 0,
+  },
+  // 市役所のデータを追加
+  city_hall: {
+    type: 'city_hall',
+    name: '市役所',
+    size: 5, // 少し大きめのサイズ
+    cost: 5000, // 高コスト
+    maintenanceCost: 100,
+    description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
+    category: 'government',
+    satisfaction: 10, // 設置すると満足度が少し上がる
   }
 }

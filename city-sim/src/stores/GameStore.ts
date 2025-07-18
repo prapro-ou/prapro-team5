@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility'; // Facility型をインポート（パスは適宜修正）
 import { FACILITY_DATA } from '../types/facility'; // 施設データのインポート（パスは適宜修正）
-
+import { useFacilityStore } from './FacilityStore';
 interface GameStore {
   // ゲーム統計
   stats: GameStats;
@@ -51,6 +51,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   advanceTime: () => {
     set((state) => {
       const newDate = { ...state.stats.date };
+      let newMoney = state.stats.money;
       newDate.week += 1;
 
       // 4週目を超えたら月を進める
@@ -58,6 +59,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
         newDate.week = 1;
         newDate.month += 1;
         
+        // --- ここから税収ロジック ---
+        // FacilityStoreから現在の施設リストを取得
+        const facilities = useFacilityStore.getState().facilities;
+        // 市役所が存在するかチェック
+        const hasCityHall = facilities.some(f => f.type === 'city_hall');
+
+        if (hasCityHall) {
+          // 税率を満足度に応じて変動させる (満足度50%を基準の1.0倍とする)
+          const taxMultiplier = state.stats.satisfaction / 50;
+          // 税収計算：(人口 * 基本税額) * 満足度補正
+          const taxRevenue = Math.floor((state.stats.population * 10) * taxMultiplier);
+          
+          if (taxRevenue > 0) {
+            newMoney += taxRevenue;
+            console.log(`Tax Revenue: +$${taxRevenue} (Satisfaction Bonus: ${taxMultiplier.toFixed(2)}x)`);
+          }
+        }
+        // --- 税収ロジックここまで ---
         // 12月を超えたら年を繰り上げる
         if (newDate.month > 12) {
           newDate.month = 1;
@@ -69,6 +88,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         stats: {
           ...state.stats,
           date: newDate,
+          money: newMoney,
         },
       };
     });

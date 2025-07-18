@@ -53,9 +53,20 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   },
   
   checkCanPlace: (position, facilityType, gridSize) => {
+    const { facilities } = get();
+    // --- ここから追加 ---
+    // もし建設しようとしているのが市役所なら、既に存在しないかチェック
+    if (facilityType === 'city_hall') {
+      const hasCityHall = facilities.some(f => f.type === 'city_hall');
+      if (hasCityHall) {
+        console.warn("市役所はすでに建設されています．");
+        return false; // 既に存在する場合は建設不可
+      }
+    }
+    // --- 追加ここまで ---
     const facilityData = FACILITY_DATA[facilityType];
     const radius = Math.floor(facilityData.size / 2);
-    const { facilities } = get();
+    
     
     // 範囲外チェック
     for (let dx = -radius; dx <= radius; dx++) {
