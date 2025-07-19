@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Facility, FacilityType } from '../types/facility'
 import { FACILITY_DATA } from '../types/facility'
 import type { Position } from '../types/grid';
+import { useGameStore } from './GameStore';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -31,16 +32,19 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     set(state => ({
       facilities: [...state.facilities, facility]
     }));
+    useGameStore.getState().recalculateUsedWorkforce(); // 追加
   },
 
   removeFacility: (facilityId) => {
     set(state => ({
       facilities: state.facilities.filter(f => f.id !== facilityId)
     }));
+    useGameStore.getState().recalculateUsedWorkforce(); // 追加
   },
   
   clearFacilities: () => {
     set({ facilities: [] });
+    useGameStore.getState().recalculateUsedWorkforce(); // 追加
   },  
 
   getFacilityAt: (position) => {
@@ -53,9 +57,20 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   },
   
   checkCanPlace: (position, facilityType, gridSize) => {
+    const { facilities } = get();
+    // --- ここから追加 ---
+    // もし建設しようとしているのが市役所なら、既に存在しないかチェック
+    if (facilityType === 'city_hall') {
+      const hasCityHall = facilities.some(f => f.type === 'city_hall');
+      if (hasCityHall) {
+        console.warn("市役所はすでに建設されています．");
+        return false; // 既に存在する場合は建設不可
+      }
+    }
+    // --- 追加ここまで ---
     const facilityData = FACILITY_DATA[facilityType];
     const radius = Math.floor(facilityData.size / 2);
-    const { facilities } = get();
+    
     
     // 範囲外チェック
     for (let dx = -radius; dx <= radius; dx++) {

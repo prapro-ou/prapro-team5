@@ -296,6 +296,7 @@ export const Grid: React.FC<GridProps> = ({
       case 'commercial': return 'bg-blue-500';
       case 'industrial': return 'bg-yellow-500';
       case 'road': return 'bg-gray-900';
+      case 'city_hall': return 'bg-purple-500';
       default: return 'bg-gray-700';
     }
   }
