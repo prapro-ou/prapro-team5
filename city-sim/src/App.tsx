@@ -47,10 +47,10 @@ function App() {
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
-    // 2000ミリ秒（2秒）ごとに1週間進めるタイマーを設定
+    // 5000ミリ秒（5秒）ごとに1週間進めるタイマーを設定
     const timerId = setInterval(() => {
       advanceTime();
-    }, 2000);
+    }, 5000);
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);

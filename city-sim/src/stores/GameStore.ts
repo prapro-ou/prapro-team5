@@ -3,7 +3,6 @@ import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
-// 修正されたEconomyStoreから計算関数をインポート
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 // --- 月次処理の型定義 ---
 type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -34,7 +33,7 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
 
   if (hasCityHall && stats.population > 0) {
     const taxMultiplier = stats.satisfaction / 50;
-    const taxRevenue = Math.floor((stats.population * 10) * taxMultiplier);
+    const taxRevenue = Math.floor((stats.population * 5) * taxMultiplier);
     
     if (taxRevenue > 0) {
       const currentMoney = get().stats.money;
@@ -173,7 +172,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
-    processEconomicCycle, // 新しい経済サイクルタスクを登録
+    processEconomicCycle, 
     
     // 他の月次タスクをここに追加可能
   ],
