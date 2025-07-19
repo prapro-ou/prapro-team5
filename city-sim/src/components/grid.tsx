@@ -213,9 +213,16 @@ export const Grid: React.FC<GridProps> = ({
       e.preventDefault();
       const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
       if (gridPos) {
-        setIsPlacingFacility(true);
-        setDragStartTile(gridPos);
-        setDragEndTile(gridPos);
+        // インフラカテゴリの施設のみドラッグ敷設を許可
+        const facilityData = FACILITY_DATA[selectedFacilityType];
+        if (facilityData.category === 'infrastructure') {
+          setIsPlacingFacility(true);
+          setDragStartTile(gridPos);
+          setDragEndTile(gridPos);
+        } 
+        else {
+          handleTileClick(gridPos.x, gridPos.y);
+        }
       }
     }
     // 右クリックでカメラドラッグ&敷設キャンセル
@@ -348,6 +355,9 @@ export const Grid: React.FC<GridProps> = ({
       if (!selectedFacilityType) return null;
       
       const facilityData = FACILITY_DATA[selectedFacilityType];
+
+      if (facilityData.category !== 'infrastructure') return null;
+
       if (money < facilityData.cost) {
         return 'insufficient-funds';
       }
