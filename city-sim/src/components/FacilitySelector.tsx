@@ -1,6 +1,6 @@
 import type { CategoryKey, FacilityType } from "../types/facility";
 import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TbCash } from "react-icons/tb";
 
 interface FacilitySelectorProps {
@@ -9,9 +9,14 @@ interface FacilitySelectorProps {
   money: number;  // 資金
 }
 
-export function FacilitySelector({ selectedType, onSelectType, money}: FacilitySelectorProps) {
+export function FacilitySelector({ selectedType, onSelectType, money }: FacilitySelectorProps) {
   const [category, setCategory] = useState<CategoryKey>("residential");
-  const [detailType, setDetailType] = useState<FacilityType | null>(null); // 追加
+  const [detailType, setDetailType] = useState<FacilityType | null>(null);
+
+  // カテゴリや選択中施設が変わったら詳細を閉じる
+  useEffect(() => {
+    setDetailType(null);
+  }, [category, selectedType]);
 
   const categorizedFacilities = Object.values(FACILITY_DATA).reduce((acc, facility) => {
     const category = facility.category;
