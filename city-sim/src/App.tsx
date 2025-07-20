@@ -50,7 +50,7 @@ function App() {
     // 5000ミリ秒（5秒）ごとに1週間進めるタイマーを設定
     const timerId = setInterval(() => {
       advanceTime();
-    }, 5000);
+    }, 1000);
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
