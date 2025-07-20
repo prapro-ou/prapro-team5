@@ -312,6 +312,24 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // 公園設置プレビュー時の範囲色付け
+  let parkEffectTiles = new Set<string>();
+  if (selectedFacilityType === 'park' && hoveredTile) {
+    const effectRadius = FACILITY_DATA['park'].effectRadius ?? 0;
+    for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+      for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= effectRadius) {
+          const x = hoveredTile.x + dx;
+          const y = hoveredTile.y + dy;
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            parkEffectTiles.add(`${x}-${y}`);
+          }
+        }
+      }
+    }
+  }
+
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -346,14 +364,17 @@ export const Grid: React.FC<GridProps> = ({
 
         // z-indexの計算
         const baseZ = (y * 100) + x;
-          
+
+        // 公園効果範囲の色付け（プレビュー時のみ）
+        const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
+        const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
         return (
           <div key={`${x}-${y}`} className="absolute">
             {/* トップ面 */}
             <div
               className={`
                 absolute cursor-pointer border border-gray-500
-                ${previewColor || facilityColor}
+                ${parkEffectClass} ${previewColor || facilityColor}
                 ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
               `}
               style={{
@@ -371,8 +392,8 @@ export const Grid: React.FC<GridProps> = ({
             />
           </div>
         );
-        })}
-      </div>
+      })}
     </div>
+  </div>
   );
 };
