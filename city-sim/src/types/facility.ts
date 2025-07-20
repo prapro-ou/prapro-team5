@@ -8,9 +8,8 @@ export const FACILITY_CATEGORIES = {
   commercial: { name: "商業" },
   industrial: { name: "工業" },
   infrastructure: { name: "インフラ" },
-  government: { name: "公共" }, // 新しいカテゴリ
+  government: { name: "公共" }, 
   others: { name: "その他" },
-  park: { name: "公園" }
 } as const;
 
 export type CategoryKey = keyof typeof FACILITY_CATEGORIES;
@@ -114,7 +113,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     cost: 300,
     maintenanceCost: 20,
     description: '周囲の住宅の満足度が下がるのを防ぐ施設',
-    category: 'park',
+    category: 'government', // 公共カテゴリに変更
     imgPath: 'images/buildings/park.png',
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果

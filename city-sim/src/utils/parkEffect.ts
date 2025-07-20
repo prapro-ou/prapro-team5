@@ -1,5 +1,4 @@
 import type { Facility } from '../types/facility';
-import type { Position } from '../types/grid';
 
 /**
  * 指定した住宅施設が公園の効果範囲内にあるか判定する
