@@ -264,13 +264,16 @@ export const Grid: React.FC<GridProps> = ({
 
   // マウスムーブ処理
   const handleMouseMove = (e: React.MouseEvent) => {
+    const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
     // 施設敷設ドラッグ中
-    if (isPlacingFacility && dragStartTile) {
-      const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
-      if (gridPos) {
-        setDragEndTile(gridPos);
-      }
+  
+    if (isPlacingFacility && dragStartTile && gridPos) {
+      setDragEndTile(gridPos);
       return;
+    }
+    
+    if (selectedFacilityType && gridPos) {
+      debouncedSetHover(gridPos);
     }
 
     if (!isDragging) return;
