@@ -11,7 +11,7 @@ export const toIsometric = (x: number, y: number) => {
 
 // アイソメトリック座標からグリッド座標への変換
 export const fromIsometric = (isoX: number, isoY: number) => {
-  const x = Math.round((isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2);
+  const x = Math.round((isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2) - 1;
   const y = Math.round((isoY / (ISO_TILE_HEIGHT / 2) - isoX / (ISO_TILE_WIDTH / 2)) / 2);
   return { x, y };
 };

@@ -5,6 +5,7 @@ import { FACILITY_DATA } from "../types/facility";
 import { 
   toIsometric, 
   getViewportBounds, 
+  screenToGrid,
   ISO_TILE_WIDTH, 
   ISO_TILE_HEIGHT 
 } from "../utils/coordinates";
@@ -49,6 +50,11 @@ export const Grid: React.FC<GridProps> = ({
       y: centerIso.y + MAP_OFFSET_Y - VIEWPORT_HEIGHT / 2
     };
   });
+
+  // 施設敷設用の状態管理
+  const [isPlacingFacility, setIsPlacingFacility] = React.useState(false);
+  const [dragStartTile, setDragStartTile] = React.useState<Position | null>(null);
+  const [dragEndTile, setDragEndTile] = React.useState<Position | null>(null);
 
   const visibleTiles = React.useMemo(() => {
     const tiles = [];
@@ -162,10 +168,70 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // ドラッグ範囲の計算
+  const dragRange = React.useMemo(() => {
+    if (!isPlacingFacility || !dragStartTile || !dragEndTile) return new Set<string>();
+    
+    const tiles = new Set<string>();
+    
+    // 直線一列のみの敷設
+    const dx = Math.abs(dragEndTile.x - dragStartTile.x);
+    const dy = Math.abs(dragEndTile.y - dragStartTile.y);
+    
+    // X軸方向の直線
+    if (dx > dy) {
+      const startX = Math.min(dragStartTile.x, dragEndTile.x);
+      const endX = Math.max(dragStartTile.x, dragEndTile.x);
+      const y = dragStartTile.y;
+      
+      for (let x = startX; x <= endX; x++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    // Y軸方向の直線
+    else {
+      const startY = Math.min(dragStartTile.y, dragEndTile.y);
+      const endY = Math.max(dragStartTile.y, dragEndTile.y);
+      const x = dragStartTile.x;
+      
+      for (let y = startY; y <= endY; y++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.add(`${x}-${y}`);
+        }
+      }
+    }
+    
+    return tiles;
+  }, [isPlacingFacility, dragStartTile, dragEndTile, size]);
+
   // マウスドラッグ処理
   const handleMouseDown = (e: React.MouseEvent) => {
-    // 右クリックでドラッグ
-    if (e.button === 2) {
+    // 左クリックで施設敷設
+    if (e.button === 0 && selectedFacilityType) {
+      e.preventDefault();
+      const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+      if (gridPos) {
+        // インフラカテゴリの施設のみドラッグ敷設を許可
+        const facilityData = FACILITY_DATA[selectedFacilityType];
+        if (facilityData.category === 'infrastructure') {
+          setIsPlacingFacility(true);
+          setDragStartTile(gridPos);
+          setDragEndTile(gridPos);
+        } 
+        else {
+          handleTileClick(gridPos.x, gridPos.y);
+        }
+      }
+    }
+    // 右クリックでカメラドラッグ&敷設キャンセル
+    else if (e.button === 2) {
+      if (isPlacingFacility) {
+        setIsPlacingFacility(false);
+        setDragStartTile(null);
+        setDragEndTile(null);
+      }
       e.preventDefault();
       setIsDragging(true);
       setDragStart({ x: e.clientX, y: e.clientY });
@@ -173,8 +239,43 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // マウス座標からグリッド座標への変換
+  const mouseToGrid = (mouseX: number, mouseY: number, element: HTMLElement): Position | null => {
+    const rect = element.getBoundingClientRect();
+    const relativeX = mouseX - rect.left;
+    const relativeY = mouseY - rect.top;
+    
+    const gridPos = screenToGrid(
+      relativeX, 
+      relativeY, 
+      camera.x, 
+      camera.y,
+      MAP_OFFSET_X,
+      MAP_OFFSET_Y
+    );
+    
+    if (gridPos.x >= 0 && gridPos.x < size.width && 
+        gridPos.y >= 0 && gridPos.y < size.height) {
+      return gridPos;
+    }
+    
+    return null;
+  };
+
   // マウスムーブ処理
   const handleMouseMove = (e: React.MouseEvent) => {
+    const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+    // 施設敷設ドラッグ中
+  
+    if (isPlacingFacility && dragStartTile && gridPos) {
+      setDragEndTile(gridPos);
+      return;
+    }
+    
+    if (selectedFacilityType && gridPos) {
+      debouncedSetHover(gridPos);
+    }
+
     if (!isDragging) return;
 
     const deltaX = e.clientX - dragStart.x;
@@ -193,9 +294,46 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   // マウスアップ処理
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    // 施設敷設の確定
+    if (isPlacingFacility && dragStartTile && dragEndTile) {
+      const dx = Math.abs(dragEndTile.x - dragStartTile.x);
+      const dy = Math.abs(dragEndTile.y - dragStartTile.y);
+      
+      // X軸方向
+      if (dx > dy) {
+        const startX = Math.min(dragStartTile.x, dragEndTile.x);
+        const endX = Math.max(dragStartTile.x, dragEndTile.x);
+        const y = dragStartTile.y;
+        
+        for (let x = startX; x <= endX; x++) {
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            handleTileClick(x, y);
+          }
+        }
+      }
+      // Y軸方向
+      else {
+        const startY = Math.min(dragStartTile.y, dragEndTile.y);
+        const endY = Math.max(dragStartTile.y, dragEndTile.y);
+        const x = dragStartTile.x;
+        
+        for (let y = startY; y <= endY; y++) {
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            handleTileClick(x, y);
+          }
+        }
+      }
+      
+      setIsPlacingFacility(false);
+      setDragStartTile(null);
+      setDragEndTile(null);
+      return;
+    }
+    
+    // カメラドラッグの終了（既存の処理）
     setIsDragging(false);
-  };  
+  };
 
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
@@ -213,6 +351,28 @@ export const Grid: React.FC<GridProps> = ({
   }, [facilities]);
 
   const getPreviewStatus = React.useCallback((x: number, y: number) => {
+    const tileKey = `${x}-${y}`;
+  
+    // ドラッグ範囲内のプレビュー
+    if (isPlacingFacility && dragRange.has(tileKey)) {
+      if (!selectedFacilityType) return null;
+      
+      const facilityData = FACILITY_DATA[selectedFacilityType];
+
+      if (facilityData.category !== 'infrastructure') return null;
+
+      if (money < facilityData.cost) {
+        return 'insufficient-funds';
+      }
+      if (facilityMap.has(tileKey)) {
+        return 'occupied';
+      }
+      return 'valid';
+    }
+
+    // ドラッグ中はホバーによるプレビューを無効にする
+    if (isPlacingFacility) return null;
+
     if (!selectedFacilityType || !hoveredTile) return null;
     
     // ホバー中心から離れすぎてたら計算しない
@@ -222,21 +382,18 @@ export const Grid: React.FC<GridProps> = ({
     
     if (distance > maxDistance) return null;
 
-    const tileKey = `${x}-${y}`;
     if (!previewTiles.has(tileKey)) return null;
 
-      // 資金不足チェック
-      if (money < facilityData.cost) {
-        return 'insufficient-funds';
-      }
-      
-      // 既存施設チェック
-      if (facilityMap.has(tileKey)) {
-        return 'occupied';
-      }
-
-      return 'valid';
-    }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money]);
+    // 資金不足チェック
+    if (money < facilityData.cost) {
+      return 'insufficient-funds';
+    }
+    // 既存施設チェック
+    if (facilityMap.has(tileKey)) {
+      return 'occupied';
+    }
+    return 'valid';
+  }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange]);
 
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
