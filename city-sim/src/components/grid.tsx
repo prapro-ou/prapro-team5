@@ -502,6 +502,9 @@ export const Grid: React.FC<GridProps> = ({
 
         // z-indexの計算
         const baseZ = (y * 100) + x;
+
+        // 施設中心判定
+        const isCenter = facility && facility.position.x === x && facility.position.y === y;
           
         return (
           <div key={`${x}-${y}`} className="absolute">
