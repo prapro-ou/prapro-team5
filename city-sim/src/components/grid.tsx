@@ -507,7 +507,30 @@ export const Grid: React.FC<GridProps> = ({
         const isCenter = facility && facility.position.x === x && facility.position.y === y;
           
         return (
-          <div key={`${x}-${y}`} className="absolute">
+          <div 
+            key={`${x}-${y}`} 
+            className="absolute"
+            style={{
+              width: '100%',
+              height: '100%'
+            }}
+          >
+            {/* 施設画像表示 */}
+            {isCenter && (
+              <img
+                src={`images/buildings/test_building.png`}
+                alt="test"
+                style={{
+                  position: 'absolute',
+                  left: `${isoPos.x + MAP_OFFSET_X - 216 / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - 179 + 33}px`,
+                  width: '216px',
+                  height: '179px',
+                  zIndex: Math.floor(baseZ + 1000),
+                  border: '1px solid red',
+                }}
+              />
+            )}
             {/* トップ面 */}
             <div
               className={`
