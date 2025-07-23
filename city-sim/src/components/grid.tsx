@@ -17,7 +17,8 @@ interface GridProps {
   selectedPosition?: Position | null;
   facilities?: Facility[]; // 施設配置
   selectedFacilityType?: FacilityType | null; // 選択中の施設タイプ
-  money?: number; 
+  money?: number;
+  onSelectParkCenter?: (pos: Position) => void; // 公園中心選択用
 }
 
 // Gridコンポーネント
@@ -28,6 +29,7 @@ export const Grid: React.FC<GridProps> = ({
   facilities = [],
   selectedFacilityType = null,
   money = 0,
+  onSelectParkCenter,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
   // ビューポート
@@ -162,11 +164,6 @@ export const Grid: React.FC<GridProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
-  const handleTileClick = (x: number, y: number) => {
-    if (onTileClick) {
-      onTileClick({ x, y });
-    }
-  };
 
   // ドラッグ範囲の計算
   const dragRange = React.useMemo(() => {
@@ -454,6 +451,7 @@ export const Grid: React.FC<GridProps> = ({
       case 'industrial': return 'bg-yellow-500';
       case 'road': return 'bg-gray-900';
       case 'city_hall': return 'bg-purple-500';
+      case 'park': return 'bg-lime-400'; // 公園は明るい緑
       default: return 'bg-gray-700';
     }
   }
@@ -465,6 +463,60 @@ export const Grid: React.FC<GridProps> = ({
       case 'insufficient-funds': return 'bg-red-300 opacity-70';
       case 'out-of-bounds': return 'bg-red-500 opacity-70';
       default: return '';
+    }
+  };
+
+  // 公園設置プレビュー時 or 設置済み公園選択時の範囲色付け
+  let parkEffectTiles = new Set<string>();
+  // プレビュー中
+  if (selectedFacilityType === 'park' && hoveredTile) {
+    const effectRadius = FACILITY_DATA['park'].effectRadius ?? 0;
+    for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+      for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= effectRadius) {
+          const x = hoveredTile.x + dx;
+          const y = hoveredTile.y + dy;
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            parkEffectTiles.add(`${x}-${y}`);
+          }
+        }
+      }
+    }
+  }
+  // 設置済み公園が選択状態のとき（selectedPositionが公園中心）
+  else if (selectedPosition) {
+    // 選択位置が公園中心かどうか判定
+    const selectedPark = facilities.find(f => f.type === 'park' && f.position.x === selectedPosition.x && f.position.y === selectedPosition.y);
+    if (selectedPark) {
+      const effectRadius = FACILITY_DATA['park'].effectRadius ?? 0;
+      for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+        for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist <= effectRadius) {
+            const x = selectedPark.position.x + dx;
+            const y = selectedPark.position.y + dy;
+            if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+              parkEffectTiles.add(`${x}-${y}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // タイルクリック時の内部処理
+  const handleTileClickInternal = (x: number, y: number) => {
+    // 設置済み公園をクリックしたら、その公園の中心を選択状態にする
+    const clickedFacility = facilities.find(f =>
+      f.type === 'park' && f.occupiedTiles.some(t => t.x === x && t.y === y)
+    );
+    if (clickedFacility && onSelectParkCenter) {
+      onSelectParkCenter(clickedFacility.position);
+      return;
+    }
+    if (onTileClick) {
+      onTileClick({ x, y });
     }
   };
 
@@ -502,14 +554,17 @@ export const Grid: React.FC<GridProps> = ({
 
         // z-indexの計算
         const baseZ = (y * 100) + x;
-          
+
+        // 公園効果範囲の色付け（プレビュー時のみ）
+        const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
+        const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
         return (
           <div key={`${x}-${y}`} className="absolute">
             {/* トップ面 */}
             <div
               className={`
                 absolute cursor-pointer border border-gray-500
-                ${previewColor || facilityColor}
+                ${parkEffectClass} ${previewColor || facilityColor}
                 ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
               `}
               style={{
@@ -520,15 +575,15 @@ export const Grid: React.FC<GridProps> = ({
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
                 zIndex: Math.floor(baseZ + 30),
               }}
-              onClick={() => handleTileClick(x, y)}
+              onClick={() => handleTileClickInternal(x, y)}
               onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
               onMouseLeave={() => debouncedSetHover(null)}
               title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
             />
           </div>
         );
-        })}
-      </div>
+      })}
     </div>
+  </div>
   );
 };

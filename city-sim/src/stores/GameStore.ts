@@ -4,8 +4,9 @@ import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
+import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 // --- 月次処理の型定義 ---
-type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
+export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
 interface GameStore {
   stats: GameStats;
@@ -172,8 +173,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
-    processEconomicCycle, 
-    
+    processEconomicCycle,
+    applyParkSatisfactionPenalty,
     // 他の月次タスクをここに追加可能
   ],
   levelUpMessage: null,
