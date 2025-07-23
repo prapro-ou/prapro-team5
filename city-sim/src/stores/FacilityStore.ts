@@ -113,12 +113,19 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         occupiedTiles.push({ x: position.x + dx, y: position.y + dy });
       }
     }
+
+    let variantIndex = 0;
+    // 現在は画像が一枚しかないので、variantIndexは0固定
+    // if (facilityData.imgPaths && facilityData.imgPaths.length > 1) {
+    //   variantIndex = Math.floor(Math.random() * facilityData.imgPaths.length);
+    // }
     
     return {
       id: `${type}_${position.x}_${position.y}_${Date.now()}`,
       type,
       position,
-      occupiedTiles
+      occupiedTiles,
+      variantIndex,
     };
   }
 }));
