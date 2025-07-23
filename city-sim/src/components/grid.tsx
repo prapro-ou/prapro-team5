@@ -522,10 +522,10 @@ export const Grid: React.FC<GridProps> = ({
                 alt="test"
                 style={{
                   position: 'absolute',
-                  left: `${isoPos.x + MAP_OFFSET_X - 216 / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - 179 + 33}px`,
-                  width: '216px',
-                  height: '179px',
+                  left: `${isoPos.x + MAP_OFFSET_X - 96 / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - 79 + 32}px`,
+                  width: '96px',
+                  height: '79px',
                   zIndex: Math.floor(baseZ + 1000),
                 }}
               />
