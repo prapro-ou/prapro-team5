@@ -518,7 +518,13 @@ export const Grid: React.FC<GridProps> = ({
             {/* 施設画像表示 */}
             {isCenter && (
               <img
-                src={`images/buildings/test_building.png`}
+                src={
+                  facility?.type && facility?.variantIndex !== undefined && FACILITY_DATA[facility.type].imgPaths
+                    ? FACILITY_DATA[facility.type].imgPaths![
+                        facility.variantIndex % FACILITY_DATA[facility.type].imgPaths!.length
+                      ]
+                    : ""
+                }
                 alt="test"
                 style={{
                   position: 'absolute',
