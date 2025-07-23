@@ -23,7 +23,7 @@ export interface FacilityInfo {
   maintenanceCost: number;  // 維持費
   description: string;
   category: CategoryKey;    // カテゴリ
-  imgPath?: string;         // 画像パス
+  imgPaths: string[];       // 画像パス
   satisfaction: number;
   // --- 経済サイクル用プロパティ ---
   requiredWorkforce?: number; // 必要労働力（工業・商業用）
