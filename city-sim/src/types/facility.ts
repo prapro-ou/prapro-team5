@@ -23,7 +23,8 @@ export interface FacilityInfo {
   maintenanceCost: number;  // 維持費
   description: string;
   category: CategoryKey;    // カテゴリ
-  imgPaths?: string[];       // 画像パス（バリエーションのため複数枚指定可能）
+  imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
+  imgSizes?: { width: number; height: number }[]; // 画像サイズ
   satisfaction: number;
   // --- 経済サイクル用プロパティ ---
   requiredWorkforce?: number; // 必要労働力（工業・商業用）
@@ -53,6 +54,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '住宅地',
     category: 'residential',
     imgPaths: ['images/buildings/residential.png'],
+    imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
   },
   commercial: {
@@ -64,6 +66,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '商業地',
     category: 'commercial',
     imgPaths: ['images/buildings/commercial.png'],
+    imgSizes: [{ width: 96, height: 68 }],
     satisfaction: 7,
     requiredWorkforce: 5, // 仮値
     consumeGoods: 5,      // 1週で消費する製品数（仮値）
@@ -77,6 +80,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '工業地',
     category: 'industrial',
     imgPaths: ['images/buildings/industrial.png'],
+    imgSizes: [{ width: 96, height: 91 }],
     satisfaction: -5,
     requiredWorkforce: 200, // 仮値
     produceGoods: 10,      // 1週で生産する製品数（仮値）
