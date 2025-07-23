@@ -38,6 +38,7 @@ export interface Facility {
   type: FacilityType;
   position: Position;
   occupiedTiles: Position[]; // 施設が占有するタイル
+  variantIndex: number;      // バリエーション用のインデックス
 }
 
 // 施設のマスターデータ
