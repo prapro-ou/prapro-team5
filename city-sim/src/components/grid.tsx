@@ -503,6 +503,15 @@ export const Grid: React.FC<GridProps> = ({
         // z-indexの計算
         const baseZ = (y * 100) + x;
 
+        let imgPath = "";
+        let imgSize = { width: 96, height: 79 };
+
+        if (facility) {
+          const facilityData = FACILITY_DATA[facility.type];
+          const idx = facility.variantIndex ?? 0;
+          imgPath = facilityData.imgPaths?.[idx] ?? "";
+          imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
+        }
         // 施設中心判定
         const isCenter = facility && facility.position.x === x && facility.position.y === y;
           
@@ -518,20 +527,14 @@ export const Grid: React.FC<GridProps> = ({
             {/* 施設画像表示 */}
             {isCenter && (
               <img
-                src={
-                  facility?.type && facility?.variantIndex !== undefined && FACILITY_DATA[facility.type].imgPaths
-                    ? FACILITY_DATA[facility.type].imgPaths![
-                        facility.variantIndex % FACILITY_DATA[facility.type].imgPaths!.length
-                      ]
-                    : ""
-                }
-                alt="test"
+                src={imgPath}
+                alt={facility.type}
                 style={{
                   position: 'absolute',
-                  left: `${isoPos.x + MAP_OFFSET_X - 96 / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - 79 + 32}px`,
-                  width: '96px',
-                  height: '79px',
+                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
+                  width: `${imgSize.width}px`,
+                  height: `${imgSize.height}px`,
                   zIndex: Math.floor(baseZ + 1000),
                 }}
               />
