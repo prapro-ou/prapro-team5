@@ -527,7 +527,6 @@ export const Grid: React.FC<GridProps> = ({
                   width: '216px',
                   height: '179px',
                   zIndex: Math.floor(baseZ + 1000),
-                  border: '1px solid red',
                 }}
               />
             )}
