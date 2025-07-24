@@ -628,20 +628,39 @@ export const Grid: React.FC<GridProps> = ({
                 }}
               />
             )}
-            {isCenter && facility.type === 'road' && (
-              <img
-                src={imgPath}
-                alt={facility.type}
-                style={{
-                  position: 'absolute',
-                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
-                  width: `${imgSize.width}px`,
-                  height: `${imgSize.height}px`,
-                  zIndex: Math.floor(baseZ + 500),
-                }}
-              />
-            )}
+            {isCenter && facility.type === 'road' && (() => {
+              const connection = getRoadConnectionType(facilityMap, x, y);
+              let transform = undefined;
+              switch (connection) {
+                case 'horizontal':
+                case 'left':
+                case 'right':
+                case 'up':
+                case 'down':
+                  transform = 'scaleX(-1)';
+                  break;
+                case 'vertical':
+                  break;
+                default:
+                  break;
+              }
+
+              return (
+                <img
+                  src={imgPath}
+                  alt={facility.type}
+                  style={{
+                    position: 'absolute',
+                    left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                    top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                    width: `${imgSize.width}px`,
+                    height: `${imgSize.height}px`,
+                    zIndex: Math.floor(baseZ + 500),
+                    transform,
+                  }}
+                />
+              );
+            })()}
             {/* トップ面 */}
             <div
               className={`
