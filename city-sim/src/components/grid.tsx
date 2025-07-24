@@ -532,6 +532,37 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // 道路の接続判定
+  function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
+    const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
+    const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
+    const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
+    const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
+
+    if (left && right && up && down) {
+      return 'cross';
+    }
+    if (left && right) {
+      return 'horizontal';
+    }
+    if (up && down) {
+      return 'vertical';
+    }
+    if (left) {
+      return 'left';
+    }
+    if (right) {
+      return 'right';
+    }
+    if (up) {
+      return 'up';
+    }
+    if (down) {
+      return 'down';
+    }
+    return 'none';
+  }
+
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -565,13 +596,80 @@ export const Grid: React.FC<GridProps> = ({
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
-        const baseZ = (y * 100) + x;
+        const baseZ = (x + y) * 100 + x;
+        
+        let imgPath = "";
+        let imgSize = { width: 96, height: 79 };
+        let size = 3;
+
+        if (facility) {
+          const facilityData = FACILITY_DATA[facility.type];
+          const idx = facility.variantIndex ?? 0;
+          size = facilityData.size;
+          imgPath = facilityData.imgPaths?.[idx] ?? "";
+          imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
+        }
+        // 施設中心判定
+        const isCenter = facility && facility.position.x === x && facility.position.y === y;
 
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
         const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
         return (
-          <div key={`${x}-${y}`} className="absolute">
+          <div 
+            key={`${x}-${y}`} 
+            className="absolute"
+            style={{
+              width: '100%',
+              height: '100%'
+            }}
+          >
+            {/* 施設画像表示 */}
+            {isCenter && facility.type !== 'road' && (
+              <img
+                src={imgPath}
+                alt={facility.type}
+                style={{
+                  position: 'absolute',
+                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                  width: `${imgSize.width}px`,
+                  height: `${imgSize.height}px`,
+                  zIndex: Math.floor(baseZ + 500),
+                }}
+              />
+            )}
+            {isCenter && facility.type === 'road' && (() => {
+              const connection = getRoadConnectionType(facilityMap, x, y);
+              let transform = undefined;
+              switch (connection) {
+                case 'horizontal':
+                case 'left':
+                case 'right':
+                  transform = 'scaleX(-1)';
+                  break;
+                case 'vertical':
+                  break;
+                default:
+                  break;
+              }
+
+              return (
+                <img
+                  src={imgPath}
+                  alt={facility.type}
+                  style={{
+                    position: 'absolute',
+                    left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                    top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                    width: `${imgSize.width}px`,
+                    height: `${imgSize.height}px`,
+                    zIndex: Math.floor(baseZ + 500),
+                    transform,
+                  }}
+                />
+              );
+            })()}
             {/* トップ面 */}
             <div
               className={`
