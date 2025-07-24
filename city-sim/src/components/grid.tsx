@@ -444,7 +444,7 @@ export const Grid: React.FC<GridProps> = ({
   }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   const getFacilityColor = (facility?: Facility) => {
-    if (!facility) return 'bg-gray-700'; // デフォルトの色
+    if (!facility) return 'bg-gray-700'; 
     switch (facility.type) {
       case 'residential': return 'bg-green-500';
       case 'commercial': return 'bg-blue-500';
@@ -456,7 +456,19 @@ export const Grid: React.FC<GridProps> = ({
     }
   }
 
-  const getPreviewColor = (status: string | null) => {
+  // プレビュー時の色を施設タイプごとに変更
+  const getPreviewColor = (status: string | null, facilityType?: FacilityType | null) => {
+    if (status === 'valid') {
+      switch (facilityType) {
+        case 'residential': return 'bg-green-300 opacity-70';
+        case 'commercial': return 'bg-blue-300 opacity-70';
+        case 'industrial': return 'bg-yellow-200 opacity-70';
+        case 'road': return 'bg-gray-400 opacity-70';
+        case 'city_hall': return 'bg-purple-300 opacity-70';
+        case 'park': return 'bg-lime-200 opacity-70';
+        default: return 'bg-green-300 opacity-70';
+      }
+    }
     switch (status) {
       case 'valid': return 'bg-green-300 opacity-70';
       case 'occupied': return 'bg-red-300 opacity-70';
@@ -580,7 +592,7 @@ export const Grid: React.FC<GridProps> = ({
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
         const previewStatus = getPreviewStatus(x, y);
-        const previewColor = getPreviewColor(previewStatus);
+        const previewColor = getPreviewColor(previewStatus, selectedFacilityType);
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
@@ -599,11 +611,10 @@ export const Grid: React.FC<GridProps> = ({
         }
         // 施設中心判定
         const isCenter = facility && facility.position.x === x && facility.position.y === y;
-          
+
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
         const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
-
         return (
           <div 
             key={`${x}-${y}`} 
