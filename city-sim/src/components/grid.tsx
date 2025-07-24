@@ -501,8 +501,8 @@ export const Grid: React.FC<GridProps> = ({
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
-        const baseZ = (y * 100) + x;
-
+        const baseZ = (x + y) * 100 + x;
+        
         let imgPath = "";
         let imgSize = { width: 96, height: 79 };
 
@@ -535,7 +535,7 @@ export const Grid: React.FC<GridProps> = ({
                   top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
                   width: `${imgSize.width}px`,
                   height: `${imgSize.height}px`,
-                  zIndex: Math.floor(baseZ + 1000),
+                  zIndex: Math.floor(baseZ + 500),
                 }}
               />
             )}
