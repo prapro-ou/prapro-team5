@@ -17,8 +17,8 @@ export function BGMPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [sfxVolume, setSfxVolume] = useState(0.7);
-  // SEがミュートされているかを管理する状態を追加
-  const [isSfxMuted, setIsSfxMuted] = useState(false);
+  // SEがミュートされているかを管理する状態を追加（初期値trueでミュート）
+  const [isSfxMuted, setIsSfxMuted] = useState(true);
 
   // --- Effects ---
   useEffect(() => {
