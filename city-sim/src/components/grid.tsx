@@ -520,6 +520,37 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  // 道路の接続判定
+  function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
+    const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
+    const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
+    const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
+    const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
+
+    if (left && right && up && down) {
+      return 'cross';
+    }
+    if (left && right) {
+      return 'horizontal';
+    }
+    if (up && down) {
+      return 'vertical';
+    }
+    if (left) {
+      return 'left';
+    }
+    if (right) {
+      return 'right';
+    }
+    if (up) {
+      return 'up';
+    }
+    if (down) {
+      return 'down';
+    }
+    return 'none';
+  }
+
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
