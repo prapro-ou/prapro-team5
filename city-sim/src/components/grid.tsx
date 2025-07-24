@@ -291,7 +291,7 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   // マウスアップ処理
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = () => {
     // 施設敷設の確定
     if (isPlacingFacility && dragStartTile && dragEndTile) {
       const dx = Math.abs(dragEndTile.x - dragStartTile.x);
@@ -392,7 +392,7 @@ export const Grid: React.FC<GridProps> = ({
     return 'valid';
   }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange]);
 
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const debouncedSetHover = React.useCallback((position: Position | null) => {
     if (timeoutRef.current) {
@@ -444,7 +444,7 @@ export const Grid: React.FC<GridProps> = ({
   }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   const getFacilityColor = (facility?: Facility) => {
-    if (!facility) return 'bg-gray-700'; 
+    if (!facility) return 'bg-gray-700'; // デフォルトの色
     switch (facility.type) {
       case 'residential': return 'bg-green-500';
       case 'commercial': return 'bg-blue-500';
@@ -469,6 +469,7 @@ export const Grid: React.FC<GridProps> = ({
         default: return 'bg-green-300 opacity-70';
       }
     }
+  
     switch (status) {
       case 'valid': return 'bg-green-300 opacity-70';
       case 'occupied': return 'bg-red-300 opacity-70';
@@ -532,7 +533,6 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
-  // 道路の接続判定
   function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
     const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
     const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
@@ -611,10 +611,11 @@ export const Grid: React.FC<GridProps> = ({
         }
         // 施設中心判定
         const isCenter = facility && facility.position.x === x && facility.position.y === y;
-
+          
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
         const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
+
         return (
           <div 
             key={`${x}-${y}`} 

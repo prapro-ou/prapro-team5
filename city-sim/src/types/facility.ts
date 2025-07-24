@@ -121,7 +121,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 20,
     description: '周囲の住宅の満足度が下がるのを防ぐ施設',
     category: 'government', // 公共カテゴリに変更
-    imgPath: 'images/buildings/park.png',
+    imgPaths: ['images/buildings/park.png'],
+    imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
   }
