@@ -1,6 +1,6 @@
 import type { Position } from "./grid";
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall";
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park";
 
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
@@ -8,8 +8,8 @@ export const FACILITY_CATEGORIES = {
   commercial: { name: "商業" },
   industrial: { name: "工業" },
   infrastructure: { name: "インフラ" },
-  government: { name: "公共" }, // 新しいカテゴリ
-  others: { name: "その他" }
+  government: { name: "公共" }, 
+  others: { name: "その他" },
 } as const;
 
 export type CategoryKey = keyof typeof FACILITY_CATEGORIES;
@@ -30,6 +30,8 @@ export interface FacilityInfo {
   requiredWorkforce?: number; // 必要労働力（工業・商業用）
   produceGoods?: number;      // 生産量（工業用）
   consumeGoods?: number;      // 消費量（商業用）
+  // --- 公園など範囲効果用 ---
+  effectRadius?: number;      // 効果範囲（公園など）
 }
 
 
@@ -40,6 +42,8 @@ export interface Facility {
   position: Position;
   occupiedTiles: Position[]; // 施設が占有するタイル
   variantIndex: number;      // バリエーション用のインデックス
+  // 公園など範囲効果用
+  effectRadius?: number;
 }
 
 // 施設のマスターデータ
@@ -105,5 +109,18 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
     satisfaction: 10, // 設置すると満足度が少し上がる
+  },
+  // 公園のデータを追加
+  park: {
+    type: 'park',
+    name: '公園',
+    size: 3,
+    cost: 300,
+    maintenanceCost: 20,
+    description: '周囲の住宅の満足度が下がるのを防ぐ施設',
+    category: 'government', // 公共カテゴリに変更
+    imgPath: 'images/buildings/park.png',
+    satisfaction: 5,
+    effectRadius: 13 //13マス範囲に効果
   }
 }

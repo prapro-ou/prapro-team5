@@ -107,7 +107,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     const facilityData = FACILITY_DATA[type];
     const radius = Math.floor(facilityData.size / 2);
     const occupiedTiles: Position[] = [];
-    
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
         occupiedTiles.push({ x: position.x + dx, y: position.y + dy });
@@ -121,11 +120,18 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     // }
     
     return {
+    // 公園の場合は effectRadius を付与
+    const base = {
       id: `${type}_${position.x}_${position.y}_${Date.now()}`,
       type,
       position,
       occupiedTiles,
       variantIndex,
     };
+    if (facilityData.effectRadius !== undefined) {
+      // effectRadiusはFacilityInfo型に追加されている前提
+      return { ...base, effectRadius: facilityData.effectRadius };
+    }
+    return base;
   }
 }));
