@@ -97,6 +97,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 10,
     description: '道路',
     category: 'infrastructure',
+    imgPaths: ['images/buildings/road_right.png'],
+    imgSizes: [{ width: 32, height: 16 }],
     satisfaction: 0,
   },
   // 市役所のデータを追加
