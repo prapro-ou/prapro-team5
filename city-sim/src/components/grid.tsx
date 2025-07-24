@@ -553,13 +553,48 @@ export const Grid: React.FC<GridProps> = ({
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
-        const baseZ = (y * 100) + x;
+        const baseZ = (x + y) * 100 + x;
+        
+        let imgPath = "";
+        let imgSize = { width: 96, height: 79 };
 
+        if (facility) {
+          const facilityData = FACILITY_DATA[facility.type];
+          const idx = facility.variantIndex ?? 0;
+          imgPath = facilityData.imgPaths?.[idx] ?? "";
+          imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
+        }
+        // 施設中心判定
+        const isCenter = facility && facility.position.x === x && facility.position.y === y;
+          
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
         const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
+
         return (
-          <div key={`${x}-${y}`} className="absolute">
+          <div 
+            key={`${x}-${y}`} 
+            className="absolute"
+            style={{
+              width: '100%',
+              height: '100%'
+            }}
+          >
+            {/* 施設画像表示 */}
+            {isCenter && (
+              <img
+                src={imgPath}
+                alt={facility.type}
+                style={{
+                  position: 'absolute',
+                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
+                  width: `${imgSize.width}px`,
+                  height: `${imgSize.height}px`,
+                  zIndex: Math.floor(baseZ + 500),
+                }}
+              />
+            )}
             {/* トップ面 */}
             <div
               className={`
