@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
+import { playBuildSound } from './components/SoundSettings';
 
 function App() {
   // UI状態
@@ -81,6 +82,8 @@ function App() {
     // 施設の配置
     const newFacility = createFacility(position, type);
     addFacility(newFacility);
+    // 設置音を鳴らす
+    playBuildSound();
     // もし設置した施設が住宅なら、人口を100人増やす
     if (type === 'residential') {
       addPopulation(100);

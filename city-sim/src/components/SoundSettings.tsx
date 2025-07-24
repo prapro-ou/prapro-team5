@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+// 設置音グローバル関数をexport
+export let playBuildSound = () => {};
 // TbBellOffアイコンを追加
 import { TbMusic, TbMusicOff, TbVolume, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
 import clickSfxSrc from '../assets/click.mp3';
+import buildSfxSrc from '../assets/build.mp3';
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
@@ -14,8 +17,8 @@ export function BGMPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [sfxVolume, setSfxVolume] = useState(0.7);
-  // SEがミュートされているかを管理する状態を追加
-  const [isSfxMuted, setIsSfxMuted] = useState(false);
+  // SEがミュートされているかを管理する状態を追加（初期値trueでミュート）
+  const [isSfxMuted, setIsSfxMuted] = useState(true);
 
   // --- Effects ---
   useEffect(() => {
@@ -88,6 +91,16 @@ export function BGMPlayer() {
   const handleSfxVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSfxVolume(Number(e.target.value));
   };
+
+  // 設置音再生関数を最新の状態でグローバルに代入
+  useEffect(() => {
+    playBuildSound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(buildSfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
+    };
+  }, [isSfxMuted, sfxVolume]);
 
   // --- Render ---
   return (
