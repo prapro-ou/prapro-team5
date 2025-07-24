@@ -635,8 +635,6 @@ export const Grid: React.FC<GridProps> = ({
                 case 'horizontal':
                 case 'left':
                 case 'right':
-                case 'up':
-                case 'down':
                   transform = 'scaleX(-1)';
                   break;
                 case 'vertical':
