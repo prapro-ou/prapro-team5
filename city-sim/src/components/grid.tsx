@@ -506,7 +506,7 @@ export const Grid: React.FC<GridProps> = ({
   }
 
   // タイルクリック時の内部処理
-  const handleTileClickInternal = (x: number, y: number) => {
+  const handleTileClick = (x: number, y: number) => {
     // 設置済み公園をクリックしたら、その公園の中心を選択状態にする
     const clickedFacility = facilities.find(f =>
       f.type === 'park' && f.occupiedTiles.some(t => t.x === x && t.y === y)
@@ -575,7 +575,7 @@ export const Grid: React.FC<GridProps> = ({
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
                 zIndex: Math.floor(baseZ + 30),
               }}
-              onClick={() => handleTileClickInternal(x, y)}
+              onClick={() => handleTileClick(x, y)}
               onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
               onMouseLeave={() => debouncedSetHover(null)}
               title={facility ? `${facility.type} (${x}, ${y})` : `空地 (${x}, ${y})`}
