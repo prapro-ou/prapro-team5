@@ -557,10 +557,12 @@ export const Grid: React.FC<GridProps> = ({
         
         let imgPath = "";
         let imgSize = { width: 96, height: 79 };
+        let size = 3;
 
         if (facility) {
           const facilityData = FACILITY_DATA[facility.type];
           const idx = facility.variantIndex ?? 0;
+          size = facilityData.size;
           imgPath = facilityData.imgPaths?.[idx] ?? "";
           imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
         }
@@ -588,7 +590,7 @@ export const Grid: React.FC<GridProps> = ({
                 style={{
                   position: 'absolute',
                   left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
                   width: `${imgSize.width}px`,
                   height: `${imgSize.height}px`,
                   zIndex: Math.floor(baseZ + 500),
