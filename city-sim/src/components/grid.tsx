@@ -614,7 +614,21 @@ export const Grid: React.FC<GridProps> = ({
             }}
           >
             {/* 施設画像表示 */}
-            {isCenter && (
+            {isCenter && facility.type !== 'road' && (
+              <img
+                src={imgPath}
+                alt={facility.type}
+                style={{
+                  position: 'absolute',
+                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                  width: `${imgSize.width}px`,
+                  height: `${imgSize.height}px`,
+                  zIndex: Math.floor(baseZ + 500),
+                }}
+              />
+            )}
+            {isCenter && facility.type === 'road' && (
               <img
                 src={imgPath}
                 alt={facility.type}
