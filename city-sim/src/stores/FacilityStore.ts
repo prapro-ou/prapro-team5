@@ -119,7 +119,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     //   variantIndex = Math.floor(Math.random() * facilityData.imgPaths.length);
     // }
     
-    return {
     // 公園の場合は effectRadius を付与
     const base = {
       id: `${type}_${position.x}_${position.y}_${Date.now()}`,
