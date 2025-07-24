@@ -444,7 +444,7 @@ export const Grid: React.FC<GridProps> = ({
   }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   const getFacilityColor = (facility?: Facility) => {
-    if (!facility) return 'bg-gray-700'; // デフォルトの色
+    if (!facility) return 'bg-gray-700'; 
     switch (facility.type) {
       case 'residential': return 'bg-green-500';
       case 'commercial': return 'bg-blue-500';
