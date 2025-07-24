@@ -291,7 +291,7 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   // マウスアップ処理
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = () => {
     // 施設敷設の確定
     if (isPlacingFacility && dragStartTile && dragEndTile) {
       const dx = Math.abs(dragEndTile.x - dragStartTile.x);
@@ -392,7 +392,7 @@ export const Grid: React.FC<GridProps> = ({
     return 'valid';
   }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange]);
 
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const debouncedSetHover = React.useCallback((position: Position | null) => {
     if (timeoutRef.current) {
@@ -444,7 +444,7 @@ export const Grid: React.FC<GridProps> = ({
   }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   const getFacilityColor = (facility?: Facility) => {
-    if (!facility) return 'bg-gray-700'; 
+    if (!facility) return 'bg-gray-700'; // デフォルトの色
     switch (facility.type) {
       case 'residential': return 'bg-green-500';
       case 'commercial': return 'bg-blue-500';
@@ -456,19 +456,7 @@ export const Grid: React.FC<GridProps> = ({
     }
   }
 
-  // プレビュー時の色を施設タイプごとに変更
-  const getPreviewColor = (status: string | null, facilityType?: FacilityType | null) => {
-    if (status === 'valid') {
-      switch (facilityType) {
-        case 'residential': return 'bg-green-300 opacity-70';
-        case 'commercial': return 'bg-blue-300 opacity-70';
-        case 'industrial': return 'bg-yellow-200 opacity-70';
-        case 'road': return 'bg-gray-400 opacity-70';
-        case 'city_hall': return 'bg-purple-300 opacity-70';
-        case 'park': return 'bg-lime-200 opacity-70';
-        default: return 'bg-green-300 opacity-70';
-      }
-    }
+  const getPreviewColor = (status: string | null) => {
     switch (status) {
       case 'valid': return 'bg-green-300 opacity-70';
       case 'occupied': return 'bg-red-300 opacity-70';
@@ -532,37 +520,6 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
-  // 道路の接続判定
-  function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
-    const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
-    const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
-    const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
-    const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
-
-    if (left && right && up && down) {
-      return 'cross';
-    }
-    if (left && right) {
-      return 'horizontal';
-    }
-    if (up && down) {
-      return 'vertical';
-    }
-    if (left) {
-      return 'left';
-    }
-    if (right) {
-      return 'right';
-    }
-    if (up) {
-      return 'up';
-    }
-    if (down) {
-      return 'down';
-    }
-    return 'none';
-  }
-
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -592,7 +549,7 @@ export const Grid: React.FC<GridProps> = ({
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
         const previewStatus = getPreviewStatus(x, y);
-        const previewColor = getPreviewColor(previewStatus, selectedFacilityType);
+        const previewColor = getPreviewColor(previewStatus);
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
@@ -600,21 +557,20 @@ export const Grid: React.FC<GridProps> = ({
         
         let imgPath = "";
         let imgSize = { width: 96, height: 79 };
-        let size = 3;
 
         if (facility) {
           const facilityData = FACILITY_DATA[facility.type];
           const idx = facility.variantIndex ?? 0;
-          size = facilityData.size;
           imgPath = facilityData.imgPaths?.[idx] ?? "";
           imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
         }
         // 施設中心判定
         const isCenter = facility && facility.position.x === x && facility.position.y === y;
-
+          
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
         const parkEffectClass = isInParkEffect ? 'bg-lime-200 opacity-40' : '';
+
         return (
           <div 
             key={`${x}-${y}`} 
@@ -625,51 +581,20 @@ export const Grid: React.FC<GridProps> = ({
             }}
           >
             {/* 施設画像表示 */}
-            {isCenter && facility.type !== 'road' && (
+            {isCenter && (
               <img
                 src={imgPath}
                 alt={facility.type}
                 style={{
                   position: 'absolute',
                   left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
                   width: `${imgSize.width}px`,
                   height: `${imgSize.height}px`,
                   zIndex: Math.floor(baseZ + 500),
                 }}
               />
             )}
-            {isCenter && facility.type === 'road' && (() => {
-              const connection = getRoadConnectionType(facilityMap, x, y);
-              let transform = undefined;
-              switch (connection) {
-                case 'horizontal':
-                case 'left':
-                case 'right':
-                  transform = 'scaleX(-1)';
-                  break;
-                case 'vertical':
-                  break;
-                default:
-                  break;
-              }
-
-              return (
-                <img
-                  src={imgPath}
-                  alt={facility.type}
-                  style={{
-                    position: 'absolute',
-                    left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                    top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
-                    width: `${imgSize.width}px`,
-                    height: `${imgSize.height}px`,
-                    zIndex: Math.floor(baseZ + 500),
-                    transform,
-                  }}
-                />
-              );
-            })()}
             {/* トップ面 */}
             <div
               className={`
