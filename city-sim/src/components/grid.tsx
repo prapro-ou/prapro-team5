@@ -456,7 +456,20 @@ export const Grid: React.FC<GridProps> = ({
     }
   }
 
-  const getPreviewColor = (status: string | null) => {
+  // プレビュー時の色を施設タイプごとに変更
+  const getPreviewColor = (status: string | null, facilityType?: FacilityType | null) => {
+    if (status === 'valid') {
+      switch (facilityType) {
+        case 'residential': return 'bg-green-300 opacity-70';
+        case 'commercial': return 'bg-blue-300 opacity-70';
+        case 'industrial': return 'bg-yellow-200 opacity-70';
+        case 'road': return 'bg-gray-400 opacity-70';
+        case 'city_hall': return 'bg-purple-300 opacity-70';
+        case 'park': return 'bg-lime-200 opacity-70';
+        default: return 'bg-green-300 opacity-70';
+      }
+    }
+  
     switch (status) {
       case 'valid': return 'bg-green-300 opacity-70';
       case 'occupied': return 'bg-red-300 opacity-70';
@@ -520,6 +533,36 @@ export const Grid: React.FC<GridProps> = ({
     }
   };
 
+  function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
+    const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
+    const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
+    const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
+    const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
+
+    if (left && right && up && down) {
+      return 'cross';
+    }
+    if (left && right) {
+      return 'horizontal';
+    }
+    if (up && down) {
+      return 'vertical';
+    }
+    if (left) {
+      return 'left';
+    }
+    if (right) {
+      return 'right';
+    }
+    if (up) {
+      return 'up';
+    }
+    if (down) {
+      return 'down';
+    }
+    return 'none';
+  }
+
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -549,7 +592,7 @@ export const Grid: React.FC<GridProps> = ({
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
         const previewStatus = getPreviewStatus(x, y);
-        const previewColor = getPreviewColor(previewStatus);
+        const previewColor = getPreviewColor(previewStatus, selectedFacilityType);
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
@@ -557,10 +600,12 @@ export const Grid: React.FC<GridProps> = ({
         
         let imgPath = "";
         let imgSize = { width: 96, height: 79 };
+        let size = 3;
 
         if (facility) {
           const facilityData = FACILITY_DATA[facility.type];
           const idx = facility.variantIndex ?? 0;
+          size = facilityData.size;
           imgPath = facilityData.imgPaths?.[idx] ?? "";
           imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
         }
@@ -581,20 +626,51 @@ export const Grid: React.FC<GridProps> = ({
             }}
           >
             {/* 施設画像表示 */}
-            {isCenter && (
+            {isCenter && facility.type !== 'road' && (
               <img
                 src={imgPath}
                 alt={facility.type}
                 style={{
                   position: 'absolute',
                   left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 32}px`,
+                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
                   width: `${imgSize.width}px`,
                   height: `${imgSize.height}px`,
                   zIndex: Math.floor(baseZ + 500),
                 }}
               />
             )}
+            {isCenter && facility.type === 'road' && (() => {
+              const connection = getRoadConnectionType(facilityMap, x, y);
+              let transform = undefined;
+              switch (connection) {
+                case 'horizontal':
+                case 'left':
+                case 'right':
+                  transform = 'scaleX(-1)';
+                  break;
+                case 'vertical':
+                  break;
+                default:
+                  break;
+              }
+
+              return (
+                <img
+                  src={imgPath}
+                  alt={facility.type}
+                  style={{
+                    position: 'absolute',
+                    left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                    top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                    width: `${imgSize.width}px`,
+                    height: `${imgSize.height}px`,
+                    zIndex: Math.floor(baseZ + 500),
+                    transform,
+                  }}
+                />
+              );
+            })()}
             {/* トップ面 */}
             <div
               className={`
