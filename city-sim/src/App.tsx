@@ -33,6 +33,9 @@ function App() {
     setSelectedTile
   } = useUIStore();
 
+  // スタート画面の表示状態
+  const [showStartScreen, setShowStartScreen] = useState(true);
+
   // ゲーム統計情報・レベルアップ通知
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
 
