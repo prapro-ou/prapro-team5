@@ -124,7 +124,20 @@ function App() {
   }, [levelUpMessage, setLevelUpMessage]);
 
   if (showStartScreen) {
-    return <StartScreen onStart={() => setShowStartScreen(false)} />;
+    return (
+      <>
+        <StartScreen
+          onStart={() => setShowStartScreen(false)}
+          onShowSettings={openSettings}
+        />
+        <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
+          <SettingsPanel 
+            onClose={closeSettings} 
+            onShowCredits={switchToCredits}
+          />
+        </div>
+      </>
+    );
   }
 
   return (
