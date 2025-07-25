@@ -6,7 +6,7 @@ type Props = {
 };
 
 const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
-  <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[3000]">
+  <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
     <h1 className="text-5xl font-bold text-white mb-8">City Sim</h1>
     <div className="flex flex-col items-center space-y-4">
       <button
