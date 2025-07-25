@@ -7,10 +7,10 @@ type Props = {
 
 const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
-    <div className="bg-white shadow-lg">
-      <img src="logo.svg" alt="Logo" className="w-full h-36 object-contain mb-8" />
+    <div className="bg-white shadow-lg items-center rounded-lg">
+      <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
     </div>
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4 mt-16">
       <button
         onClick={onStart}
         className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-2xl shadow-lg"
