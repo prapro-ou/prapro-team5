@@ -52,7 +52,7 @@ function App() {
 
   // 報酬パネル表示状態のみAppで管理
   const [showRewardPanel, setShowRewardPanel] = useState(false);
-  const { rewards, claimReward, updateAchievements } = useRewardStore();
+  const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
   // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     updateAchievements();
@@ -133,17 +133,22 @@ function App() {
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
       <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
-        <button
-          onClick={() => setShowRewardPanel(v => !v)}
-          className="hover:opacity-80 transition-opacity"
-        >
-          <img 
-            src={RewardButtonImg} 
-            alt="報酬" 
-            className="w-25 h-15 object-cover rounded"
-          />
-          
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowRewardPanel(v => !v)}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={RewardButtonImg} 
+              alt="報酬" 
+              className="w-25 h-15 object-cover rounded"
+            />
+          </button>
+          {/* 受け取り可能な報酬がある場合の通知バッジ */}
+          {hasClaimableRewards() && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+          )}
+        </div>
         <button 
           onClick={openSettings}
           className="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors"

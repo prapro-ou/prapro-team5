@@ -7,6 +7,7 @@ interface RewardStore {
   rewards: Reward[];
   claimReward: (id: string) => void;
   updateAchievements: () => void;
+  hasClaimableRewards: () => boolean;
 }
 
 const initialRewards: Reward[] = [
@@ -128,5 +129,10 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
         return r;
       })
     }));
+  },
+
+  hasClaimableRewards: () => {
+    const rewards = get().rewards;
+    return rewards.some(r => r.achieved && !r.claimed);
   },
 }));
