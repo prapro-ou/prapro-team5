@@ -26,20 +26,42 @@ const initialRewards: Reward[] = [
     condition: '公園5つ以上',
     achieved: false,
     claimed: false,
-    reward: '後楽園',
+    reward: '後楽園（まだ実装していません）',
+  },
+  {
+    id: 'level2',
+    title: 'レベル2達成',
+    description: '都市レベルが2に到達すると報酬がもらえます。',
+    condition: 'レベル2以上',
+    achieved: false,
+    claimed: false,
+    reward: '¥5,000',
+  },
+  {
+    id: 'level5',
+    title: 'レベル5達成',
+    description: '都市レベルが5に到達すると報酬がもらえます。',
+    condition: 'レベル5以上',
+    achieved: false,
+    claimed: false,
+    reward: '¥20,000',
   },
 ];
 
 export const useRewardStore = create<RewardStore>((set, get) => ({
   rewards: initialRewards,
   claimReward: (id: string) => {
-    // 報酬反映処理（資金加算など）を先に実行
     const reward = get().rewards.find(r => r.id === id);
     if (reward && reward.achieved && !reward.claimed) {
       if (reward.id === 'pop1000') {
         useGameStore.getState().addMoney(10000);
       }
-      // 他の報酬処理もここに追加
+      if (reward.id === 'level2') {
+        useGameStore.getState().addMoney(5000);
+      }
+      if (reward.id === 'level5') {
+        useGameStore.getState().addMoney(20000);
+      }
       set(state => ({
         rewards: state.rewards.map(r =>
           r.id === id ? { ...r, claimed: true } : r
@@ -47,6 +69,7 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
       }));
     }
   },
+
   updateAchievements: () => {
     const stats = useGameStore.getState().stats;
     const facilities = useFacilityStore.getState().facilities;
@@ -58,6 +81,12 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
         if (r.id === 'park5') {
           const parkCount = facilities.filter(f => f.type === 'park').length;
           return { ...r, achieved: parkCount >= 5 };
+        }
+        if (r.id === 'level2') {
+          return { ...r, achieved: stats.level >= 2 };
+        }
+        if (r.id === 'level5') {
+          return { ...r, achieved: stats.level >= 5 };
         }
         return r;
       })
