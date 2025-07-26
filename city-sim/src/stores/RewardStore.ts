@@ -55,6 +55,7 @@ const initialRewards: Reward[] = [
     achieved: false,
     claimed: false,
     reward: '¥25,000 + 称号「経験豊富な市長」',
+    hidden: true,
   },
   {
     id: 'oneYear',
@@ -64,6 +65,7 @@ const initialRewards: Reward[] = [
     achieved: false,
     claimed: false,
     reward: '¥50,000 + 称号「ベテラン市長」',
+    hidden: true,
   },
   {
     id: 'commercial10',
@@ -73,6 +75,27 @@ const initialRewards: Reward[] = [
     achieved: false,
     claimed: false,
     reward: '人口+500人 + ¥15,000',
+    hidden: true,
+  },
+  {
+    id: 'megacity',
+    title: 'メガシティの誕生',
+    description: '巨大都市を築き上げた偉大な市長！',
+    condition: '人口5000人達成',
+    achieved: false,
+    claimed: false,
+    reward: '¥100,000 + 特別建物解放',
+    hidden: true,
+  },
+  {
+    id: 'richMayor',
+    title: '裕福な市長',
+    description: '経済的成功を収めた手腕の持ち主！',
+    condition: '所持金500,000円達成',
+    achieved: false,
+    claimed: false,
+    reward: '税収+30% (永続)',
+    hidden: true,
   },
 ];
 
@@ -101,6 +124,14 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
       if (reward.id === 'commercial10') {
         useGameStore.getState().addMoney(15000);
         useGameStore.getState().addPopulation(500);
+      }
+      if (reward.id === 'megacity') {
+        useGameStore.getState().addMoney(100000);
+        // TODO: 特別建物解放の実装
+      }
+      if (reward.id === 'richMayor') {
+        // TODO: 税収+30%の永続効果実装
+        console.log('Rich Mayor reward claimed - Tax bonus should be applied!');
       }
       set(state => ({
         rewards: state.rewards.map(r =>
@@ -144,6 +175,14 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
           const commercialCount = facilities.filter(f => f.type === 'commercial').length;
           console.log(`Commercial reward check - Current count: ${commercialCount}, Required: 10, Achieved: ${commercialCount >= 10}`);
           return { ...r, achieved: commercialCount >= 10 };
+        }
+        if (r.id === 'megacity') {
+          // 人口5000人達成
+          return { ...r, achieved: stats.population >= 5000 };
+        }
+        if (r.id === 'richMayor') {
+          // 所持金500,000円達成
+          return { ...r, achieved: stats.money >= 500000 };
         }
         return r;
       })

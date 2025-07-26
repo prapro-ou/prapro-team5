@@ -8,6 +8,7 @@ export type Reward = {
   achieved: boolean;
   claimed: boolean;
   reward: string;
+  hidden?: boolean; // 報酬が隠されているかどうか
 };
 
 export type RewardPanelProps = {
@@ -28,10 +29,20 @@ export default function RewardPanel({ rewards, onClaim, onClose }: RewardPanelPr
         <ul className="space-y-4">
           {rewards.map(r => (
             <li key={r.id} className="border-b pb-4">
-              <div className="font-semibold text-lg">{r.title}</div>
-              <div className="text-gray-600 text-sm mb-1">{r.description}</div>
-              <div className="text-xs mb-2">条件: {r.condition}</div>
-              <div className="mb-2">報酬: <span className="font-bold text-yellow-600">{r.reward}</span></div>
+              <div className="font-semibold text-lg">
+                {r.title}
+              </div>
+              <div className="text-gray-600 text-sm mb-1">
+                {r.hidden && !r.achieved ? '隠された報酬です。条件を達成すると詳細が明らかになります。' : r.description}
+              </div>
+              <div className="text-xs mb-2">
+                条件: {r.hidden && !r.achieved ? '???' : r.condition}
+              </div>
+              <div className="mb-2">
+                報酬: <span className="font-bold text-yellow-600">
+                  {r.hidden && !r.achieved ? '???' : r.reward}
+                </span>
+              </div>
               {r.achieved ? (
                 r.claimed ? (
                   <span className="text-green-600 font-bold">受け取り済み</span>
