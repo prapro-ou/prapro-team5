@@ -11,6 +11,7 @@ import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
 import { useEffect, useState } from 'react';
+import RewardButtonImg from './assets/RewardButton.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -131,17 +132,17 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-4 right-4 flex gap-2 z-[1200]">
+      <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
         <button
           onClick={() => setShowRewardPanel(v => !v)}
-          className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
+          className="hover:opacity-80 transition-opacity"
         >
           <img 
-            src="/images/icon/RewardButton.jpg" 
+            src={RewardButtonImg} 
             alt="報酬" 
-            className="w-5 h-5 object-cover rounded"
+            className="w-25 h-15 object-cover rounded"
           />
-          報酬
+          
         </button>
         <button 
           onClick={openSettings}
@@ -184,14 +185,6 @@ function App() {
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
-      </button>
-
-      {/* 設定パネルを開くボタン */}
-      <button 
-        onClick={openSettings}
-        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
-      >
-        <TbSettings size={24} />
       </button>
 
       {/* 施設建設パネル */}
