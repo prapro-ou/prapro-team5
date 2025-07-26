@@ -26,25 +26,25 @@ const initialRewards: Reward[] = [
     condition: '公園5つ以上',
     achieved: false,
     claimed: false,
-    reward: '特別な公園',
+    reward: '後楽園',
   },
 ];
 
 export const useRewardStore = create<RewardStore>((set, get) => ({
   rewards: initialRewards,
   claimReward: (id: string) => {
-    set(state => ({
-      rewards: state.rewards.map(r =>
-        r.id === id ? { ...r, claimed: true } : r
-      )
-    }));
-    // 報酬反映処理（資金加算など）
+    // 報酬反映処理（資金加算など）を先に実行
     const reward = get().rewards.find(r => r.id === id);
     if (reward && reward.achieved && !reward.claimed) {
       if (reward.id === 'pop1000') {
         useGameStore.getState().addMoney(10000);
       }
       // 他の報酬処理もここに追加
+      set(state => ({
+        rewards: state.rewards.map(r =>
+          r.id === id ? { ...r, claimed: true } : r
+        )
+      }));
     }
   },
   updateAchievements: () => {
