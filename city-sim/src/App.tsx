@@ -6,7 +6,6 @@ import { CreditsPanel } from './components/CreditsPanel'
 import RewardPanel from './components/RewardPanel';
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
-// 報酬型はRewardPanelからimport
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
