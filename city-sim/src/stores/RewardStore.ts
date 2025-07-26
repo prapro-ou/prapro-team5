@@ -46,6 +46,24 @@ const initialRewards: Reward[] = [
     claimed: false,
     reward: '¥20,000',
   },
+  {
+    id: 'halfYear',
+    title: '半年間の市長',
+    description: '都市を半年間運営した記念の報酬です。',
+    condition: 'ゲーム内時間で半年経過（26週）',
+    achieved: false,
+    claimed: false,
+    reward: '¥25,000 + 称号「経験豊富な市長」',
+  },
+  {
+    id: 'oneYear',
+    title: '一年間の市長',
+    description: '都市を一年間運営した記念の報酬です。',
+    condition: 'ゲーム内時間で1年経過（52週）',
+    achieved: false,
+    claimed: false,
+    reward: '¥50,000 + 称号「ベテラン市長」',
+  },
 ];
 
 export const useRewardStore = create<RewardStore>((set, get) => ({
@@ -62,6 +80,14 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
       if (reward.id === 'level5') {
         useGameStore.getState().addMoney(20000);
       }
+      if (reward.id === 'halfYear') {
+        useGameStore.getState().addMoney(25000);
+        // TODO: 称号「経験豊富な市長」の実装
+      }
+      if (reward.id === 'oneYear') {
+        useGameStore.getState().addMoney(50000);
+        // TODO: 称号「ベテラン市長」の実装
+      }
       set(state => ({
         rewards: state.rewards.map(r =>
           r.id === id ? { ...r, claimed: true } : r
@@ -73,6 +99,7 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
   updateAchievements: () => {
     const stats = useGameStore.getState().stats;
     const facilities = useFacilityStore.getState().facilities;
+    console.log('updateAchievements called, current stats:', stats);
     set(state => ({
       rewards: state.rewards.map(r => {
         if (r.id === 'pop1000') {
@@ -87,6 +114,16 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
         }
         if (r.id === 'level5') {
           return { ...r, achieved: stats.level >= 5 };
+        }
+        if (r.id === 'halfYear') {
+          // ゲーム内時間で半年経過（26週）
+          console.log(`HalfYear reward check - Current week: ${stats.date.week}, Required: 26, Achieved: ${stats.date.week >= 26}`);
+          return { ...r, achieved: stats.date.week >= 26 };
+        }
+        if (r.id === 'oneYear') {
+          // ゲーム内時間で1年経過（52週）
+          console.log(`OneYear reward check - Current week: ${stats.date.week}, Required: 52, Achieved: ${stats.date.week >= 52}`);
+          return { ...r, achieved: stats.date.week >= 52 };
         }
         return r;
       })

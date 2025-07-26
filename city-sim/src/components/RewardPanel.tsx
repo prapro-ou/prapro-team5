@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 export type Reward = {
   id: string;
@@ -17,6 +17,11 @@ export type RewardPanelProps = {
 };
 
 export default function RewardPanel({ rewards, onClaim, onClose }: RewardPanelProps) {
+  // パネルが開かれたときに報酬の状態を確認
+  useEffect(() => {
+    console.log('RewardPanel opened, current rewards:', rewards);
+  }, [rewards]);
+  
   return (
     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 w-[400px] z-[3000]">
       <div className="max-h-[400px] overflow-y-auto mb-4">

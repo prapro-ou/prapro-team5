@@ -56,7 +56,7 @@ function App() {
   // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     updateAchievements();
-  }, [stats.population, facilities]);
+  }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, updateAchievements]);
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
