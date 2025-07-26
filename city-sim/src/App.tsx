@@ -6,7 +6,7 @@ import { CreditsPanel } from './components/CreditsPanel'
 import RewardPanel from './components/RewardPanel';
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
-import type { Reward } from './components/RewardPanel';
+// 報酬型はRewardPanelからimport
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
@@ -16,6 +16,7 @@ import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { playBuildSound } from './components/SoundSettings';
+import { useRewardStore } from './stores/RewardStore';
 
 function App() {
   // UI状態
@@ -48,53 +49,12 @@ function App() {
     createFacility 
   } = useFacilityStore();
 
-  // 報酬パネル表示状態
+  // 報酬パネル表示状態のみAppで管理
   const [showRewardPanel, setShowRewardPanel] = useState(false);
-  const [rewards, setRewards] = useState<Reward[]>([
-    {
-      id: 'pop1000',
-      title: '人口1000人達成',
-      description: '人口が1000人に到達すると報酬がもらえます。',
-      condition: '人口1000人以上',
-      achieved: false,
-      claimed: false,
-      reward: '¥10,000',
-    },
-    {
-      id: 'park5',
-      title: '公園5つ設置',
-      description: '公園を5つ設置すると特別な報酬がもらえます。',
-      condition: '公園5つ以上',
-      achieved: false,
-      claimed: false,
-      reward: '特別な公園',
-    },
-  ]);
-
-  // 報酬受け取り処理
-  const handleClaimReward = (id: string) => {
-    setRewards(rewards =>
-      rewards.map(r =>
-        r.id === id ? { ...r, claimed: true } : r
-      )
-    );
-    // 報酬反映処理（資金加算など）もここで
-  };
-
-  // 報酬達成条件チェック
+  const { rewards, claimReward, updateAchievements } = useRewardStore();
+  // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
-    setRewards(rewards =>
-      rewards.map(r => {
-        if (r.id === 'pop1000') {
-          return { ...r, achieved: stats.population >= 1000 };
-        }
-        if (r.id === 'park5') {
-          const parkCount = facilities.filter(f => f.type === 'park').length;
-          return { ...r, achieved: parkCount >= 5 };
-        }
-        return r;
-      })
-    );
+    updateAchievements();
   }, [stats.population, facilities]);
 
   // 時間経過を処理するuseEffect
@@ -170,6 +130,28 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+      {/* 報酬パネル表示ボタン */}
+      <button
+        onClick={() => setShowRewardPanel(true)}
+        className="fixed top-4 left-4 bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg z-[1200]"
+      >
+        報酬
+      </button>
+      {/* 報酬パネル */}
+      {showRewardPanel && (
+        <div>
+          <button
+            onClick={() => setShowRewardPanel(false)}
+            className="fixed top-6 left-1/2 -translate-x-1/2 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow z-[3100]"
+          >
+            閉じる
+          </button>
+          <RewardPanel
+            rewards={rewards}
+            onClaim={claimReward}
+          />
+        </div>
+      )}
       {/* レベルアップ通知 */}
       {levelUpMessage && (
         <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black text-xl font-bold px-8 py-4 rounded-lg shadow-lg z-[2000] animate-bounce">
@@ -247,7 +229,7 @@ function App() {
           </button>
           <RewardPanel
             rewards={rewards}
-            onClaim={handleClaimReward}
+            onClaim={claimReward}
           />
         </div>
       )}
