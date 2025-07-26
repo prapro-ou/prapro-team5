@@ -130,13 +130,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
-      {/* 報酬パネル表示ボタン */}
-      <button
-        onClick={() => setShowRewardPanel(true)}
-        className="fixed top-4 left-4 bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg z-[1200]"
-      >
-        報酬
-      </button>
+      {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
+      <div className="fixed top-4 right-4 flex gap-2 z-[1200]">
+        <button
+          onClick={() => setShowRewardPanel(true)}
+          className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg"
+        >
+          報酬
+        </button>
+        <button 
+          onClick={openSettings}
+          className="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors"
+        >
+          <TbSettings size={24} />
+        </button>
+      </div>
       {/* 報酬パネル */}
       {showRewardPanel && (
         <div>
@@ -211,13 +219,6 @@ function App() {
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
 
-      {/* 報酬パネル表示ボタン */}
-      <button
-        onClick={() => setShowRewardPanel(true)}
-        className="fixed top-4 left-4 bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg z-[1200]"
-      >
-        報酬
-      </button>
       {/* 報酬パネル */}
       {showRewardPanel && (
         <div>
