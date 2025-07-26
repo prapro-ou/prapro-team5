@@ -13,12 +13,13 @@ export type Reward = {
 export type RewardPanelProps = {
   rewards: Reward[];
   onClaim: (id: string) => void;
+  onClose: () => void;
 };
 
-export default function RewardPanel({ rewards, onClaim }: RewardPanelProps) {
+export default function RewardPanel({ rewards, onClaim, onClose }: RewardPanelProps) {
   return (
     <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 w-[400px] z-[3000]">
-      <div className="max-h-[400px] overflow-y-auto">
+      <div className="max-h-[400px] overflow-y-auto mb-4">
         <ul className="space-y-4">
           {rewards.map(r => (
             <li key={r.id} className="border-b pb-4">
@@ -43,6 +44,14 @@ export default function RewardPanel({ rewards, onClaim }: RewardPanelProps) {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="flex justify-center">
+        <button
+          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold shadow"
+          onClick={onClose}
+        >
+          閉じる
+        </button>
       </div>
     </div>
   );

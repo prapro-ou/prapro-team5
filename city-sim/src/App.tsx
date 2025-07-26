@@ -147,18 +147,11 @@ function App() {
       </div>
       {/* 報酬パネル */}
       {showRewardPanel && (
-        <div>
-          <button
-            onClick={() => setShowRewardPanel(false)}
-            className="fixed top-6 left-1/2 -translate-x-1/2 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow z-[3100]"
-          >
-            閉じる
-          </button>
-          <RewardPanel
-            rewards={rewards}
-            onClaim={claimReward}
-          />
-        </div>
+        <RewardPanel
+          rewards={rewards}
+          onClaim={claimReward}
+          onClose={() => setShowRewardPanel(false)}
+        />
       )}
       {/* レベルアップ通知 */}
       {levelUpMessage && (
@@ -218,22 +211,6 @@ function App() {
       </div>
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
-
-      {/* 報酬パネル */}
-      {showRewardPanel && (
-        <div>
-          <button
-            onClick={() => setShowRewardPanel(false)}
-            className="fixed top-6 left-1/2 -translate-x-1/2 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg shadow z-[3100]"
-          >
-            閉じる
-          </button>
-          <RewardPanel
-            rewards={rewards}
-            onClaim={claimReward}
-          />
-        </div>
-      )}
     </div>
   );
 }
