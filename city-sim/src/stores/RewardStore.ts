@@ -65,6 +65,15 @@ const initialRewards: Reward[] = [
     claimed: false,
     reward: '¥50,000 + 称号「ベテラン市長」',
   },
+  {
+    id: 'commercial10',
+    title: '商業地区発展',
+    description: '商業施設の発展により多くの人々が街に移住してきました。',
+    condition: '商業施設10個建設',
+    achieved: false,
+    claimed: false,
+    reward: '人口+500人 + ¥15,000',
+  },
 ];
 
 export const useRewardStore = create<RewardStore>((set, get) => ({
@@ -88,6 +97,10 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
       if (reward.id === 'oneYear') {
         useGameStore.getState().addMoney(50000);
         // TODO: 称号「ベテラン市長」の実装
+      }
+      if (reward.id === 'commercial10') {
+        useGameStore.getState().addMoney(15000);
+        useGameStore.getState().addPopulation(500);
       }
       set(state => ({
         rewards: state.rewards.map(r =>
@@ -125,6 +138,12 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
           // ゲーム内時間で1年経過（52週）
           console.log(`OneYear reward check - Current week: ${stats.date.week}, Required: 52, Achieved: ${stats.date.week >= 52}`);
           return { ...r, achieved: stats.date.week >= 52 };
+        }
+        if (r.id === 'commercial10') {
+          // 商業施設10個建設
+          const commercialCount = facilities.filter(f => f.type === 'commercial').length;
+          console.log(`Commercial reward check - Current count: ${commercialCount}, Required: 10, Achieved: ${commercialCount >= 10}`);
+          return { ...r, achieved: commercialCount >= 10 };
         }
         return r;
       })
