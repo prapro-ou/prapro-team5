@@ -14,7 +14,7 @@ const createBuilding = (rows: number, cols: number, width: string, height: strin
           {[...Array(cols)].map((_, colIndex) => (
             <div
               key={`window-${rowIndex}-${colIndex}`}
-              className={`${width} ${height} mx-1 ${margin} rounded-sm transition-all duration-300 ${
+              className={`${width} ${height} mx-1 ${margin} transition-all duration-300 ${
                 Math.random() > 0.8 ? 'bg-gray-100/60' : 'bg-gray-700/40'
               }`}
             />
@@ -29,21 +29,9 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
     {/* ビルの窓明かり */}
     <div className="absolute left-0 bottom-0 flex flex-col">
-      <div className="flex flex-col">
-        {[...Array(5)].map((_, rowIndex) => (
-          <div key={`row-${rowIndex}`} className="flex">
-            {[...Array(3)].map((_, colIndex) => (
-              <div
-                key={`left-window-${rowIndex}-${colIndex}`}
-                className={`w-6 h-4 mx-1 mb-3 transition-all duration-300 ${
-                  Math.random() > 0.8 ? 'bg-gray-100/60' : 'bg-gray-700/40'
-                }`}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
+      {createBuilding(5, 3, 'w-6', 'h-4', 'mb-3')}
     </div>
+ 
     <div className="bg-white shadow-lg items-center rounded-lg">
       <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
     </div>
