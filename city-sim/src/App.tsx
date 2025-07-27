@@ -4,19 +4,21 @@ import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
+import RewardPanel from './components/RewardPanel';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
-
 import { useEffect, useState } from 'react';
+import RewardButtonImg from './assets/RewardButton.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { playBuildSound } from './components/SoundSettings';
+import { useRewardStore } from './stores/RewardStore';
 
 function App() {
   // UI状態
@@ -51,6 +53,14 @@ function App() {
     checkCanPlace,
     createFacility 
   } = useFacilityStore();
+
+  // 報酬パネル表示状態のみAppで管理
+  const [showRewardPanel, setShowRewardPanel] = useState(false);
+  const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
+  // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
+  useEffect(() => {
+    updateAchievements();
+  }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, stats.level, stats.money, updateAchievements]);
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
@@ -142,6 +152,39 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
+      {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
+      <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
+        <div className="relative">
+          <button
+            onClick={() => setShowRewardPanel(v => !v)}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={RewardButtonImg} 
+              alt="報酬" 
+              className="w-25 h-15 object-cover rounded"
+            />
+          </button>
+          {/* 受け取り可能な報酬がある場合の通知バッジ */}
+          {hasClaimableRewards() && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+          )}
+        </div>
+        <button 
+          onClick={openSettings}
+          className="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors"
+        >
+          <TbSettings size={24} />
+        </button>
+      </div>
+      {/* 報酬パネル */}
+      {showRewardPanel && (
+        <RewardPanel
+          rewards={rewards}
+          onClaim={claimReward}
+          onClose={() => setShowRewardPanel(false)}
+        />
+      )}
       {/* レベルアップ通知 */}
       {levelUpMessage && (
         <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black text-xl font-bold px-8 py-4 rounded-lg shadow-lg z-[2000] animate-bounce">
@@ -168,14 +211,6 @@ function App() {
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
-      </button>
-
-      {/* 設定パネルを開くボタン */}
-      <button 
-        onClick={openSettings}
-        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors z-[1100]"
-      >
-        <TbSettings size={24} />
       </button>
 
       {/* 施設建設パネル */}
