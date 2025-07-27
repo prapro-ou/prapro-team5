@@ -13,13 +13,13 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
     <div className="flex flex-col items-center space-y-4 mt-12">
       <button
         onClick={onStart}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48"
+        className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10"
       >
         スタート
       </button>
       <button
         onClick={onShowSettings}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48"
+        className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10"
       >
         設定
       </button>
