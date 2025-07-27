@@ -56,8 +56,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
 
   const buildingWindows = useMemo(
     () =>
-      Array.from({ length: 5 }).map(() => ({
-        rows: 4 + Math.floor(Math.random() * 7),
+      Array.from({ length: 12 }).map(() => ({
+        rows: 4 + Math.floor(Math.random() * 6),
         cols: 2 + Math.floor(Math.random() * 5), 
       })),
     []
@@ -96,23 +96,12 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
       )}
 
       {/* 装飾 */}
-      <div className="absolute left-0 bottom-0 flex flex-col">
-        {createBuilding(5, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
-      </div>
-      <div className="absolute left-30 bottom-0 flex flex-col">
-        {createBuilding(8, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
-      </div>
-      <div className="absolute left-60 bottom-0 flex flex-col">
-        {createBuilding(5, 6, 'w-6', 'h-4', 'mb-2', overlayVisible)}
-      </div>
-      <div className="absolute right-0 bottom-0 flex flex-col">
-        {createBuilding(5, 2, 'w-6', 'h-4', 'mb-2', overlayVisible)}
-      </div>
-      <div className="absolute right-22 bottom-0 flex flex-col">
-        {createBuilding(10, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
-      </div>
-      <div className="absolute right-52 bottom-0 flex flex-col">
-        {createBuilding(7, 4, 'w-6', 'h-4', 'mb-2', overlayVisible)}
+      <div className="absolute left-0 bottom-0 flex flex-row gap-4 items-end">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i}>
+            {createBuilding(buildingWindows[i].rows, buildingWindows[i].cols, 'w-6', 'h-4', 'mb-2', overlayVisible)}
+          </div>
+        ))}
       </div>
 
       {/* ロゴ */}
