@@ -5,6 +5,26 @@ type Props = {
   onShowSettings: () => void;
 };
 
+// ビル生成関数
+const createBuilding = (rows: number, cols: number, width: string, height: string, margin: string) => {
+  return (
+    <div className="flex flex-col">
+      {[...Array(rows)].map((_, rowIndex) => (
+        <div key={`row-${rowIndex}`} className="flex">
+          {[...Array(cols)].map((_, colIndex) => (
+            <div
+              key={`window-${rowIndex}-${colIndex}`}
+              className={`${width} ${height} mx-1 ${margin} rounded-sm transition-all duration-300 ${
+                Math.random() > 0.8 ? 'bg-gray-100/60' : 'bg-gray-700/40'
+              }`}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
     {/* ビルの窓明かり */}
