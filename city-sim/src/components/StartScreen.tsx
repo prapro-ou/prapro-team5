@@ -8,14 +8,16 @@ type Props = {
 // ビル生成関数
 const createBuilding = (rows: number, cols: number, width: string, height: string, margin: string) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col border-2 border-gray-600/20">
       {[...Array(rows)].map((_, rowIndex) => (
         <div key={`row-${rowIndex}`} className="flex">
           {[...Array(cols)].map((_, colIndex) => (
             <div
               key={`window-${rowIndex}-${colIndex}`}
-              className={`${width} ${height} mx-1 ${margin} transition-all duration-300 ${
-                Math.random() > 0.8 ? 'bg-gray-100/60' : 'bg-gray-700/40'
+              className={`${width} ${height} mx-1 mt-1 ${margin} transition-all duration-300 ${
+                Math.random() > 0.8 
+                  ? 'bg-yellow-300/80 shadow-lg shadow-yellow-200/50 glow-yellow'
+                  : ''
               }`}
             />
           ))}
@@ -29,7 +31,13 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
     {/* 装飾 */}
     <div className="absolute left-0 bottom-0 flex flex-col">
-      {createBuilding(5, 3, 'w-6', 'h-4', 'mb-3')}
+      {createBuilding(5, 3, 'w-6', 'h-4', 'mb-2')}
+    </div>
+    <div className="absolute left-30 bottom-0 flex flex-col">
+      {createBuilding(8, 3, 'w-6', 'h-4', 'mb-2')}
+    </div>
+    <div className="absolute left-60 bottom-0 flex flex-col">
+      {createBuilding(5, 6, 'w-6', 'h-4', 'mb-2')}
     </div>
     {/* ロゴ */}
     <div className="bg-white shadow-lg items-center rounded-lg">
