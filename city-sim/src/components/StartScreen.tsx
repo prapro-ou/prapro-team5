@@ -18,7 +18,7 @@ const createBuilding = (rows: number, cols: number, width: string, height: strin
               isStart
               ? 'bg-gray-700/30'
               : Math.random() > 0.8
-                ? 'bg-yellow-300/80 shadow-lg shadow-yellow-200/50 glow-yellow'
+                ? 'bg-yellow-300/80 shadow-lg shadow-yellow-200/50 glow-yellow animate-pulse'
                 : ''
             }`}
             />
