@@ -70,20 +70,23 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
       <div className="absolute right-52 bottom-0 flex flex-col">
         {createBuilding(7, 4, 'w-6', 'h-4', 'mb-2')}
       </div>
+
       {/* ロゴ */}
-      <div 
-        className={`bg-white shadow-lg items-center rounded-lg transition-all duration-1000 ease-out ${
-          logoVisible 
-            ? 'transform translate-y-0 opacity-100' 
-            : 'transform translate-y-full opacity-0'
-        }`}
-      >
-        <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
+      <div className="bg-white shadow-lg items-center rounded-lg overflow-hidden">
+        <div 
+          className={`transition-all duration-5000 ease-out ${
+            logoVisible 
+              ? 'transform translate-y-0' 
+              : 'transform translate-y-full'
+          }`}
+        >
+          <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
+        </div>
       </div>
 
       {/* ボタン */}
       <div 
-        className={`flex flex-col items-center space-y-4 mt-12 transition-all duration-1000 ease-out ${
+        className={`flex flex-col items-center space-y-4 mt-12 transition-all duration-3000 ease-out ${
           buttonsVisible 
             ? 'transform translate-y-0 opacity-100' 
             : 'transform translate-y-full opacity-0'
