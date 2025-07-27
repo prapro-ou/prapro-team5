@@ -27,14 +27,15 @@ const createBuilding = (rows: number, cols: number, width: string, height: strin
 
 const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-[2000]">
-    {/* ビルの窓明かり */}
+    {/* 装飾 */}
     <div className="absolute left-0 bottom-0 flex flex-col">
       {createBuilding(5, 3, 'w-6', 'h-4', 'mb-3')}
     </div>
- 
+    {/* ロゴ */}
     <div className="bg-white shadow-lg items-center rounded-lg">
       <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
     </div>
+    {/* ボタン */}
     <div className="flex flex-col items-center space-y-4 mt-12">
       <button
         onClick={onStart}
