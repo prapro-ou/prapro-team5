@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 type Props = {
   onStart: () => void;
@@ -53,6 +53,15 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
       clearTimeout(buttonTimer);
     };
   }, []);
+
+  const buildingWindows = useMemo(
+    () =>
+      Array.from({ length: 5 }).map(() => ({
+        rows: 4 + Math.floor(Math.random() * 7),
+        cols: 2 + Math.floor(Math.random() * 5), 
+      })),
+    []
+  );
 
   // スタートアニメーション
   const handleStartClick = () => {
