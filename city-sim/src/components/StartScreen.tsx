@@ -6,19 +6,21 @@ type Props = {
 };
 
 // ビル生成関数
-const createBuilding = (rows: number, cols: number, width: string, height: string, margin: string) => {
+const createBuilding = (rows: number, cols: number, width: string, height: string, margin: string, isStart: boolean = false) => {
   return (
     <div className="flex flex-col border-2 border-gray-600/20">
       {[...Array(rows)].map((_, rowIndex) => (
         <div key={`row-${rowIndex}`} className="flex">
           {[...Array(cols)].map((_, colIndex) => (
             <div
-              key={`window-${rowIndex}-${colIndex}`}
-              className={`${width} ${height} mx-1 mt-1 ${margin} transition-all duration-300 ${
-                Math.random() > 0.8 
-                  ? 'bg-yellow-300/80 shadow-lg shadow-yellow-200/50 glow-yellow'
-                  : ''
-              }`}
+            key={`window-${rowIndex}-${colIndex}`}
+            className={`${width} ${height} mx-1 mt-1 ${margin} transition-all duration-300 ${
+              isStart
+              ? 'bg-gray-700/30'
+              : Math.random() > 0.8
+                ? 'bg-yellow-300/80 shadow-lg shadow-yellow-200/50 glow-yellow'
+                : ''
+            }`}
             />
           ))}
         </div>
@@ -86,22 +88,22 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
 
       {/* 装飾 */}
       <div className="absolute left-0 bottom-0 flex flex-col">
-        {createBuilding(5, 3, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(5, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
       <div className="absolute left-30 bottom-0 flex flex-col">
-        {createBuilding(8, 3, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(8, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
       <div className="absolute left-60 bottom-0 flex flex-col">
-        {createBuilding(5, 6, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(5, 6, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
       <div className="absolute right-0 bottom-0 flex flex-col">
-        {createBuilding(5, 2, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(5, 2, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
       <div className="absolute right-22 bottom-0 flex flex-col">
-        {createBuilding(10, 3, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(10, 3, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
       <div className="absolute right-52 bottom-0 flex flex-col">
-        {createBuilding(7, 4, 'w-6', 'h-4', 'mb-2')}
+        {createBuilding(7, 4, 'w-6', 'h-4', 'mb-2', overlayVisible)}
       </div>
 
       {/* ロゴ */}
