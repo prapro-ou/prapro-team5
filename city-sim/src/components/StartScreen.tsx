@@ -39,6 +39,15 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => (
     <div className="absolute left-60 bottom-0 flex flex-col">
       {createBuilding(5, 6, 'w-6', 'h-4', 'mb-2')}
     </div>
+    <div className="absolute right-0 bottom-0 flex flex-col">
+      {createBuilding(5, 2, 'w-6', 'h-4', 'mb-2')}
+    </div>
+    <div className="absolute right-22 bottom-0 flex flex-col">
+      {createBuilding(10, 3, 'w-6', 'h-4', 'mb-2')}
+    </div>
+    <div className="absolute right-52 bottom-0 flex flex-col">
+      {createBuilding(7, 4, 'w-6', 'h-4', 'mb-2')}
+    </div>
     {/* ロゴ */}
     <div className="bg-white shadow-lg items-center rounded-lg">
       <img src="logo.svg" alt="Titile Logo" className="w-full h-36 object-contain p-4" />
