@@ -3,7 +3,9 @@ import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
+import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
+
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
@@ -32,6 +34,9 @@ function App() {
     switchToCredits,
     setSelectedTile
   } = useUIStore();
+
+  // スタート画面の表示状態
+  const [showStartScreen, setShowStartScreen] = useState(true);
 
   // ゲーム統計情報・レベルアップ通知
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
@@ -127,6 +132,23 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [levelUpMessage, setLevelUpMessage]);
+
+  if (showStartScreen) {
+    return (
+      <>
+        <StartScreen
+          onStart={() => setShowStartScreen(false)}
+          onShowSettings={openSettings}
+        />
+        <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
+          <SettingsPanel 
+            onClose={closeSettings} 
+            onShowCredits={switchToCredits}
+          />
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
