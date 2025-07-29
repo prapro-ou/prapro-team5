@@ -162,13 +162,13 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
         }
         if (r.id === 'halfYear') {
           // ゲーム内時間で半年経過（26週）
-          console.log(`HalfYear reward check - Current week: ${stats.date.week}, Required: 26, Achieved: ${stats.date.week >= 26}`);
-          return { ...r, achieved: stats.date.week >= 26 };
+          console.log(`HalfYear reward check - Current totalWeeks: ${stats.date.totalWeeks}, Required: 26, Achieved: ${stats.date.totalWeeks >= 26}`);
+          return { ...r, achieved: stats.date.totalWeeks >= 26 };
         }
         if (r.id === 'oneYear') {
           // ゲーム内時間で1年経過（52週）
-          console.log(`OneYear reward check - Current week: ${stats.date.week}, Required: 52, Achieved: ${stats.date.week >= 52}`);
-          return { ...r, achieved: stats.date.week >= 52 };
+          console.log(`OneYear reward check - Current totalWeeks: ${stats.date.totalWeeks}, Required: 52, Achieved: ${stats.date.totalWeeks >= 52}`);
+          return { ...r, achieved: stats.date.totalWeeks >= 52 };
         }
         if (r.id === 'commercial10') {
           // 商業施設10個建設
