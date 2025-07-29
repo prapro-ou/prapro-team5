@@ -10,6 +10,7 @@ export interface GameStats {
     year: number;
     month: number;
     week: number;
+    totalWeeks: number; // ゲーム開始からの通算週数
   };
 }
 
