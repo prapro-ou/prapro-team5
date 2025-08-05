@@ -26,6 +26,10 @@ export interface FacilityInfo {
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
   satisfaction: number;
+  // --- インフラ用プロパティ ---
+  infrastructureDemand?: number; // インフラ需要
+  infrastructureSupply?: number; // インフラ供給
+
   // --- 経済サイクル用プロパティ ---
   requiredWorkforce?: number; // 必要労働力（工業・商業用）
   produceGoods?: number;      // 生産量（工業用）
