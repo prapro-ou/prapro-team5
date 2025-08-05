@@ -2,6 +2,17 @@ import type { Position } from "./grid";
 
 export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
 
+// インフラ需要・供給
+export interface InfrastructureDemand {
+  water: number;
+  electricity: number;
+};
+
+export interface InfrastructureSupply {
+  water: number;
+  electricity: number;
+};
+
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
   residential: { name: "住宅" },
@@ -64,6 +75,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/residential.png'],
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
+    infrastructureDemand: 100,
   },
   commercial: {
     type: 'commercial', 
