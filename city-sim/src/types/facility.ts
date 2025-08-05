@@ -1,6 +1,6 @@
 import type { Position } from "./grid";
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park";
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
 
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
