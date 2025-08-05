@@ -129,5 +129,31 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
+  },
+  // インフラ関連
+  electric_plant: {
+    type: 'electric_plant',
+    name: '発電所',
+    size: 3,
+    cost: 1000,
+    maintenanceCost: 100,
+    description: '電力を生産する施設',
+    category: 'infrastructure',
+    satisfaction: 0,
+    infrastructureDemand: 100,
+    infrastructureSupply: 5000,
+  },
+
+  water_plant: {
+    type: 'water_plant',
+    name: '浄水所',
+    size: 3,
+    cost: 1000,
+    maintenanceCost: 100,
+    description: '水を生産する施設',
+    category: 'infrastructure',
+    satisfaction: 0,
+    infrastructureDemand: 100,
+    infrastructureSupply: 5000,
   }
 }
