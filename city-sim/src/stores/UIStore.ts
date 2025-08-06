@@ -7,6 +7,7 @@ export interface UIStore {
   showPanel: boolean;
   isSettingsOpen: boolean;
   isCreditsOpen: boolean;
+  isInfrastructureInfoOpen: boolean;
 
   selectedTile: Position | null;
 
@@ -19,6 +20,8 @@ export interface UIStore {
   closeCredits: () => void;
   setSelectedTile: (tile: Position | null) => void;
   switchToCredits: () => void; 
+  openInfrastructureInfo: () => void;
+  closeInfrastructureInfo: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -27,6 +30,7 @@ export const useUIStore = create<UIStore>((set) => ({
   isSettingsOpen: false,
   isCreditsOpen: false,
   selectedTile: null,
+  isInfrastructureInfoOpen: false,
 
   togglePanel: () => {
     set((state) => ({ showPanel: !state.showPanel }));
@@ -44,5 +48,7 @@ export const useUIStore = create<UIStore>((set) => ({
   switchToCredits: () => set({ 
     isSettingsOpen: false,
     isCreditsOpen: true 
-  })
+  }),
+  openInfrastructureInfo: () => set({ isInfrastructureInfoOpen: true }),
+  closeInfrastructureInfo: () => set({ isInfrastructureInfoOpen: false }),
 }));
