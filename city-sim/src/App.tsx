@@ -3,6 +3,7 @@ import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
+import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
 
@@ -26,6 +27,7 @@ function App() {
     showPanel,
     isSettingsOpen,
     isCreditsOpen,
+    isInfrastructureInfoOpen,
     selectedTile,
     togglePanel,
     openSettings,
@@ -202,6 +204,12 @@ function App() {
       >
         <TbAlignLeft2 />
       </button>
+
+      {/* インフラ情報パネル */}
+      {isInfrastructureInfoOpen && (
+        <InfrastructureInfo onClose={toggleInfrastructureInfo} />
+      )}
+
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
         <Grid 
