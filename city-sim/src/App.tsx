@@ -32,7 +32,8 @@ function App() {
     closeSettings,
     closeCredits,
     switchToCredits,
-    setSelectedTile
+    setSelectedTile,
+    toggleInfrastructureInfo
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -195,7 +196,8 @@ function App() {
       <InfoPanel stats={stats} />
       
       {/* インフラパネルボタン */}
-      <button 
+      <button
+        onClick={toggleInfrastructureInfo}
         className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         <TbAlignLeft2 />
