@@ -10,7 +10,7 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
 
@@ -194,6 +194,12 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel stats={stats} />
       
+      {/* インフラパネルボタン */}
+      <button 
+        className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbAlignLeft2 />
+      </button>
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
         <Grid 
