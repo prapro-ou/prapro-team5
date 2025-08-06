@@ -207,7 +207,9 @@ function App() {
 
       {/* インフラ情報パネル */}
       {isInfrastructureInfoOpen && (
-        <InfrastructureInfo onClose={toggleInfrastructureInfo} />
+        <div className="fixed top-25 left-25 z-[1100]">
+          <InfrastructureInfo onClose={toggleInfrastructureInfo} />
+        </div>
       )}
 
       {/* ゲームグリッド */}

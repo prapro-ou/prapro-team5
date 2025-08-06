@@ -7,7 +7,7 @@ interface InfrastructureInfoProps {
 
 export function InfrastructureInfo({ onClose }: InfrastructureInfoProps) {
 	return (
-		<div className="fixed left-0 top-0 h-full w-80 bg-gray-800/95 backdrop-blur-sm text-white shadow-2xl z-[1100]">
+		<div className="fixed bg-gray-800/30 backdrop-blur-sm text-white shadow-2xl z-[1100] p-6 rounded-lg max-w-md">
 			<div className="flex items-center justify-between p-4 border-b border-gray-600">
 				<h2 className="text-xl font-bold flex items-center gap-2">
 					<TbDroplet className="text-blue-400" />
