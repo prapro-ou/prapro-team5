@@ -20,6 +20,7 @@ import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { playBuildSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
+import { useInfrastructureStore } from './stores/InfrastructureStore';
 
 function App() {
   // UI状態
@@ -76,6 +77,12 @@ function App() {
     return () => clearInterval(timerId);
   }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
 
+  // インフラ計算
+  useEffect(() => {
+    const { calculateInfrastructure } = useInfrastructureStore.getState();
+    calculateInfrastructure(facilities);
+  }, [facilities]);
+
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
@@ -111,6 +118,10 @@ function App() {
     // この時、更新後の施設リストを取得して渡す
     recalculateSatisfaction(useFacilityStore.getState().facilities);
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
+
+    // インフラ状況を再計算
+    const { calculateInfrastructure } = useInfrastructureStore.getState();
+    calculateInfrastructure(useFacilityStore.getState().facilities);
   };
 
   const handleTileClick = (position: Position) => {
