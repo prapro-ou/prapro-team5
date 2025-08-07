@@ -17,8 +17,8 @@ export function InfrastructureInfo({ onClose }: InfrastructureInfoProps) {
   };
 
   return (
-    <div className="fixed bg-gray-800/95 backdrop-blur-sm text-white shadow-2xl z-[1100] p-6 rounded-lg max-w-md">
-      <div className="flex items-center justify-between mb-4">
+    <div className="fixed bg-gray-800/50 backdrop-blur-sm text-white shadow-2xl z-[1100] p-6 rounded-lg max-w-md">
+      <div className="flex items-center justify-between mb-4 mx-2">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <TbDroplet className="text-blue-400" />
           インフラ状況
