@@ -1,11 +1,15 @@
 import React from 'react';
 import { TbDroplet, TbBolt, TbX } from 'react-icons/tb';
+import { useInfrastructureStore } from '../stores/InfrastructureStore';
 
 interface InfrastructureInfoProps {
   onClose: () => void;
 }
 
 export function InfrastructureInfo({ onClose }: InfrastructureInfoProps) {
+	const { getInfrastructureStatus } = useInfrastructureStore();
+	const status = getInfrastructureStatus();
+
 	return (
 		<div className="fixed bg-gray-800/30 backdrop-blur-sm text-white shadow-2xl z-[1100] p-6 rounded-lg max-w-md">
 			<div className="flex items-center justify-between p-4 border-b border-gray-600">
@@ -26,10 +30,12 @@ export function InfrastructureInfo({ onClose }: InfrastructureInfoProps) {
 					<div className="flex items-center gap-2">
 						<TbBolt className="text-yellow-400" />
 						<span>電気</span>
+						<span>{status.electricity.demand} / {status.electricity.supply}</span>
 					</div>
 					<div className="flex items-center gap-2">
 						<TbDroplet className="text-blue-400" />
 						<span>水道</span>
+						<span>{status.water.demand} / {status.water.supply}</span>
 					</div>
 				</div>
 			</div>
