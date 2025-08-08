@@ -544,28 +544,44 @@ export const Grid: React.FC<GridProps> = ({
     const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
     const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
 
+    // 接続数カウント
+    const connections = [left, right, up, down].filter(Boolean).length;
+
+    // 交差点
     if (left && right && up && down) {
-      return 'cross';
+      return { type: 'cross', variantIndex: 1 };
     }
+    
+    // 丁字路
+    if (connections === 3) {
+      if (!left) return { type: 't-junction', variantIndex: 3, rotation: 0 };   // 右、上、下
+      if (!right) return { type: 't-junction', variantIndex: 3, rotation: 180 }; // 左、上、下
+      if (!up) return { type: 't-junction', variantIndex: 3, rotation: 90 };    // 左、右、下
+      if (!down) return { type: 't-junction', variantIndex: 3, rotation: 270 }; // 左、右、上
+    }
+    
+    // 右左折
+    if (connections === 2) {
+      if ((left && up) || (right && down)) return { type: 'turn', variantIndex: 2, rotation: 0 };
+      if ((right && up) || (left && down)) return { type: 'turn', variantIndex: 2, rotation: 90 };
+    }
+    
+    // 直線道路
     if (left && right) {
-      return 'horizontal';
+      return { type: 'horizontal', variantIndex: 0, rotation: 0 };
     }
     if (up && down) {
-      return 'vertical';
+      return { type: 'vertical', variantIndex: 0, rotation: 90 };
     }
-    if (left) {
-      return 'left';
-    }
-    if (right) {
-      return 'right';
-    }
-    if (up) {
-      return 'up';
-    }
-    if (down) {
-      return 'down';
-    }
-    return 'none';
+    
+    // 端の道路
+    if (left) return { type: 'end', variantIndex: 0, rotation: 0 };
+    if (right) return { type: 'end', variantIndex: 0, rotation: 180 };
+    if (up) return { type: 'end', variantIndex: 0, rotation: 90 };
+    if (down) return { type: 'end', variantIndex: 0, rotation: 270 };
+    
+    // 孤立
+    return { type: 'isolated', variantIndex: 0, rotation: 0 };
   }
 
   const isPreviewInvalid = React.useMemo(() => {
@@ -689,15 +705,20 @@ export const Grid: React.FC<GridProps> = ({
             {isCenter && facility.type === 'road' && (() => {
               const connection = getRoadConnectionType(facilityMap, x, y);
               let transform = undefined;
-              switch (connection) {
+              switch (connection.type) {
+                case 'cross':
+                  transform = 'rotate(45deg)';
+                  break;
+                case 't-junction':
+                  transform = `rotate(${connection.rotation}deg)`;
+                  break;
+                case 'turn':
+                  transform = `rotate(${connection.rotation}deg)`;
+                  break;
                 case 'horizontal':
-                case 'left':
-                case 'right':
-                  transform = 'scaleX(-1)';
-                  break;
                 case 'vertical':
-                  break;
-                default:
+                case 'end':
+                case 'isolated':
                   break;
               }
 
