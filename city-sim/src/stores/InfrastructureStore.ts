@@ -1,0 +1,83 @@
+import { create } from 'zustand';
+import type { Facility } from '../types/facility';
+import { FACILITY_DATA } from '../types/facility';
+
+export interface InfrastructureStatus {
+  water: { demand: number; supply: number; balance: number };
+  electricity: { demand: number; supply: number; balance: number };
+}
+
+interface InfrastructureStore {
+  status: InfrastructureStatus;
+  
+  // アクション
+  calculateInfrastructure: (facilities: Facility[]) => void;
+  getInfrastructureStatus: () => InfrastructureStatus;
+  getInfrastructureShortage: () => { water: number; electricity: number };
+  getInfrastructureSurplus: () => { water: number; electricity: number };
+}
+
+export const useInfrastructureStore = create<InfrastructureStore>((set, get) => ({
+  status: {
+    water: { demand: 0, supply: 0, balance: 0 },
+    electricity: { demand: 0, supply: 0, balance: 0 }
+  },
+
+  calculateInfrastructure: (facilities: Facility[]) => {
+    let totalWaterDemand = 0;
+    let totalElectricityDemand = 0;
+    let totalWaterSupply = 0;
+    let totalElectricitySupply = 0;
+
+    facilities.forEach(facility => {
+      const info = FACILITY_DATA[facility.type];
+      
+      // 需要の計算
+      if (info.infrastructureDemand) {
+        totalWaterDemand += info.infrastructureDemand.water;
+        totalElectricityDemand += info.infrastructureDemand.electricity;
+      }
+      
+      // 供給の計算
+      if (info.infrastructureSupply) {
+        totalWaterSupply += info.infrastructureSupply.water;
+        totalElectricitySupply += info.infrastructureSupply.electricity;
+      }
+    });
+
+    const newStatus: InfrastructureStatus = {
+      water: {
+        demand: totalWaterDemand,
+        supply: totalWaterSupply,
+        balance: totalWaterSupply - totalWaterDemand
+      },
+      electricity: {
+        demand: totalElectricityDemand,
+        supply: totalElectricitySupply,
+        balance: totalElectricitySupply - totalElectricityDemand
+      }
+    };
+
+    set({ status: newStatus });
+  },
+
+  getInfrastructureStatus: () => {
+    return get().status;
+  },
+
+  getInfrastructureShortage: () => {
+    const status = get().status;
+    return {
+      water: Math.max(0, -status.water.balance),
+      electricity: Math.max(0, -status.electricity.balance)
+    };
+  },
+
+  getInfrastructureSurplus: () => {
+    const status = get().status;
+    return {
+      water: Math.max(0, status.water.balance),
+      electricity: Math.max(0, status.electricity.balance)
+    };
+  }
+}));

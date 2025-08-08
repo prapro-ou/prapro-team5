@@ -3,6 +3,7 @@ import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
+import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
 
@@ -10,7 +11,7 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
 
@@ -19,6 +20,7 @@ import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { playBuildSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
+import { useInfrastructureStore } from './stores/InfrastructureStore';
 
 function App() {
   // UI状態
@@ -26,13 +28,15 @@ function App() {
     showPanel,
     isSettingsOpen,
     isCreditsOpen,
+    isInfrastructureInfoOpen,
     selectedTile,
     togglePanel,
     openSettings,
     closeSettings,
     closeCredits,
     switchToCredits,
-    setSelectedTile
+    setSelectedTile,
+    toggleInfrastructureInfo
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -73,6 +77,12 @@ function App() {
     return () => clearInterval(timerId);
   }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
 
+  // インフラ計算
+  useEffect(() => {
+    const { calculateInfrastructure } = useInfrastructureStore.getState();
+    calculateInfrastructure(facilities);
+  }, [facilities]);
+
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
@@ -108,6 +118,10 @@ function App() {
     // この時、更新後の施設リストを取得して渡す
     recalculateSatisfaction(useFacilityStore.getState().facilities);
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
+
+    // インフラ状況を再計算
+    const { calculateInfrastructure } = useInfrastructureStore.getState();
+    calculateInfrastructure(useFacilityStore.getState().facilities);
   };
 
   const handleTileClick = (position: Position) => {
@@ -194,6 +208,21 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel stats={stats} />
       
+      {/* インフラパネルボタン */}
+      <button
+        onClick={toggleInfrastructureInfo}
+        className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbAlignLeft2 />
+      </button>
+
+      {/* インフラ情報パネル */}
+      {isInfrastructureInfoOpen && (
+        <div className="fixed top-25 left-25 z-[1100]">
+          <InfrastructureInfo onClose={toggleInfrastructureInfo} />
+        </div>
+      )}
+
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
         <Grid 
