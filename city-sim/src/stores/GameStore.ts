@@ -5,6 +5,7 @@ import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
+import { useInfrastructureStore } from './InfrastructureStore';
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -126,6 +127,46 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
 };
 
 /**
+ * インフラ計算タスク
+ */
+const processInfrastructure: MonthlyTask = (get, set) => {
+  const facilities = useFacilityStore.getState().facilities;
+  const { calculateInfrastructure, getInfrastructureShortage } = useInfrastructureStore.getState();
+  
+  // インフラ状況を計算
+  calculateInfrastructure(facilities);
+  
+  // インフラ不足
+  const shortage = getInfrastructureShortage();
+  let satisfactionPenalty = 0;
+  
+  // 水道不足
+  if (shortage.water > 0) {
+    satisfactionPenalty += Math.min(20, shortage.water / 10);
+    console.log(`Water shortage: -${shortage.water}, Satisfaction penalty: -${Math.min(20, shortage.water / 10)}`);
+  }
+  
+  // 電気不足
+  if (shortage.electricity > 0) {
+    satisfactionPenalty += Math.min(20, shortage.electricity / 10);
+    console.log(`Electricity shortage: -${shortage.electricity}, Satisfaction penalty: -${Math.min(20, shortage.electricity / 10)}`);
+  }
+  
+  // 満足度更新
+  if (satisfactionPenalty > 0) {
+    const currentStats = get().stats;
+    const newSatisfaction = Math.max(0, currentStats.satisfaction - satisfactionPenalty);
+    set({
+      stats: {
+        ...currentStats,
+        satisfaction: newSatisfaction
+      }
+    });
+    console.log(`Infrastructure shortage total penalty: -${satisfactionPenalty}`);
+  }
+};
+
+/*
  * 人口が一定数を超えたらレベルアップするタスク
  */
 // レベルアップ判定関数（人口や満足度など複数条件に対応可能）
@@ -164,7 +205,7 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     workforce: 0, // 労働力（初期値0、人口から計算する場合は後で上書き）
     goods: 0,     // 製品（初期値0）
-    date: { year: 2024, month: 1, week: 1 }
+    date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -175,6 +216,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     adjustPopulationBySatisfaction,
     processEconomicCycle,
     applyParkSatisfactionPenalty,
+    processInfrastructure,
     // 他の月次タスクをここに追加可能
   ],
   levelUpMessage: null,
@@ -249,6 +291,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const newDate = { ...currentDate };
     
     newDate.week += 1;
+    newDate.totalWeeks += 1; // 絶対週数を増加
 
     if (newDate.week > 4) {
       newDate.week = 1;

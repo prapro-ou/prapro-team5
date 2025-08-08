@@ -1,6 +1,18 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | null;
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park";
+
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
+
+// インフラ需要・供給
+export interface InfrastructureDemand {
+  water: number;
+  electricity: number;
+};
+
+export interface InfrastructureSupply {
+  water: number;
+  electricity: number;
+};
 
 // カテゴリ定義
 export const FACILITY_CATEGORIES = {
@@ -26,6 +38,10 @@ export interface FacilityInfo {
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
   satisfaction: number;
+  // --- インフラ用プロパティ ---
+  infrastructureDemand?: InfrastructureDemand; // インフラ需要
+  infrastructureSupply?: InfrastructureSupply; // インフラ供給
+
   // --- 経済サイクル用プロパティ ---
   requiredWorkforce?: number; // 必要労働力（工業・商業用）
   produceGoods?: number;      // 生産量（工業用）
@@ -60,6 +76,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/residential.png'],
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
+    infrastructureDemand: { water: 50, electricity: 50 },
   },
   commercial: {
     type: 'commercial', 
@@ -74,6 +91,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 7,
     requiredWorkforce: 5, // 仮値
     consumeGoods: 5,      // 1週で消費する製品数（仮値）
+    infrastructureDemand: { water: 100, electricity: 100 },
   },
   industrial: {
     type: 'industrial',
@@ -88,6 +106,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: -5,
     requiredWorkforce: 200, // 仮値
     produceGoods: 10,      // 1週で生産する製品数（仮値）
+    infrastructureDemand: { water: 200, electricity: 200 },
   },
   road: {
     type: 'road',
@@ -125,5 +144,29 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
+  },
+  // インフラ関連
+  electric_plant: {
+    type: 'electric_plant',
+    name: '発電所',
+    size: 3,
+    cost: 1000,
+    maintenanceCost: 100,
+    description: '電力を生産する施設',
+    category: 'infrastructure',
+    satisfaction: 0,
+    infrastructureSupply: { water: 0, electricity: 5000 },
+  },
+
+  water_plant: {
+    type: 'water_plant',
+    name: '浄水所',
+    size: 3,
+    cost: 1000,
+    maintenanceCost: 100,
+    description: '水を生産する施設',
+    category: 'infrastructure',
+    satisfaction: 0,
+    infrastructureSupply: { water: 5000, electricity: 0 },
   }
 }
