@@ -1,5 +1,6 @@
 import type { Facility } from "./facility";
 
+
 export interface Position {
   x: number;
   y: number;

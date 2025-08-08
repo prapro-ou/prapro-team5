@@ -349,7 +349,12 @@ export const Grid: React.FC<GridProps> = ({
 
   const getPreviewStatus = React.useCallback((x: number, y: number) => {
     const tileKey = `${x}-${y}`;
-  
+
+    // 範囲外チェックを追加
+    if (x < 0 || x >= size.width || y < 0 || y >= size.height) {
+      return 'out-of-bounds';
+    }
+
     // ドラッグ範囲内のプレビュー
     if (isPlacingFacility && dragRange.has(tileKey)) {
       if (!selectedFacilityType) return null;
@@ -390,7 +395,7 @@ export const Grid: React.FC<GridProps> = ({
       return 'occupied';
     }
     return 'valid';
-  }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange]);
+  }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange, size]);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -563,6 +568,39 @@ export const Grid: React.FC<GridProps> = ({
     return 'none';
   }
 
+  const isPreviewInvalid = React.useMemo(() => {
+    if (!selectedFacilityType || !hoveredTile) return false;
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const radius = Math.floor(facilityData.size / 2);
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = hoveredTile.x + dx;
+        const y = hoveredTile.y + dy;
+        const status = getPreviewStatus(x, y);
+        if (status === 'occupied' || status === 'out-of-bounds' || status === 'insufficient-funds') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }, [selectedFacilityType, hoveredTile, getPreviewStatus]);
+
+  const previewColor = (x: number, y: number) => {
+    if (!selectedFacilityType || !hoveredTile) return '';
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const radius = Math.floor(facilityData.size / 2);
+    if (
+      x >= hoveredTile.x - radius && x <= hoveredTile.x + radius &&
+      y >= hoveredTile.y - radius && y <= hoveredTile.y + radius
+    ) {
+      if (isPreviewInvalid) {
+        return 'bg-red-300 opacity-70';
+      }
+      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
+    }
+    return '';
+  };
+
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -591,8 +629,7 @@ export const Grid: React.FC<GridProps> = ({
       {visibleTiles.map(({ x, y }) => {
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
-        const previewStatus = getPreviewStatus(x, y);
-        const previewColor = getPreviewColor(previewStatus, selectedFacilityType);
+        const previewColorValue = previewColor(x, y);
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
@@ -675,7 +712,7 @@ export const Grid: React.FC<GridProps> = ({
             <div
               className={`
                 absolute cursor-pointer border border-gray-500
-                ${parkEffectClass} ${previewColor || facilityColor}
+                ${parkEffectClass} ${previewColorValue || facilityColor}
                 ${isSelected(x, y) ? 'ring-2 ring-yellow-400' : ''}
               `}
               style={{
