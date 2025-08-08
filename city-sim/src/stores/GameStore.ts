@@ -205,7 +205,7 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     workforce: 0, // 労働力（初期値0、人口から計算する場合は後で上書き）
     goods: 0,     // 製品（初期値0）
-    date: { year: 2024, month: 1, week: 1 }
+    date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -291,6 +291,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const newDate = { ...currentDate };
     
     newDate.week += 1;
+    newDate.totalWeeks += 1; // 絶対週数を増加
 
     if (newDate.week > 4) {
       newDate.week = 1;
