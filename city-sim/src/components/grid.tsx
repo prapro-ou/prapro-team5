@@ -586,6 +586,15 @@ export const Grid: React.FC<GridProps> = ({
   }, [selectedFacilityType, hoveredTile, getPreviewStatus]);
 
   const previewColor = (x: number, y: number) => {
+    const tileKey = `${x}-${y}`;
+    
+    // ドラッグ敷設中のプレビュー
+    if (isPlacingFacility && dragRange.has(tileKey)) {
+      if (!selectedFacilityType) return '';
+      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
+    }
+    
+    // 通常のホバープレビュー
     if (!selectedFacilityType || !hoveredTile) return '';
     const facilityData = FACILITY_DATA[selectedFacilityType];
     const radius = Math.floor(facilityData.size / 2);
