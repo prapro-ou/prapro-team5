@@ -116,8 +116,18 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 10,
     description: '道路',
     category: 'infrastructure',
-    imgPaths: ['images/buildings/road_right.png'],
-    imgSizes: [{ width: 32, height: 16 }],
+    imgPaths: [
+      'images/buildings/road_right.png',    // 0: 直線道路
+      'images/buildings/road_cross.png',    // 1: 交差点
+      'images/buildings/road_turn.png',     // 2: 右左折
+      'images/buildings/road_t.png',        // 3: 丁字路
+    ],
+    imgSizes: [
+      { width: 32, height: 16 },
+      { width: 32, height: 16 },
+      { width: 32, height: 16 },
+      { width: 32, height: 16 },
+    ],
     satisfaction: 0,
   },
   // 市役所のデータを追加
