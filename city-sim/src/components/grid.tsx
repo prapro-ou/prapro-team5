@@ -547,34 +547,34 @@ export const Grid: React.FC<GridProps> = ({
     const connections = [left, right, up, down].filter(Boolean).length;
 
     if (left && right && up && down) {
-      return { type: 'cross', variantIndex: 1, rotation: 0 };
+      return { type: 'cross', variantIndex: 1, rotation: 0, flip: false };
     }
     
     if (connections === 3) {
-      if (!left) return { type: 't-junction', variantIndex: 3, rotation: 0 };
-      if (!right) return { type: 't-junction', variantIndex: 3, rotation: 180 };
-      if (!up) return { type: 't-junction', variantIndex: 3, rotation: 180 };
-      if (!down) return { type: 't-junction', variantIndex: 3, rotation: 0 };
+      if (!left) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false };
+      if (!right) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false };
+      if (!up) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false };
+      if (!down) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false };
     }
     
     if (connections === 2) {
-      if ((left && up) || (right && down)) return { type: 'turn', variantIndex: 2, rotation: 0 };
-      if ((right && up) || (left && down)) return { type: 'turn', variantIndex: 2, rotation: 180 };
+      if ((left && up) || (right && down)) return { type: 'turn', variantIndex: 2, rotation: 0, flip: false };
+      if ((right && up) || (left && down)) return { type: 'turn', variantIndex: 2, rotation: 180, flip: false };
     }
     
     if (left && right) {
-      return { type: 'horizontal', variantIndex: 0, rotation: 0 };
+      return { type: 'horizontal', variantIndex: 0, rotation: 180, flip: true };
     }
     if (up && down) {
-      return { type: 'vertical', variantIndex: 0, rotation: 0 };
+      return { type: 'vertical', variantIndex: 0, rotation: 0, flip: false };
     }
     
-    if (left) return { type: 'end', variantIndex: 0, rotation: 0 };
-    if (right) return { type: 'end', variantIndex: 0, rotation: 0 };
-    if (up) return { type: 'end', variantIndex: 0, rotation: 180 };
-    if (down) return { type: 'end', variantIndex: 0, rotation: 180 };
+    if (left) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
+    if (right) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
+    if (up) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
+    if (down) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
     
-    return { type: 'isolated', variantIndex: 0, rotation: 0 };
+    return { type: 'isolated', variantIndex: 0, rotation: 0, flip: false };
   }
 
   const isPreviewInvalid = React.useMemo(() => {
@@ -708,9 +708,15 @@ export const Grid: React.FC<GridProps> = ({
                   break;
                 case 't-junction':
                   transform = `rotate(${connection.rotation}deg)`;
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
+                  }
                   break;
                 case 'turn':
                   transform = `rotate(${connection.rotation}deg)`;
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
+                  }
                   break;
                 case 'horizontal':
                 case 'vertical':
@@ -718,6 +724,9 @@ export const Grid: React.FC<GridProps> = ({
                 case 'isolated':
                   if (connection.rotation !== 0) {
                     transform = `rotate(${connection.rotation}deg)`;
+                  }
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
                   }
                   break;
               }
