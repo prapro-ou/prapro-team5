@@ -11,7 +11,8 @@ const creditsData = [
   { role: 'ディレクター', name: 'あなた' },
   { role: 'プログラム', name: 'あなた' },
   { role: 'デザイン', name: 'あなた' },
-  { role: 'サウンド', name: 'Gemini' },
+  { role: 'BGM', name: 'shimtone様よりMorning Glory' },
+  { role: 'SE', name: '小森平様' },
   { role: 'スペシャルサンクス', name: 'プレイヤーの皆さん' },
 ];
 
@@ -43,7 +44,27 @@ export const CreditsPanel: React.FC<CreditsPanelProps> = ({ onClose }) => {
           {creditsData.map((credit, index) => (
             <div key={index}>
               <p className="text-lg text-gray-400">{credit.role}</p>
-              <p className="text-2xl font-semibold">{credit.name}</p>
+              {credit.role === 'SE' ? (
+                <a 
+                  href="https://taira-komori.net/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-2xl font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
+                >
+                  {credit.name}
+                </a>
+              ) : credit.role === 'BGM' ? (
+                <a 
+                  href="https://dova-s.jp/_contents/author/profile295.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-2xl font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
+                >
+                  {credit.name}
+                </a>
+              ) : (
+                <p className="text-2xl font-semibold">{credit.name}</p>
+              )}
             </div>
           ))}
         </div>
