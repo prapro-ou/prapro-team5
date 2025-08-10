@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 // 設置音グローバル関数をexport
 export let playBuildSound = () => {};
+export let playLevelUpSound = () => {};
 // TbBellOffアイコンを追加
 import { TbMusic, TbMusicOff, TbVolume, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
 import clickSfxSrc from '../assets/click.mp3';
 import buildSfxSrc from '../assets/build.mp3';
+import levelupSfxSrc from '../assets/levelup.mp3';
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
@@ -97,6 +99,13 @@ export function BGMPlayer() {
     playBuildSound = () => {
       if (isSfxMuted) return;
       const sfx = new Audio(buildSfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
+    };
+
+    playLevelUpSound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(levelupSfxSrc);
       sfx.volume = sfxVolume;
       sfx.play().catch(() => {});
     };
