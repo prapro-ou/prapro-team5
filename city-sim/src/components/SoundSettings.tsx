@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-// 設置音グローバル関数をexport
+// 効果音グローバル関数をexport
 export let playBuildSound = () => {};
 export let playLevelUpSound = () => {};
 export let playPanelSound = () => {};
 export let playCoinSound = () => {};
+export let playSelectSound = () => {};
+export let playSelect1Sound = () => {};
 // TbBellOffアイコンを追加
 import { TbMusic, TbMusicOff, TbVolume, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
@@ -11,6 +13,8 @@ import clickSfxSrc from '../assets/click.mp3';
 import buildSfxSrc from '../assets/build.mp3';
 import levelupSfxSrc from '../assets/levelup.mp3';
 import coinSfxSrc from '../assets/coin.mp3';
+import selectSfxSrc from '../assets/select.mp3';
+import select1SfxSrc from '../assets/select1.mp3';
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
@@ -123,6 +127,20 @@ export function BGMPlayer() {
     playCoinSound = () => {
       if (isSfxMuted) return;
       const sfx = new Audio(coinSfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
+    };
+
+    playSelectSound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(selectSfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
+    };
+
+    playSelect1Sound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(select1SfxSrc);
       sfx.volume = sfxVolume;
       sfx.play().catch(() => {});
     };
