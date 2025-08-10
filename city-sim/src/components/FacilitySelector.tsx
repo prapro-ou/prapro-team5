@@ -2,6 +2,7 @@ import type { CategoryKey, FacilityType } from "../types/facility";
 import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
 import { useState, useEffect } from "react";
 import { TbCash } from "react-icons/tb";
+import { playPanelSound } from "./SoundSettings";
 
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
@@ -76,7 +77,10 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
                 </button>
                 <button
                   className="mt-1 text-xs underline text-blue-200 hover:text-blue-400"
-                  onClick={() => setDetailType(facility.type)}
+                  onClick={() => {
+                    playPanelSound();
+                    setDetailType(facility.type);
+                  }}
                   type="button"
                 >
                   詳細を見る
@@ -92,7 +96,10 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
         <div className="mt-4 p-3 bg-gray-700 rounded text-white">
           <button
             className="mb-2 text-xs underline text-blue-200 hover:text-blue-400"
-            onClick={() => setDetailType(null)}
+            onClick={() => {
+              playPanelSound();
+              setDetailType(null);
+            }}
             type="button"
           >
             閉じる
