@@ -543,6 +543,10 @@ export const Grid: React.FC<GridProps> = ({
     const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
     const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
     const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
+    const leftUp  = facilityMap.get(`${x-1}-${y-1}`)?.type === 'road';
+    const rightUp = facilityMap.get(`${x+1}-${y-1}`)?.type === 'road';
+    const leftDown = facilityMap.get(`${x-1}-${y+1}`)?.type === 'road';
+    const rightDown = facilityMap.get(`${x+1}-${y+1}`)?.type === 'road';
 
     const connections = [left, right, up, down].filter(Boolean).length;
 
@@ -550,11 +554,11 @@ export const Grid: React.FC<GridProps> = ({
       return { type: 'cross', variantIndex: 1, rotation: 0, flip: false };
     }
     
-    if (connections === 3) {
-      if (!left) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false };
-      if (!right) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false };
-      if (!up) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false };
-      if (!down) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false };
+    if (connections >= 1) {
+      if (left && leftUp && leftDown) return { type: 't-junction', variantIndex: 4, rotation: 0, flip: true };
+      if (right && rightUp && rightDown) return { type: 't-junction', variantIndex: 4, rotation: 180, flip: true};
+      if (up && leftUp && rightUp) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false};
+      if (down && leftDown && rightDown) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false};
     }
     
     if (connections === 2) {
