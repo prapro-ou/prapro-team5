@@ -77,8 +77,28 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
 /**
  * レベルに応じて人口を増減させるタスク
  */
-const adjustPopulationByGrowth: MonthlyTask = (get, set) => {
+const adjustPopulationByGrowth: MonthlyTask = (get) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  const residentials = facilities.filter(f => f.type === 'residential');
+  let totalIncrease = 0;
+  let growthrate = 0;
+  let random = Math.random()*0.2 + 0.9;
 
+  if (stats.level == 1) {
+    growthrate = 0.2;
+  } else if (stats.level == 2) {
+    growthrate = 0.1;
+  } else {
+    growthrate = 0.03;
+  } 
+
+  for (const res of residentials) {
+    const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
+    totalIncrease += Math.floor(basePop * growthrate * random); // 条件係数を後で追加
+  }
+  console.log(`Population Growth: +${totalIncrease}`);
+  get().addPopulation(totalIncrease);
 };
 
 /**
