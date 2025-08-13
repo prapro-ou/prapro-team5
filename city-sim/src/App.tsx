@@ -18,7 +18,7 @@ import RewardButtonImg from './assets/RewardButton.png';
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
-import { playBuildSound } from './components/SoundSettings';
+import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 
@@ -170,7 +170,12 @@ function App() {
       <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
         <div className="relative">
           <button
-            onClick={() => setShowRewardPanel(v => !v)}
+            onClick={() => {
+              setShowRewardPanel(v => {
+                playPanelSound(); // 開閉どちらでも同じ音
+                return !v;
+              });
+            }}
             className="hover:opacity-80 transition-opacity"
           >
             <img 

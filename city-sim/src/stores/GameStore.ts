@@ -6,6 +6,7 @@ import { FACILITY_DATA } from '../types/facility';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
+import { playLevelUpSound } from '../components/SoundSettings';
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -185,6 +186,9 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
     levelUpMsg = `レベル${newLevel}にアップしました！`;
   }
   if (newLevel !== stats.level) {
+    // レベルアップ効果音を再生
+    playLevelUpSound();
+    
     set({
       stats: {
         ...stats,

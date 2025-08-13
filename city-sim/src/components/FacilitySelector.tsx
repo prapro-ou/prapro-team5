@@ -2,6 +2,7 @@ import type { CategoryKey, FacilityType } from "../types/facility";
 import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
 import { useState, useEffect } from "react";
 import { TbCash } from "react-icons/tb";
+import { playPanelSound, playSelectSound, playSelect1Sound } from "./SoundSettings";
 
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
@@ -33,7 +34,10 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
         {Object.entries(FACILITY_CATEGORIES).map(([key, categoryInfo]) => (
           <button
             key={key}
-            onClick={() => setCategory(key as CategoryKey)}
+            onClick={() => {
+              playSelectSound(); // カテゴリ選択時に効果音を再生
+              setCategory(key as CategoryKey);
+            }}
             className={`px-3 py-1 text-xs rounded-t-lg transition-colors ${
               category === key
                 ? 'bg-white text-gray-600 border-b-2 border-green-500 hover:bg-gray-300'
@@ -58,6 +62,7 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
                     if (isSelected) {
                       onSelectType(null);
                     } else {
+                      playSelect1Sound(); // 施設選択時にselect1.mp3を再生
                       onSelectType(facility.type);
                     }
                   }}
@@ -76,7 +81,10 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
                 </button>
                 <button
                   className="mt-1 text-xs underline text-blue-200 hover:text-blue-400"
-                  onClick={() => setDetailType(facility.type)}
+                  onClick={() => {
+                    playPanelSound();
+                    setDetailType(facility.type);
+                  }}
                   type="button"
                 >
                   詳細を見る
@@ -92,7 +100,10 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
         <div className="mt-4 p-3 bg-gray-700 rounded text-white">
           <button
             className="mb-2 text-xs underline text-blue-200 hover:text-blue-400"
-            onClick={() => setDetailType(null)}
+            onClick={() => {
+              playPanelSound();
+              setDetailType(null);
+            }}
             type="button"
           >
             閉じる
