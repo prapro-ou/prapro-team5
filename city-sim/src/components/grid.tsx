@@ -555,15 +555,17 @@ export const Grid: React.FC<GridProps> = ({
     }
     
     if (connections >= 1) {
-      if (left && leftUp && leftDown) return { type: 't-junction', variantIndex: 4, rotation: 0, flip: true };
-      if (right && rightUp && rightDown) return { type: 't-junction', variantIndex: 4, rotation: 180, flip: true};
-      if (up && leftUp && rightUp) return { type: 't-junction', variantIndex: 3, rotation: 0, flip: false};
-      if (down && leftDown && rightDown) return { type: 't-junction', variantIndex: 3, rotation: 180, flip: false};
+      if (left && leftUp && leftDown) return { type: 't-junction', variantIndex: 5, rotation: 0, flip: true };
+      if (right && rightUp && rightDown) return { type: 't-junction', variantIndex: 5, rotation: 180, flip: true};
+      if (up && leftUp && rightUp) return { type: 't-junction', variantIndex: 4, rotation: 0, flip: false};
+      if (down && leftDown && rightDown) return { type: 't-junction', variantIndex: 4, rotation: 180, flip: false};
     }
     
     if (connections === 2) {
-      if ((left && up) || (right && down)) return { type: 'turn', variantIndex: 2, rotation: 0, flip: false };
-      if ((right && up) || (left && down)) return { type: 'turn', variantIndex: 2, rotation: 180, flip: false };
+      if (right && up) return { type: 'turn', variantIndex: 2, rotation: 0, flip: true };
+      if (left && down) return { type: 'turn', variantIndex: 2, rotation: 0, flip: false };
+      if (right && down) return { type: 'turn', variantIndex: 3, rotation: 180, flip: false };
+      if (left && up) return { type: 'turn', variantIndex: 3, rotation: 0, flip: false };
     }
     
     if (left && right) {
