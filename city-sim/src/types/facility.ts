@@ -119,9 +119,10 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: [
       'images/buildings/road_right.png',    // 0: 直線道路
       'images/buildings/road_cross.png',    // 1: 交差点
-      'images/buildings/road_turn.png',     // 2: 右左折
-      'images/buildings/road_t.png',        // 3: 丁字路1
-      'images/buildings/road_t_r.png',      // 4: 丁字路2
+      'images/buildings/road_turn.png',     // 2: 右左折1
+      'images/buildings/road_turn_r.png',   // 3: 右左折2
+      'images/buildings/road_t.png',        // 4: 丁字路1
+      'images/buildings/road_t_r.png',      // 5: 丁字路2
     ],
     imgSizes: [
       { width: 32, height: 16 },
