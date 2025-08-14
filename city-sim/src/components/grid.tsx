@@ -12,6 +12,7 @@ import { useMouseDrag } from "../hooks/useMouseDrag";
 import { useGridCoordinates } from "../hooks/useGridCoordinates";
 import { useFacilityPlacement } from "../hooks/useFacilityPlacement";
 import { useFacilityPreview } from "../hooks/useFacilityPreview";
+import { getRoadConnectionType } from "../utils/roadConnection";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -216,51 +217,6 @@ export const Grid: React.FC<GridProps> = ({
       onTileClick({ x, y });
     }
   };
-
-  function getRoadConnectionType(facilityMap: Map<string, Facility>, x: number, y: number) {
-    const left  = facilityMap.get(`${x-1}-${y}`)?.type === 'road';
-    const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
-    const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
-    const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
-    const leftUp  = facilityMap.get(`${x-1}-${y-1}`)?.type === 'road';
-    const rightUp = facilityMap.get(`${x+1}-${y-1}`)?.type === 'road';
-    const leftDown = facilityMap.get(`${x-1}-${y+1}`)?.type === 'road';
-    const rightDown = facilityMap.get(`${x+1}-${y+1}`)?.type === 'road';
-
-    const connections = [left, right, up, down].filter(Boolean).length;
-
-    if (left && right && up && down) {
-      return { type: 'cross', variantIndex: 1, rotation: 0, flip: false };
-    }
-    
-    if (connections >= 1) {
-      if (left && leftUp && leftDown) return { type: 't-junction', variantIndex: 5, rotation: 0, flip: true };
-      if (right && rightUp && rightDown) return { type: 't-junction', variantIndex: 5, rotation: 180, flip: true};
-      if (up && leftUp && rightUp) return { type: 't-junction', variantIndex: 4, rotation: 0, flip: false};
-      if (down && leftDown && rightDown) return { type: 't-junction', variantIndex: 4, rotation: 180, flip: false};
-    }
-    
-    if (connections === 2) {
-      if (right && up) return { type: 'turn', variantIndex: 2, rotation: 0, flip: true };
-      if (left && down) return { type: 'turn', variantIndex: 2, rotation: 0, flip: false };
-      if (right && down) return { type: 'turn', variantIndex: 3, rotation: 180, flip: false };
-      if (left && up) return { type: 'turn', variantIndex: 3, rotation: 0, flip: false };
-    }
-    
-    if (left && right) {
-      return { type: 'horizontal', variantIndex: 0, rotation: 180, flip: true };
-    }
-    if (up && down) {
-      return { type: 'vertical', variantIndex: 0, rotation: 0, flip: false };
-    }
-    
-    if (left) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
-    if (right) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
-    if (up) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
-    if (down) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
-    
-    return { type: 'isolated', variantIndex: 0, rotation: 0, flip: false };
-  }
 
   const previewColor = (x: number, y: number) => {
     const tileKey = `${x}-${y}`;
