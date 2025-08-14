@@ -543,29 +543,44 @@ export const Grid: React.FC<GridProps> = ({
     const right = facilityMap.get(`${x+1}-${y}`)?.type === 'road';
     const up    = facilityMap.get(`${x}-${y-1}`)?.type === 'road';
     const down  = facilityMap.get(`${x}-${y+1}`)?.type === 'road';
+    const leftUp  = facilityMap.get(`${x-1}-${y-1}`)?.type === 'road';
+    const rightUp = facilityMap.get(`${x+1}-${y-1}`)?.type === 'road';
+    const leftDown = facilityMap.get(`${x-1}-${y+1}`)?.type === 'road';
+    const rightDown = facilityMap.get(`${x+1}-${y+1}`)?.type === 'road';
+
+    const connections = [left, right, up, down].filter(Boolean).length;
 
     if (left && right && up && down) {
-      return 'cross';
+      return { type: 'cross', variantIndex: 1, rotation: 0, flip: false };
     }
+    
+    if (connections >= 1) {
+      if (left && leftUp && leftDown) return { type: 't-junction', variantIndex: 5, rotation: 0, flip: true };
+      if (right && rightUp && rightDown) return { type: 't-junction', variantIndex: 5, rotation: 180, flip: true};
+      if (up && leftUp && rightUp) return { type: 't-junction', variantIndex: 4, rotation: 0, flip: false};
+      if (down && leftDown && rightDown) return { type: 't-junction', variantIndex: 4, rotation: 180, flip: false};
+    }
+    
+    if (connections === 2) {
+      if (right && up) return { type: 'turn', variantIndex: 2, rotation: 0, flip: true };
+      if (left && down) return { type: 'turn', variantIndex: 2, rotation: 0, flip: false };
+      if (right && down) return { type: 'turn', variantIndex: 3, rotation: 180, flip: false };
+      if (left && up) return { type: 'turn', variantIndex: 3, rotation: 0, flip: false };
+    }
+    
     if (left && right) {
-      return 'horizontal';
+      return { type: 'horizontal', variantIndex: 0, rotation: 180, flip: true };
     }
     if (up && down) {
-      return 'vertical';
+      return { type: 'vertical', variantIndex: 0, rotation: 0, flip: false };
     }
-    if (left) {
-      return 'left';
-    }
-    if (right) {
-      return 'right';
-    }
-    if (up) {
-      return 'up';
-    }
-    if (down) {
-      return 'down';
-    }
-    return 'none';
+    
+    if (left) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
+    if (right) return { type: 'end', variantIndex: 0, rotation: 180, flip: true };
+    if (up) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
+    if (down) return { type: 'end', variantIndex: 0, rotation: 0, flip: false };
+    
+    return { type: 'isolated', variantIndex: 0, rotation: 0, flip: false };
   }
 
   const isPreviewInvalid = React.useMemo(() => {
@@ -688,16 +703,37 @@ export const Grid: React.FC<GridProps> = ({
             )}
             {isCenter && facility.type === 'road' && (() => {
               const connection = getRoadConnectionType(facilityMap, x, y);
+              const facilityData = FACILITY_DATA[facility.type];
+              
+              let imgPath = facilityData.imgPaths?.[connection.variantIndex] ?? "";
+              let imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
               let transform = undefined;
-              switch (connection) {
+              
+              switch (connection.type) {
+                case 'cross':
+                  break;
+                case 't-junction':
+                  transform = `rotate(${connection.rotation}deg)`;
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
+                  }
+                  break;
+                case 'turn':
+                  transform = `rotate(${connection.rotation}deg)`;
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
+                  }
+                  break;
                 case 'horizontal':
-                case 'left':
-                case 'right':
-                  transform = 'scaleX(-1)';
-                  break;
                 case 'vertical':
-                  break;
-                default:
+                case 'end':
+                case 'isolated':
+                  if (connection.rotation !== 0) {
+                    transform = `rotate(${connection.rotation}deg)`;
+                  }
+                  if (connection.flip) {
+                    transform += ' scaleX(-1)';
+                  }
                   break;
               }
 
