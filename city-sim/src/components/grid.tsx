@@ -1,9 +1,7 @@
 import React from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility, FacilityType } from "../types/facility";
-import { FACILITY_DATA } from "../types/facility";
 import { 
-  toIsometric, 
   ISO_TILE_WIDTH, 
   ISO_TILE_HEIGHT 
 } from "../utils/coordinates";
