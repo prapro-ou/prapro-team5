@@ -214,61 +214,6 @@ const INITIAL_STATS: GameStats = {
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
-export const citizenFeedTask: MonthlyTask = (get, set) => {
-  const stats = get().stats;
-  const facilities = useFacilityStore.getState().facilities;
-  const feedStore = useFeedStore.getState();
-  const now = Date.now();
-
-  // 資源不足
-  if (stats.goods <= 10) {
-    feedStore.addFeed({
-      text: "お店に品物が全然ないよ！工業地帯を増やして生産して！🏭",
-      icon: "shop",
-      timestamp: now
-    });
-  }
-
-  // 労働力不足
-  const totalRequiredWorkforce = facilities.reduce((sum, f) => {
-    const data = FACILITY_DATA[f.type];
-    return sum + (data?.requiredWorkforce || 0);
-  }, 0);
-  if (stats.workforce < totalRequiredWorkforce - 10) {
-    feedStore.addFeed({
-      text: "働き口がない…商業地や工業地帯を建ててほしいな…💼",
-      icon: "work",
-      timestamp: now
-    });
-  }
-
-  // 公園サービス範囲外住宅
-  const residentials = facilities.filter(f => f.type === 'residential');
-  const parks = facilities.filter(f => f.type === 'park');
-  const outOfRangeResidentials = getResidentialsWithoutPark(residentials, parks);
-  if (outOfRangeResidentials.length > 0) {
-    feedStore.addFeed({
-      text: "近くに公園がなくて、子どもを遊ばせる場所がないよ！🌳",
-      icon: "park",
-      timestamp: now
-    });
-  }
-
-  // 満足度
-  if (stats.satisfaction < 30) {
-    feedStore.addFeed({
-      text: "この街、なんだか退屈だ…何か楽しいことはないのかな？😞",
-      icon: "sad",
-      timestamp: now
-    });
-  } else if (stats.satisfaction > 80) {
-    feedStore.addFeed({
-      text: "この街は本当に住みやすい！市長に感謝！😄",
-      icon: "happy",
-      timestamp: now
-    });
-  }
-};
 
 export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
