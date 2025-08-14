@@ -3,8 +3,7 @@ import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
-import { useFeedStore } from './FeedStore';
-import { getResidentialsWithoutPark } from '../utils/parkEffect';
+import { citizenFeedTask } from './CitizenFeedTask';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
@@ -224,7 +223,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processEconomicCycle,
     applyParkSatisfactionPenalty,
     processInfrastructure,
-    citizenFeedTask,
+  citizenFeedTask,
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
