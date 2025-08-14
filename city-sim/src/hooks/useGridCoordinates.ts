@@ -1,9 +1,11 @@
 import React from 'react';
 import type { Position } from '../types/grid';
+import type { Camera } from './useCamera';
 import { screenToGrid, getViewportBounds } from '../utils/coordinates';
 
 interface UseGridCoordinatesProps {
-  camera: { x: number; y: number };
+  camera: Camera;
+  getCameraBounds: () => { maxX: number; maxY: number; minX: number; minY: number };
   mapOffsetX: number;
   mapOffsetY: number;
   gridSize: { width: number; height: number };
@@ -11,6 +13,7 @@ interface UseGridCoordinatesProps {
 
 export const useGridCoordinates = ({ 
   camera, 
+  getCameraBounds,
   mapOffsetX, 
   mapOffsetY, 
   gridSize 
@@ -48,7 +51,7 @@ export const useGridCoordinates = ({
   const getVisibleTiles = React.useCallback((
     viewportWidth: number,
     viewportHeight: number
-  ) => {
+  ): Position[] => {
     const bounds = getViewportBounds(
       viewportWidth,
       viewportHeight,
@@ -58,7 +61,7 @@ export const useGridCoordinates = ({
       mapOffsetY
     );
     
-    const tiles = [];
+    const tiles: Position[] = [];
     const startX = Math.max(0, bounds.minX - 1);
     const endX = Math.min(gridSize.width, bounds.maxX + 2);
     const startY = Math.max(0, bounds.minY - 1);
@@ -71,10 +74,17 @@ export const useGridCoordinates = ({
     }
     
     return tiles;
-  }, [camera, mapOffsetX, mapOffsetY, gridSize]);
+  }, [camera, mapOffsetX, mapOffsetY, gridSize, getCameraBounds]);
+
+  // カメラ境界内かチェック
+  const isWithinCameraBounds = React.useCallback((x: number, y: number): boolean => {
+    const bounds = getCameraBounds();
+    return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
+  }, [getCameraBounds]);
 
   return {
     mouseToGrid,
-    getVisibleTiles
+    getVisibleTiles,
+    isWithinCameraBounds
   };
-}; 
+};

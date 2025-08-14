@@ -4,11 +4,11 @@ import type { Facility, FacilityType } from "../types/facility";
 import { FACILITY_DATA } from "../types/facility";
 import { 
   toIsometric, 
-  getViewportBounds, 
   screenToGrid,
   ISO_TILE_WIDTH, 
   ISO_TILE_HEIGHT 
 } from "../utils/coordinates";
+import { useCamera, useMouseDrag, useGridCoordinates } from "../hooks/useCameraAndMouse";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -32,6 +32,7 @@ export const Grid: React.FC<GridProps> = ({
   onSelectParkCenter,
 }) => {
   const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
+  
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
   const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
@@ -40,17 +41,26 @@ export const Grid: React.FC<GridProps> = ({
   const MAP_OFFSET_X = (size.width + size.height) * (ISO_TILE_WIDTH / 2);
   const MAP_OFFSET_Y = 150;
 
-  const [camera, setCamera] = React.useState(() => {
-    // マップの中心グリッド座標を計算
-    const centerGridX = size.width / 2;
-    const centerGridY = size.height / 2;
-    
-    const centerIso = toIsometric(centerGridX, centerGridY);
-    
-    return {
-      x: centerIso.x + MAP_OFFSET_X - VIEWPORT_WIDTH / 2,
-      y: centerIso.y + MAP_OFFSET_Y - VIEWPORT_HEIGHT / 2
-    };
+  // カスタムフックを使用
+  const { camera, setCamera, getCameraBounds } = useCamera({
+    size,
+    viewportWidth: VIEWPORT_WIDTH,
+    viewportHeight: VIEWPORT_HEIGHT,
+    mapOffsetX: MAP_OFFSET_X,
+    mapOffsetY: MAP_OFFSET_Y
+  });
+
+  const { isDragging, startDrag, updateDrag, endDrag } = useMouseDrag({
+    camera,
+    setCamera,
+    getCameraBounds
+  });
+
+  const { mouseToGrid, getVisibleTiles } = useGridCoordinates({
+    camera,
+    mapOffsetX: MAP_OFFSET_X,
+    mapOffsetY: MAP_OFFSET_Y,
+    gridSize: size
   });
 
   // 施設敷設用の状態管理
@@ -58,33 +68,10 @@ export const Grid: React.FC<GridProps> = ({
   const [dragStartTile, setDragStartTile] = React.useState<Position | null>(null);
   const [dragEndTile, setDragEndTile] = React.useState<Position | null>(null);
 
+  // visibleTilesをカスタムフックから取得
   const visibleTiles = React.useMemo(() => {
-    const tiles = [];
-    
-    // ビューポート四隅のグリッド座標を取得
-    const bounds = getViewportBounds(
-      VIEWPORT_WIDTH,
-      VIEWPORT_HEIGHT,
-      camera.x,
-      camera.y,
-      MAP_OFFSET_X,
-      MAP_OFFSET_Y
-    );
-    
-    // マップ境界内でクランプ
-    const startX = Math.max(0, bounds.minX - 1);
-    const endX = Math.min(size.width, bounds.maxX + 2);
-    const startY = Math.max(0, bounds.minY - 1);
-    const endY = Math.min(size.height, bounds.maxY + 2);
-    
-    for (let y = startY; y < endY; y++) {
-      for (let x = startX; x < endX; x++) {
-        tiles.push({ x, y });
-      }
-    }
-    
-    return tiles;
-  }, [camera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
+    return getVisibleTiles(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+  }, [getVisibleTiles, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
 
   // プレビュー範囲の事前計算
   const previewTiles = React.useMemo(() => {
@@ -107,63 +94,6 @@ export const Grid: React.FC<GridProps> = ({
     }
     return tiles;
   }, [selectedFacilityType, hoveredTile, size]);
-
-  // ドラッグ状態の管理
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
-  const [dragStartCamera, setDragStartCamera] = React.useState({ x: 0, y: 0 });
-
-  // カメラの移動処理
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const scrollSpeed = 64;
-      
-      const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
-      const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
-      
-      const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
-      const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
-      
-      switch (e.key) {
-        case 'ArrowUp':
-        case 'w':
-        case 'W':
-          setCamera(prev => ({ 
-            ...prev,
-            y: Math.max(-MAP_OFFSET_Y, prev.y - scrollSpeed) 
-          }));
-          break;
-        case 'ArrowDown':
-        case 's':
-        case 'S':
-          setCamera(prev => ({ 
-            ...prev,
-            y: Math.min(maxCameraY, prev.y + scrollSpeed) 
-          }));
-          break;
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-          setCamera(prev => ({ 
-            ...prev,
-            x: Math.max(-MAP_OFFSET_X, prev.x - scrollSpeed) 
-          }));
-          break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
-          setCamera(prev => ({ 
-            ...prev,
-            x: Math.min(maxCameraX, prev.x + scrollSpeed) 
-          }));
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
-
 
   // ドラッグ範囲の計算
   const dragRange = React.useMemo(() => {
@@ -230,9 +160,7 @@ export const Grid: React.FC<GridProps> = ({
         setDragEndTile(null);
       }
       e.preventDefault();
-      setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
-      setDragStartCamera({ x: camera.x, y: camera.y });
+      startDrag(e.clientX, e.clientY); // カスタムフックの関数を使用
     }
   };
 
@@ -262,8 +190,8 @@ export const Grid: React.FC<GridProps> = ({
   // マウスムーブ処理
   const handleMouseMove = (e: React.MouseEvent) => {
     const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+    
     // 施設敷設ドラッグ中
-  
     if (isPlacingFacility && dragStartTile && gridPos) {
       setDragEndTile(gridPos);
       return;
@@ -273,21 +201,10 @@ export const Grid: React.FC<GridProps> = ({
       debouncedSetHover(gridPos);
     }
 
-    if (!isDragging) return;
-
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-
-    const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
-    const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
-    
-    const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
-    const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
-
-    const newCameraX = Math.max(-MAP_OFFSET_X, Math.min(maxCameraX, dragStartCamera.x - deltaX));
-    const newCameraY = Math.max(-MAP_OFFSET_Y, Math.min(maxCameraY, dragStartCamera.y - deltaY));
-
-    setCamera({ x: newCameraX, y: newCameraY });
+    // カメラドラッグ中
+    if (isDragging) {
+      updateDrag(e.clientX, e.clientY);
+    }
   };
 
   // マウスアップ処理
@@ -328,8 +245,8 @@ export const Grid: React.FC<GridProps> = ({
       return;
     }
     
-    // カメラドラッグの終了（既存の処理）
-    setIsDragging(false);
+    // カメラドラッグの終了
+    endDrag();
   };
 
   const isSelected = (x: number, y: number) => {
@@ -420,23 +337,11 @@ export const Grid: React.FC<GridProps> = ({
     if (!isDragging) return;
 
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStart.x;
-      const deltaY = e.clientY - dragStart.y;
-
-      const mapWidth = (size.width + size.height) * ISO_TILE_WIDTH;
-      const mapHeight = (size.width + size.height) * ISO_TILE_HEIGHT;
-      
-      const maxCameraX = Math.max(0, mapWidth - VIEWPORT_WIDTH + MAP_OFFSET_X);
-      const maxCameraY = Math.max(0, mapHeight - VIEWPORT_HEIGHT + MAP_OFFSET_Y);
-
-      const newCameraX = Math.max(-MAP_OFFSET_X, Math.min(maxCameraX, dragStartCamera.x - deltaX));
-      const newCameraY = Math.max(-MAP_OFFSET_Y, Math.min(maxCameraY, dragStartCamera.y - deltaY));
-
-      setCamera({ x: newCameraX, y: newCameraY });
+      updateDrag(e.clientX, e.clientY);
     };
 
     const handleGlobalMouseUp = () => {
-      setIsDragging(false);
+      endDrag();
     };
 
     document.addEventListener('mousemove', handleGlobalMouseMove);
@@ -446,7 +351,7 @@ export const Grid: React.FC<GridProps> = ({
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging, dragStart, dragStartCamera, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
+  }, [isDragging, updateDrag, endDrag]);
 
   const getFacilityColor = (facility?: Facility) => {
     if (!facility) return 'bg-gray-700'; // デフォルトの色
