@@ -12,6 +12,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   const feedStore = useFeedStore.getState();
   const now = Date.now();
+  let feedAdded = false;
 
   // 資源不足（お店がある時だけ表示）
     const hasShop = facilities.some(f => f.type === "commercial");
@@ -22,6 +23,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "negative"
     });
+    feedAdded = true;
   }
 
 
@@ -52,6 +54,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "negative"
     });
+    feedAdded = true;
   }
   // 水道改善メッセージ
   if (prevShortage.water && shortage.water === 0) {
@@ -61,6 +64,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "positive"
     });
+    feedAdded = true;
   }
   // 電気不足メッセージ（ランダム）
   const electricityMessages = [
@@ -76,6 +80,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "negative"
     });
+    feedAdded = true;
   }
   // 電気改善メッセージ
   if (prevShortage.electricity && shortage.electricity === 0) {
@@ -85,6 +90,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "positive"
     });
+    feedAdded = true;
   }
 
   // 公園サービス範囲外住宅メッセージ（ランダム）
@@ -96,6 +102,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "negative"
     });
+    feedAdded = true;
   }
     // 公園サービス範囲外住宅メッセージ（ランダム）
   // 公園改善メッセージ
@@ -106,6 +113,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "positive"
     });
+    feedAdded = true;
   }
 
   // 満足度メッセージ（ランダム）
@@ -127,8 +135,27 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
       timestamp: now,
       mood: "negative"
     });
+    feedAdded = true;
   } else if (stats.satisfaction > 80) {
     const msg = happyMessages[Math.floor(Math.random() * happyMessages.length)];
+    feedStore.addFeed({
+      text: msg,
+      icon: "happy",
+      timestamp: now,
+      mood: "positive"
+    });
+    feedAdded = true;
+  }
+  // 住人がいる＆今月何もメッセージが出ていない場合は日常メッセージ（ポジティブ）
+  const dailyMessages = [
+    "今日はみんな元気に過ごしているよ！😊",
+    "公園で子どもたちが遊んでる、平和な一日だね🌞",
+    "新しい友達ができた！楽しい毎日！👫",
+    "街の景色がきれいで気持ちいい！🌇",
+    "みんなでご飯を食べて幸せ！🍚"
+  ];
+  if (stats.population > 0 && !feedAdded) {
+    const msg = dailyMessages[Math.floor(Math.random() * dailyMessages.length)];
     feedStore.addFeed({
       text: msg,
       icon: "happy",
