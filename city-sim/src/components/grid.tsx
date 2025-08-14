@@ -4,11 +4,12 @@ import type { Facility, FacilityType } from "../types/facility";
 import { FACILITY_DATA } from "../types/facility";
 import { 
   toIsometric, 
-  screenToGrid,
   ISO_TILE_WIDTH, 
   ISO_TILE_HEIGHT 
 } from "../utils/coordinates";
-import { useCamera, useMouseDrag, useGridCoordinates } from "../hooks/useCameraAndMouse";
+import { useCamera } from "../hooks/useCamera";
+import { useMouseDrag } from "../hooks/useMouseDrag";
+import { useGridCoordinates } from "../hooks/useGridCoordinates";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -58,6 +59,7 @@ export const Grid: React.FC<GridProps> = ({
 
   const { mouseToGrid, getVisibleTiles } = useGridCoordinates({
     camera,
+    getCameraBounds, // カメラフックから境界値を取得
     mapOffsetX: MAP_OFFSET_X,
     mapOffsetY: MAP_OFFSET_Y,
     gridSize: size
@@ -162,29 +164,6 @@ export const Grid: React.FC<GridProps> = ({
       e.preventDefault();
       startDrag(e.clientX, e.clientY); // カスタムフックの関数を使用
     }
-  };
-
-  // マウス座標からグリッド座標への変換
-  const mouseToGrid = (mouseX: number, mouseY: number, element: HTMLElement): Position | null => {
-    const rect = element.getBoundingClientRect();
-    const relativeX = mouseX - rect.left;
-    const relativeY = mouseY - rect.top;
-    
-    const gridPos = screenToGrid(
-      relativeX, 
-      relativeY, 
-      camera.x, 
-      camera.y,
-      MAP_OFFSET_X,
-      MAP_OFFSET_Y
-    );
-    
-    if (gridPos.x >= 0 && gridPos.x < size.width && 
-        gridPos.y >= 0 && gridPos.y < size.height) {
-      return gridPos;
-    }
-    
-    return null;
   };
 
   // マウスムーブ処理
