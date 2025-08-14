@@ -13,8 +13,9 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
   const feedStore = useFeedStore.getState();
   const now = Date.now();
 
-  // 資源不足
-  if (stats.goods <= 5) {
+  // 資源不足（お店がある時だけ表示）
+    const hasShop = facilities.some(f => f.type === "commercial");
+  if (hasShop && stats.goods <= 5) {
     feedStore.addFeed({
       text: "お店に品物が全然ないよ！工業地帯を増やして生産して！🏭",
       icon: "shop",
