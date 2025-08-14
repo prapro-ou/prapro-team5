@@ -2,7 +2,7 @@ import React from 'react';
 import type { GridSize } from '../types/grid';
 import { toIsometric, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 
-interface Camera {
+export interface Camera {
   x: number;
   y: number;
 }
