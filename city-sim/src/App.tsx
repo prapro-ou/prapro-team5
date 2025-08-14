@@ -68,14 +68,15 @@ function App() {
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
-    // 5000ミリ秒（5秒）ごとに1週間進めるタイマーを設定
+    if (showStartScreen) return; // スタート画面中はタイマーを動かさない
+
     const timerId = setInterval(() => {
       advanceTime();
     }, 5000); // 5秒ごとに時間を進める
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
-  }, [advanceTime]); // advanceTimeは不変だが、作法として依存配列に含める
+  }, [advanceTime, showStartScreen]);
 
   // インフラ計算
   useEffect(() => {
