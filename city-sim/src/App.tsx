@@ -15,6 +15,7 @@ import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
+import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -31,9 +32,10 @@ const SNSFeedButton = () => {
     <>
       <button
         onClick={() => setShowSNS(v => !v)}
-        className="fixed bottom-4 right-4 bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[1500]"
+        className="fixed bottom-4 right-4 rounded-lg shadow-lg z-[1500]"
+        style={{ background: 'transparent', padding: 0, border: 'none' }}
       >
-        {showSNS ? "SNSを閉じる" : "SNSを見る"}
+  <img src={SNSicon} alt="SNS" style={{ width: 256, height: 128 }} />
       </button>
       {showSNS && (
         <div className="fixed bottom-20 right-4 z-[1500]">
