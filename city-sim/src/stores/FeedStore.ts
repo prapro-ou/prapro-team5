@@ -4,6 +4,7 @@ export type Feed = {
   text: string;
   icon: string;
   timestamp: number;
+  mood: "positive" | "negative";
 };
 
 interface FeedState {

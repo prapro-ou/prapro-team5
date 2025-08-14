@@ -6,7 +6,7 @@
   max-width: 320px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.18);
   font-size: 1.1rem;
-  color: #fff;
+  color: #e20a0a;
 }
 .feed-item {
   display: flex;
@@ -21,6 +21,12 @@
 .feed-text {
   flex: 1;
   word-break: break-word;
+}
+.feed-text-positive {
+  color: #2ecc40;
+}
+.feed-text-negative {
+  color: #e20a0a;
 }
 @keyframes fadeInUp {
   from {

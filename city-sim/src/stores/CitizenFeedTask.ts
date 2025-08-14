@@ -16,7 +16,8 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: "お店に品物が全然ないよ！工業地帯を増やして生産して！🏭",
       icon: "shop",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   }
 
@@ -35,7 +36,8 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: msg,
       icon: "work",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   }
 
@@ -53,7 +55,8 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: msg,
       icon: "trouble",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   }
   // 電気不足メッセージ（ランダム）
@@ -67,7 +70,8 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: msg,
       icon: "trouble",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   }
 
@@ -85,7 +89,8 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: msg,
       icon: "park",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   }
 
@@ -105,14 +110,16 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
     feedStore.addFeed({
       text: msg,
       icon: "sad",
-      timestamp: now
+      timestamp: now,
+      mood: "negative"
     });
   } else if (stats.satisfaction > 80) {
     const msg = happyMessages[Math.floor(Math.random() * happyMessages.length)];
     feedStore.addFeed({
       text: msg,
       icon: "happy",
-      timestamp: now
+      timestamp: now,
+      mood: "positive"
     });
   }
 }
