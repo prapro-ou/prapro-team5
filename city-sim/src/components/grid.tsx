@@ -13,6 +13,7 @@ import { useGridCoordinates } from "../hooks/useGridCoordinates";
 import { useFacilityPlacement } from "../hooks/useFacilityPlacement";
 import { useFacilityPreview } from "../hooks/useFacilityPreview";
 import { getRoadConnectionType } from "../utils/roadConnection";
+import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -98,6 +99,19 @@ export const Grid: React.FC<GridProps> = ({
     money,
     facilities,
     selectedPosition: selectedPosition || null
+  });
+
+  // 施設表示フックを使用
+  const {
+    getFacilityImageData,
+    getRoadImageData,
+    isFacilityCenter,
+    calculateZIndex,
+    getIsometricPosition
+  } = useFacilityDisplay({
+    facilityMap,
+    MAP_OFFSET_X,
+    MAP_OFFSET_Y
   });
 
   const visibleTiles = React.useMemo(() => {
@@ -232,24 +246,13 @@ export const Grid: React.FC<GridProps> = ({
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
         const previewColorValue = getPreviewColorValue(x, y);
-        const isoPos = toIsometric(x, y);
+        const isoPos = getIsometricPosition(x, y);
 
         // z-indexの計算
-        const baseZ = (x + y) * 100 + x;
+        const baseZ = calculateZIndex(x, y);
         
-        let imgPath = "";
-        let imgSize = { width: 96, height: 79 };
-        let size = 3;
-
-        if (facility) {
-          const facilityData = FACILITY_DATA[facility.type];
-          const idx = facility.variantIndex ?? 0;
-          size = facilityData.size;
-          imgPath = facilityData.imgPaths?.[idx] ?? "";
-          imgSize = facilityData.imgSizes?.[idx] ?? { width: 96, height: 79 };
-        }
         // 施設中心判定
-        const isCenter = facility && facility.position.x === x && facility.position.y === y;
+        const isCenter = facility && isFacilityCenter(facility, x, y);
           
         // 公園効果範囲の色付け（プレビュー時のみ）
         const isInParkEffect = parkEffectTiles.has(`${x}-${y}`);
@@ -265,56 +268,8 @@ export const Grid: React.FC<GridProps> = ({
             }}
           >
             {/* 施設画像表示 */}
-            {isCenter && facility.type !== 'road' && (
-              <img
-                src={imgPath}
-                alt={facility.type}
-                style={{
-                  position: 'absolute',
-                  left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
-                  top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
-                  width: `${imgSize.width}px`,
-                  height: `${imgSize.height}px`,
-                  zIndex: Math.floor(baseZ + 500),
-                }}
-              />
-            )}
-            {isCenter && facility.type === 'road' && (() => {
-              const connection = getRoadConnectionType(facilityMap, x, y);
-              const facilityData = FACILITY_DATA[facility.type];
-              
-              let imgPath = facilityData.imgPaths?.[connection.variantIndex] ?? "";
-              let imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
-              let transform = undefined;
-              
-              switch (connection.type) {
-                case 'cross':
-                  break;
-                case 't-junction':
-                  transform = `rotate(${connection.rotation}deg)`;
-                  if (connection.flip) {
-                    transform += ' scaleX(-1)';
-                  }
-                  break;
-                case 'turn':
-                  transform = `rotate(${connection.rotation}deg)`;
-                  if (connection.flip) {
-                    transform += ' scaleX(-1)';
-                  }
-                  break;
-                case 'horizontal':
-                case 'vertical':
-                case 'end':
-                case 'isolated':
-                  if (connection.rotation !== 0) {
-                    transform = `rotate(${connection.rotation}deg)`;
-                  }
-                  if (connection.flip) {
-                    transform += ' scaleX(-1)';
-                  }
-                  break;
-              }
-
+            {isCenter && facility.type !== 'road' && (() => {
+              const { imgPath, imgSize, size } = getFacilityImageData(facility, x, y);
               return (
                 <img
                   src={imgPath}
@@ -325,7 +280,26 @@ export const Grid: React.FC<GridProps> = ({
                     top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
                     width: `${imgSize.width}px`,
                     height: `${imgSize.height}px`,
-                    zIndex: Math.floor(baseZ + 500),
+                    zIndex: calculateZIndex(x, y, 500),
+                  }}
+                />
+              );
+            })()}
+            {/* 道路画像表示 */}
+            {isCenter && facility.type === 'road' && (() => {
+              const { imgPath, imgSize, transform } = getRoadImageData(facility, x, y);
+              const { size } = getFacilityImageData(facility, x, y);
+              return (
+                <img
+                  src={imgPath}
+                  alt={facility.type}
+                  style={{
+                    position: 'absolute',
+                    left: `${isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16}px`,
+                    top: `${isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (size + 1) / 2}px`,
+                    width: `${imgSize.width}px`,
+                    height: `${imgSize.height}px`,
+                    zIndex: calculateZIndex(x, y, 500),
                     transform,
                   }}
                 />
@@ -344,7 +318,7 @@ export const Grid: React.FC<GridProps> = ({
                 width: '32px',
                 height: '16px',
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                zIndex: Math.floor(baseZ + 30),
+                zIndex: calculateZIndex(x, y, 30),
               }}
               onClick={() => handleTileClick(x, y)}
               onMouseEnter={() => selectedFacilityType && debouncedSetHover({ x, y })}
