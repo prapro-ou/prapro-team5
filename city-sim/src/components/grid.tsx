@@ -12,6 +12,7 @@ import { useFacilityPlacement } from "../hooks/useFacilityPlacement";
 import { useFacilityPreview } from "../hooks/useFacilityPreview";
 import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
 import { useHover } from "../hooks/useHover";
+import { useGridConstants } from "../hooks/useGridConstants";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -37,14 +38,9 @@ export const Grid: React.FC<GridProps> = ({
   // ホバーフックを使用
   const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
   
-  // ビューポート
-  const VIEWPORT_WIDTH = 800;  // 表示領域の幅
-  const VIEWPORT_HEIGHT = 400; // 表示領域の高さ
+  // 定数フックを使用
+  const { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y } = useGridConstants({ size });
   
-  // アイソメトリックマップ全体のオフセット
-  const MAP_OFFSET_X = (size.width + size.height) * (ISO_TILE_WIDTH / 2);
-  const MAP_OFFSET_Y = 150;
-
   // カスタムフックを使用
   const { camera, setCamera, getCameraBounds } = useCamera({
     size,
