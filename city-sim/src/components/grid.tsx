@@ -12,7 +12,6 @@ import { useMouseDrag } from "../hooks/useMouseDrag";
 import { useGridCoordinates } from "../hooks/useGridCoordinates";
 import { useFacilityPlacement } from "../hooks/useFacilityPlacement";
 import { useFacilityPreview } from "../hooks/useFacilityPreview";
-import { getRoadConnectionType } from "../utils/roadConnection";
 import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
 
 // Gridコンポーネントのプロパティ
@@ -247,9 +246,6 @@ export const Grid: React.FC<GridProps> = ({
         const facilityColor = getFacilityColor(facility);
         const previewColorValue = getPreviewColorValue(x, y);
         const isoPos = getIsometricPosition(x, y);
-
-        // z-indexの計算
-        const baseZ = calculateZIndex(x, y);
         
         // 施設中心判定
         const isCenter = facility && isFacilityCenter(facility, x, y);
