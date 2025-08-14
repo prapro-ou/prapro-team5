@@ -57,7 +57,7 @@ export const useMouseDrag = ({ camera, setCamera, getCameraBounds }: UseMouseDra
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging, dragStart, dragStartCamera]);
+  }, [isDragging, dragStart, dragStartCamera, updateDrag]);
 
   return {
     isDragging,
