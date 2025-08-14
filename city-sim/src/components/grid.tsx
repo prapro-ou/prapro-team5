@@ -11,6 +11,7 @@ import { useGridCoordinates } from "../hooks/useGridCoordinates";
 import { useFacilityPlacement } from "../hooks/useFacilityPlacement";
 import { useFacilityPreview } from "../hooks/useFacilityPreview";
 import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
+import { useHover } from "../hooks/useHover";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -33,7 +34,8 @@ export const Grid: React.FC<GridProps> = ({
   money = 0,
   onSelectParkCenter,
 }) => {
-  const [hoveredTile, setHoveredTile] = React.useState<Position | null>(null);
+  // ホバーフックを使用
+  const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
   
   // ビューポート
   const VIEWPORT_WIDTH = 800;  // 表示領域の幅
@@ -159,24 +161,6 @@ export const Grid: React.FC<GridProps> = ({
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
-
-  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const debouncedSetHover = React.useCallback((position: Position | null) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => setHoveredTile(position), 50);
-  }, []);
-
-  // クリーンアップ
-  React.useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   // ドラッグ用のグローバルマウスイベント
   React.useEffect(() => {
