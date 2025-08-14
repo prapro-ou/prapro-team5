@@ -12,6 +12,7 @@ import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
+import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
 
@@ -21,6 +22,27 @@ import { useUIStore } from './stores/UIStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
+
+// SNSフィード表示用ボタンコンポーネント
+
+const SNSFeedButton = () => {
+  const [showSNS, setShowSNS] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setShowSNS(v => !v)}
+        className="fixed bottom-4 right-4 bg-pink-600 hover:bg-pink-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[1500]"
+      >
+        {showSNS ? "SNSを閉じる" : "SNSを見る"}
+      </button>
+      {showSNS && (
+        <div className="fixed bottom-20 right-4 z-[1500]">
+          <CitizenFeed />
+        </div>
+      )}
+    </>
+  );
+};
 
 function App() {
   // UI状態
@@ -184,6 +206,7 @@ function App() {
               alt="報酬" 
               className="w-25 h-15 object-cover rounded"
             />
+
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
@@ -260,7 +283,8 @@ function App() {
             </div>
         </div>
       )}
-
+ {/* SNSを見るボタンとフィード表示 */}
+ <SNSFeedButton />
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
@@ -271,6 +295,7 @@ function App() {
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>
+    
   );
 }
 
