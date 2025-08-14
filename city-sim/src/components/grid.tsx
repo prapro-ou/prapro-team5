@@ -14,6 +14,7 @@ import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
 import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
+import { useTileInteraction } from "../hooks/useTileInteraction";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -134,25 +135,17 @@ export const Grid: React.FC<GridProps> = ({
     debouncedSetHover
   });
 
-  const isSelected = (x: number, y: number) => {
-    return selectedPosition?.x === x && selectedPosition?.y === y;
-  };
+  // タイルインタラクションフックを使用
+  const {
+    handleTileClick,
+    isSelected
+  } = useTileInteraction({
+    facilities,
+    onSelectParkCenter,
+    onTileClick,
+    selectedPosition: selectedPosition || null
+  });
 
-  // タイルクリック時の内部処理
-  const handleTileClick = (x: number, y: number) => {
-    // 設置済み公園をクリックしたら、その公園の中心を選択状態にする
-    const clickedFacility = facilities.find(f =>
-      f.type === 'park' && f.occupiedTiles.some(t => t.x === x && t.y === y)
-    );
-    if (clickedFacility && onSelectParkCenter) {
-      onSelectParkCenter(clickedFacility.position);
-      return;
-    }
-    if (onTileClick) {
-      onTileClick({ x, y });
-    }
-  };
-  
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
