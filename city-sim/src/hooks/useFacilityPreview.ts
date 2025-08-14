@@ -199,12 +199,54 @@ export const useFacilityPreview = ({
     return false;
   }, [selectedFacilityType, hoveredTile, getPreviewStatus]);
 
+  // 施設の色を取得
+  const getFacilityColor = React.useCallback((facility?: Facility): string => {
+    if (!facility) return 'bg-gray-700'; // デフォルトの色
+    switch (facility.type) {
+      case 'residential': return 'bg-green-500';
+      case 'commercial': return 'bg-blue-500';
+      case 'industrial': return 'bg-yellow-500';
+      case 'road': return 'bg-gray-900';
+      case 'city_hall': return 'bg-purple-500';
+      case 'park': return 'bg-lime-400'; // 公園は明るい緑
+      default: return 'bg-gray-700';
+    }
+  }, []);
+
+  // プレビュー色の計算
+  const getPreviewColorValue = React.useCallback((x: number, y: number): string => {
+    const tileKey = `${x}-${y}`;
+    
+    // ドラッグ敷設中のプレビュー
+    if (isPlacingFacility && dragRange.has(tileKey)) {
+      if (!selectedFacilityType) return '';
+      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
+    }
+    
+    // 通常のホバープレビュー
+    if (!selectedFacilityType || !hoveredTile) return '';
+    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const radius = Math.floor(facilityData.size / 2);
+    if (
+      x >= hoveredTile.x - radius && x <= hoveredTile.x + radius &&
+      y >= hoveredTile.y - radius && y <= hoveredTile.y + radius
+    ) {
+      if (isPreviewInvalid) {
+        return 'bg-red-300 opacity-70';
+      }
+      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
+    }
+    return '';
+  }, [isPlacingFacility, dragRange, selectedFacilityType, hoveredTile, isPreviewInvalid, getPreviewStatus, getPreviewColor]);
+
   return {
     facilityMap,
     previewTiles,
     parkEffectTiles,
     getPreviewStatus,
     getPreviewColor,
-    isPreviewInvalid
+    isPreviewInvalid,
+    getFacilityColor,        // 追加
+    getPreviewColorValue     // 追加
   };
 }; 

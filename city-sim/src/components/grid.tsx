@@ -86,11 +86,9 @@ export const Grid: React.FC<GridProps> = ({
   // 施設プレビューフックを使用
   const {
     facilityMap,
-    previewTiles,
     parkEffectTiles,
-    getPreviewStatus,
-    getPreviewColor,
-    isPreviewInvalid
+    getFacilityColor,
+    getPreviewColorValue
   } = useFacilityPreview({
     size,
     selectedFacilityType,
@@ -190,19 +188,6 @@ export const Grid: React.FC<GridProps> = ({
     };
   }, [isDragging, updateDrag, endDrag]);
 
-  const getFacilityColor = (facility?: Facility) => {
-    if (!facility) return 'bg-gray-700'; // デフォルトの色
-    switch (facility.type) {
-      case 'residential': return 'bg-green-500';
-      case 'commercial': return 'bg-blue-500';
-      case 'industrial': return 'bg-yellow-500';
-      case 'road': return 'bg-gray-900';
-      case 'city_hall': return 'bg-purple-500';
-      case 'park': return 'bg-lime-400'; // 公園は明るい緑
-      default: return 'bg-gray-700';
-    }
-  }
-
   // タイルクリック時の内部処理
   const handleTileClick = (x: number, y: number) => {
     // 設置済み公園をクリックしたら、その公園の中心を選択状態にする
@@ -217,32 +202,7 @@ export const Grid: React.FC<GridProps> = ({
       onTileClick({ x, y });
     }
   };
-
-  const previewColor = (x: number, y: number) => {
-    const tileKey = `${x}-${y}`;
-    
-    // ドラッグ敷設中のプレビュー
-    if (isPlacingFacility && dragRange.has(tileKey)) {
-      if (!selectedFacilityType) return '';
-      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
-    }
-    
-    // 通常のホバープレビュー
-    if (!selectedFacilityType || !hoveredTile) return '';
-    const facilityData = FACILITY_DATA[selectedFacilityType];
-    const radius = Math.floor(facilityData.size / 2);
-    if (
-      x >= hoveredTile.x - radius && x <= hoveredTile.x + radius &&
-      y >= hoveredTile.y - radius && y <= hoveredTile.y + radius
-    ) {
-      if (isPreviewInvalid) {
-        return 'bg-red-300 opacity-70';
-      }
-      return getPreviewColor(getPreviewStatus(x, y), selectedFacilityType);
-    }
-    return '';
-  };
-
+  
   return (
     <div 
       className="relative overflow-hidden border-2 border-blue-500"
@@ -271,7 +231,7 @@ export const Grid: React.FC<GridProps> = ({
       {visibleTiles.map(({ x, y }) => {
         const facility = facilityMap.get(`${x}-${y}`);
         const facilityColor = getFacilityColor(facility);
-        const previewColorValue = previewColor(x, y);
+        const previewColorValue = getPreviewColorValue(x, y);
         const isoPos = toIsometric(x, y);
 
         // z-indexの計算
