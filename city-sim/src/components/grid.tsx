@@ -13,6 +13,7 @@ import { useFacilityPreview } from "../hooks/useFacilityPreview";
 import { useFacilityDisplay } from "../hooks/useFacilityDisplay";
 import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
+import { useMouseEvents } from "../hooks/useMouseEvents";
 
 // Gridコンポーネントのプロパティ
 interface GridProps {
@@ -113,71 +114,29 @@ export const Grid: React.FC<GridProps> = ({
     return getVisibleTiles(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
   }, [getVisibleTiles, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
 
-  // マウスドラッグ処理
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // 施設配置の処理
-    handleFacilityMouseDown(e, e.currentTarget as HTMLElement);
-    
-    // 右クリックでカメラドラッグ&敷設キャンセル
-    if (e.button === 2) {
-      if (isPlacingFacility) {
-        cancelPlacement();
-      }
-      e.preventDefault();
-      startDrag(e.clientX, e.clientY);
-    }
-  };
-
-  // マウスムーブ処理
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // 施設配置の処理
-    handleFacilityMouseMove(e, e.currentTarget as HTMLElement);
-    
-    // ホバー処理
-    const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget as HTMLElement);
-    if (selectedFacilityType && gridPos) {
-      debouncedSetHover(gridPos);
-    }
-
-    // カメラドラッグ中
-    if (isDragging) {
-      updateDrag(e.clientX, e.clientY);
-    }
-  };
-
-  // マウスアップ処理
-  const handleMouseUp = () => {
-    // 施設配置の確定
-    handleFacilityMouseUp();
-    
-    // カメラドラッグの終了
-    endDrag();
-  };
+  // マウスイベントフックを使用
+  const {
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp
+  } = useMouseEvents({
+    handleFacilityMouseDown,
+    handleFacilityMouseMove,
+    handleFacilityMouseUp,
+    cancelPlacement,
+    isPlacingFacility,
+    startDrag,
+    updateDrag,
+    endDrag,
+    isDragging,
+    mouseToGrid,
+    selectedFacilityType,
+    debouncedSetHover
+  });
 
   const isSelected = (x: number, y: number) => {
     return selectedPosition?.x === x && selectedPosition?.y === y;
   };
-
-  // ドラッグ用のグローバルマウスイベント
-  React.useEffect(() => {
-    if (!isDragging) return;
-
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      updateDrag(e.clientX, e.clientY);
-    };
-
-    const handleGlobalMouseUp = () => {
-      endDrag();
-    };
-
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
-  }, [isDragging, updateDrag, endDrag]);
 
   // タイルクリック時の内部処理
   const handleTileClick = (x: number, y: number) => {
