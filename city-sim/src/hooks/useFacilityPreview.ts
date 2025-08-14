@@ -124,9 +124,8 @@ export const useFacilityPreview = ({
         default: return 'bg-green-300 opacity-70';
       }
     }
-  
+
     switch (status) {
-      case 'valid': return 'bg-green-300 opacity-70';
       case 'occupied': return 'bg-red-300 opacity-70';
       case 'insufficient-funds': return 'bg-red-300 opacity-70';
       case 'out-of-bounds': return 'bg-red-500 opacity-70';

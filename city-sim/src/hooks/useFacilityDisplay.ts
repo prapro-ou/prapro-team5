@@ -1,5 +1,4 @@
 import React from 'react';
-import type { Position } from '../types/grid';
 import type { Facility } from '../types/facility';
 import { FACILITY_DATA } from '../types/facility';
 import { toIsometric } from '../utils/coordinates';
@@ -13,8 +12,6 @@ interface UseFacilityDisplayProps {
 
 export const useFacilityDisplay = ({
   facilityMap,
-  MAP_OFFSET_X,
-  MAP_OFFSET_Y
 }: UseFacilityDisplayProps) => {
 
   // 施設の画像情報を取得
