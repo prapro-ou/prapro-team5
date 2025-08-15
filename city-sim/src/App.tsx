@@ -231,7 +231,7 @@ function App() {
       )}
 
       {/* ゲームグリッド */}
-      <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
+      <div className="pt-20 flex justify-center items-center">
         <CanvasGrid 
           size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
           onTileClick={handleTileClick}
