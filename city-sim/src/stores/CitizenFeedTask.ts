@@ -162,10 +162,13 @@ export const citizenFeedTask: MonthlyTask = (get) => {
     "自転車のタイヤがちょっと空気抜けてるかも🚲"
   ];
   if (stats.population > 0 && !feedAdded) {
-    const msg = dailyMessages[Math.floor(Math.random() * dailyMessages.length)];
+    const idx = Math.floor(Math.random() * dailyMessages.length);
+    const msg = dailyMessages[idx];
+    // どうでもいい系はneutral、それ以外はhappy
+    const neutralIdxs = [2,3,4,5,6,7,8,9,10,11]; // dailyMessages配列のどうでもいい系インデックス
     feedStore.addFeed({
       text: msg,
-      icon: "happy",
+      icon: neutralIdxs.includes(idx) ? "neutral" : "happy",
       timestamp: now,
       mood: "positive"
     });

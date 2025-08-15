@@ -24,15 +24,16 @@ interface FeedStoreState {
 }
 
 const iconMap: IconMap = {
-    angry: "😠",
-    sad: "😞",
-    happy: "😄",
-    trouble: "😟",
-    thanks: "🙏",
-    shop: "🏬",
-    work: "💼",
-    park: "🌳",
-    factory: "🏭",
+  angry: "😠",
+  sad: "😞",
+  happy: "😄",
+  neutral: "😐",
+  trouble: "😟",
+  thanks: "🙏",
+  shop: "🏬",
+  work: "💼",
+  park: "🌳",
+  factory: "🏭",
 };
 
 const feeds: Feed[] = useFeedStore((state: FeedStoreState) => state.feeds);
