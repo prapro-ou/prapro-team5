@@ -238,7 +238,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
     
-    // 可視タイルのみ描画
+    // タイルの描画（背景のみ）
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       const facilityColor = getFacilityColor(facility);
@@ -258,7 +258,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         tileColor = convertCssClassToColor(previewColorValue);
       }
       
-      // アイソメトリックタイルを描画
+      // アイソメトリックタイルを描画（背景のみ）
       ctx.beginPath();
       ctx.moveTo(isoPos.x + MAP_OFFSET_X, isoPos.y + MAP_OFFSET_Y);
       ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y - ISO_TILE_HEIGHT / 2);
@@ -274,27 +274,26 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       let borderColor = '#666';
       let borderWidth = 1;
       
-      // if (isSelected(x, y)) {
-      //   borderColor = '#FFD700';
-      //   borderWidth = 3;
-      // }
-      
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = borderWidth;
       ctx.stroke();
+    });
 
-      // 施設画像の描画
+    // 施設画像の描画（タイルの上に重ねる）
+    visibleTiles.forEach(({ x, y }) => {
+      const facility = facilityMap.get(`${x}-${y}`);
       if (facility && imagesLoaded) {
         const isCenter = isFacilityCenter(facility, x, y);
         if (isCenter) {
           const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
+          const isoPos = getIsometricPosition(x, y);
           
           // 画像キャッシュから画像を取得
           const cachedImage = imageCache[imgPath];
           if (cachedImage) {
             // 画像の描画位置を計算
-            const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
-            const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize + 1) / 2;
+						const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
+            const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize) / 2;
             
             // 画像を描画
             ctx.drawImage(
