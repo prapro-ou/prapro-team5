@@ -1,13 +1,12 @@
 // 前月の不足状態を記憶する変数（モジュールスコープ）
 let prevShortage = { water: false, electricity: false, park: false };
 import { useFacilityStore } from "./FacilityStore";
-import { FACILITY_DATA } from "../types/facility";
 import { useFeedStore } from "./FeedStore";
 import { getResidentialsWithoutPark } from "../utils/parkEffect";
 import { useInfrastructureStore } from "./InfrastructureStore";
 import type { MonthlyTask } from "./GameStore";
 
-export const citizenFeedTask: MonthlyTask = (get, set) => {
+export const citizenFeedTask: MonthlyTask = (get) => {
   const stats = get().stats;
   const facilities = useFacilityStore.getState().facilities;
   const feedStore = useFeedStore.getState();
@@ -120,7 +119,7 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
   const sadMessages = [
     "この街、なんだか退屈だ…何か楽しいことはないのかな？😞",
     "最近つまらない…イベントとかやってほしい！🎉",
-    "毎日同じで飽きちゃった…何か変化が欲しい！🌀"
+    "毎日同じで飽きちゃった…何か変化が欲しい！"
   ];
   const happyMessages = [
     "この街は本当に住みやすい！市長に感謝！😄",
@@ -148,11 +147,19 @@ export const citizenFeedTask: MonthlyTask = (get, set) => {
   }
   // 住人がいる＆今月何もメッセージが出ていない場合は日常メッセージ（ポジティブ）
   const dailyMessages = [
-    "今日はみんな元気に過ごしているよ！😊",
-    "公園で子どもたちが遊んでる、平和な一日だね🌞",
-    "新しい友達ができた！楽しい毎日！👫",
-    "街の景色がきれいで気持ちいい！🌇",
-    "みんなでご飯を食べて幸せ！🍚"
+    "今日はいい天気だね！☀️",
+    "みんなでご飯を食べて幸せ！🍚",
+    // どうでもいい系
+    "靴下が片方なくなった…どこいったんだろう",
+    "今日の天気、まあまあだったな…☁️",
+    "冷蔵庫にプリンがあった！ラッキー",
+    "隣の家の犬がまた吠えてる…",
+    "スマホの充電が切れそう…",
+    "なんとなく散歩したくなる日だな🚶",
+    "お昼ごはん何食べようかな…🤔",
+    "テレビで面白い番組やってた！📺",
+    "今日は特に何もなかった…それもいいかも",
+    "自転車のタイヤがちょっと空気抜けてるかも🚲"
   ];
   if (stats.population > 0 && !feedAdded) {
     const msg = dailyMessages[Math.floor(Math.random() * dailyMessages.length)];
