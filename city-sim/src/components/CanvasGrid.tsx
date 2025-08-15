@@ -279,30 +279,56 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       ctx.stroke();
     });
 
-    // 施設画像の描画（タイルの上に重ねる）
+    // 施設画像の描画
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       if (facility && imagesLoaded) {
         const isCenter = isFacilityCenter(facility, x, y);
         if (isCenter) {
-          const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
           const isoPos = getIsometricPosition(x, y);
           
-          // 画像キャッシュから画像を取得
-          const cachedImage = imageCache[imgPath];
-          if (cachedImage) {
-            // 画像の描画位置を計算
-						const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
-            const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize) / 2;
+          if (facility.type === 'road') {
+            const { imgPath, imgSize, transform } = getRoadImageData(facility, x, y);
             
-            // 画像を描画
-            ctx.drawImage(
-              cachedImage,
-              drawX,
-              drawY,
-              imgSize.width,
-              imgSize.height
-            );
+            const cachedImage = imageCache[imgPath];
+            if (cachedImage) {
+              const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
+              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facility.size || 1) / 2;
+              
+              // 変形情報を適用
+              ctx.save();
+              if (transform) {
+                ctx.translate(drawX + imgSize.width / 2, drawY + imgSize.height / 2);
+                
+                // transform文字列を解析して適用
+                if (transform.includes('rotate')) {
+                  const rotation = transform.match(/rotate\(([^)]+)\)/)?.[1];
+                  if (rotation) {
+                    ctx.rotate((parseFloat(rotation) * Math.PI) / 180);
+                  }
+                }
+                
+                if (transform.includes('scaleX(-1)')) {
+                  ctx.scale(-1, 1);
+                }
+                
+                ctx.translate(-(drawX + imgSize.width / 2), -(drawY + imgSize.height / 2));
+              }
+              
+              ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
+              ctx.restore();
+            }
+          } 
+					else {
+            const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
+            
+            const cachedImage = imageCache[imgPath];
+            if (cachedImage) {
+              const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
+              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize) / 2;
+              
+              ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
+            }
           }
         }
       }
@@ -359,7 +385,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, getIsometricPosition, isSelected, parkEffectTiles, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, convertCssClassToColor, imagesLoaded, getFacilityImageData]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, getIsometricPosition, isSelected, parkEffectTiles, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, convertCssClassToColor, imagesLoaded, getFacilityImageData, getRoadImageData]);
 
   // Canvas描画の実行
   useEffect(() => {
