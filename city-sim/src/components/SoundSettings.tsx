@@ -22,6 +22,10 @@ import pressEnterSfxSrc from '../assets/press_enter.mp3';
  * BGMと効果音の再生・音量調整を行うコンポーネント．
  */
 export function BGMPlayer() {
+  // SNS通知音専用ミュート状態・音量
+  const [snsVolume, setSNSVolume] = useState(0.1);
+  // SNS通知音専用ミュート状態
+  const [isSNSMuted, setIsSNSMuted] = useState(true);
   // --- State Declarations ---
   const [isBgmPlaying, setIsBgmPlaying] = useState(false);
   const [bgmVolume, setBgmVolume] = useState(0.2);
@@ -147,12 +151,12 @@ export function BGMPlayer() {
       sfx.play().catch(() => {});
     };
     playPressEnterSound = () => {
-      if (isSfxMuted) return;
+      if (isSNSMuted) return;
       const sfx = new Audio(pressEnterSfxSrc);
-      sfx.volume = sfxVolume;
+      sfx.volume = snsVolume;
       sfx.play().catch(() => {});
     };
-  }, [isSfxMuted, sfxVolume]);
+  }, [isSfxMuted, sfxVolume, isSNSMuted]);
 
   // --- Render ---
   return (
@@ -206,6 +210,27 @@ export function BGMPlayer() {
         </div>
       </div>
 
+      {/* SNS通知音ミュート・音量 */}
+      <div className="flex items-center justify-between mt-4">
+        <label className="text-white font-semibold">SNS通知音</label>
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={snsVolume}
+            onChange={e => setSNSVolume(Number(e.target.value))}
+            className="w-32 h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer"
+          />
+          <button
+            onClick={() => setIsSNSMuted(m => !m)}
+            className={`bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition-colors`}
+          >
+            {isSNSMuted ? "OFF" : "ON"}
+          </button>
+        </div>
+      </div>
       <audio ref={audioRef} src={bgmSrc} loop />
     </div>
   );
