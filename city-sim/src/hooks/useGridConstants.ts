@@ -1,6 +1,6 @@
 import React from 'react';
 import type { GridSize } from '../types/grid';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
+import { ISO_TILE_WIDTH } from '../utils/coordinates';
 
 interface UseGridConstantsProps {
   size: GridSize;
