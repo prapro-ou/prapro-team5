@@ -16,6 +16,11 @@ import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
 
+// 画像キャッシュの型定義
+interface ImageCache {
+  [key: string]: HTMLImageElement;
+}
+
 // CanvasGridコンポーネントのプロパティ
 interface CanvasGridProps {
   size: GridSize;
@@ -38,6 +43,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   onSelectParkCenter,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // 画像キャッシュの状態管理
+  const [imageCache, setImageCache] = React.useState<ImageCache>({});
+  const [imagesLoaded, setImagesLoaded] = React.useState(false);
   
   // 既存のフックをそのまま使用
   const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
@@ -168,6 +177,57 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     // デフォルト色
     return '#9CA3AF';
   }, []);
+
+  // 画像ロード機能
+  const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }, []);
+
+  // 施設画像の事前ロード
+  const preloadFacilityImages = useCallback(async () => {
+    try {
+      const imagePaths = [
+        '/images/buildings/residential.png',
+        '/images/buildings/commercial.png',
+        '/images/buildings/industrial.png',
+        '/images/buildings/road_cross.png',
+        '/images/buildings/road_right.png',
+        '/images/buildings/road_t_r.png',
+        '/images/buildings/road_t.png',
+        '/images/buildings/road_turn_r.png',
+        '/images/buildings/road_turn.png',
+        '/images/buildings/city_hall.png',
+        '/images/buildings/park.png'
+      ];
+
+      const loadedImages: ImageCache = {};
+      
+      for (const path of imagePaths) {
+        try {
+          const img = await loadImage(path);
+          loadedImages[path] = img;
+        } catch (error) {
+          console.warn(`画像のロードに失敗: ${path}`, error);
+        }
+      }
+
+      setImageCache(loadedImages);
+      setImagesLoaded(true);
+      console.log('施設画像のロードが完了しました');
+    } catch (error) {
+      console.error('画像ロード中にエラーが発生:', error);
+    }
+  }, [loadImage]);
+
+  // コンポーネントマウント時に画像をロード
+  useEffect(() => {
+    preloadFacilityImages();
+  }, [preloadFacilityImages]);
 
   // Canvas描画関数
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
