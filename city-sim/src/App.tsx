@@ -1,4 +1,5 @@
-import { Grid } from './components/grid'
+// import { Grid } from './components/grid'
+import { CanvasGrid } from './components/CanvasGrid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -231,7 +232,7 @@ function App() {
 
       {/* ゲームグリッド */}
       <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
-        <Grid 
+        <CanvasGrid 
           size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
           onTileClick={handleTileClick}
           selectedPosition={selectedTile}
