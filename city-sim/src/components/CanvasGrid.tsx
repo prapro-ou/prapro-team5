@@ -282,6 +282,31 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = borderWidth;
       ctx.stroke();
+
+      // 施設画像の描画
+      if (facility && imagesLoaded) {
+        const isCenter = isFacilityCenter(facility, x, y);
+        if (isCenter) {
+          const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
+          
+          // 画像キャッシュから画像を取得
+          const cachedImage = imageCache[imgPath];
+          if (cachedImage) {
+            // 画像の描画位置を計算
+            const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
+            const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize + 1) / 2;
+            
+            // 画像を描画
+            ctx.drawImage(
+              cachedImage,
+              drawX,
+              drawY,
+              imgSize.width,
+              imgSize.height
+            );
+          }
+        }
+      }
     });
     
     // 公園効果範囲の描画
@@ -335,7 +360,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, getIsometricPosition, isSelected, parkEffectTiles, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, convertCssClassToColor]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, getIsometricPosition, isSelected, parkEffectTiles, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, convertCssClassToColor, imagesLoaded, getFacilityImageData]);
 
   // Canvas描画の実行
   useEffect(() => {
