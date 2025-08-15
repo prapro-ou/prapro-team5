@@ -192,17 +192,17 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   const preloadFacilityImages = useCallback(async () => {
     try {
       const imagePaths = [
-        '/images/buildings/residential.png',
-        '/images/buildings/commercial.png',
-        '/images/buildings/industrial.png',
-        '/images/buildings/road_cross.png',
-        '/images/buildings/road_right.png',
-        '/images/buildings/road_t_r.png',
-        '/images/buildings/road_t.png',
-        '/images/buildings/road_turn_r.png',
-        '/images/buildings/road_turn.png',
-        '/images/buildings/city_hall.png',
-        '/images/buildings/park.png'
+        'images/buildings/residential.png',
+        'images/buildings/commercial.png',
+        'images/buildings/industrial.png',
+        'images/buildings/road_cross.png',
+        'images/buildings/road_right.png',
+        'images/buildings/road_t_r.png',
+        'images/buildings/road_t.png',
+        'images/buildings/road_turn_r.png',
+        'images/buildings/road_turn.png',
+        'images/buildings/city_hall.png',
+        'images/buildings/park.png'
       ];
 
       const loadedImages: ImageCache = {};
