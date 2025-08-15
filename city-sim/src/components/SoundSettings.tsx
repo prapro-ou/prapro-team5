@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 export let playBuildSound = () => {};
 export let playLevelUpSound = () => {};
 export let playPanelSound = () => {};
+export let playPressEnterSound = () => {};
 export let playCoinSound = () => {};
 export let playSelectSound = () => {};
 export let playSelect1Sound = () => {};
@@ -15,6 +16,7 @@ import levelupSfxSrc from '../assets/levelup.mp3';
 import coinSfxSrc from '../assets/coin.mp3';
 import selectSfxSrc from '../assets/select.mp3';
 import select1SfxSrc from '../assets/select1.mp3';
+import pressEnterSfxSrc from '../assets/press_enter.mp3';
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
@@ -141,6 +143,12 @@ export function BGMPlayer() {
     playSelect1Sound = () => {
       if (isSfxMuted) return;
       const sfx = new Audio(select1SfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
+    };
+    playPressEnterSound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(pressEnterSfxSrc);
       sfx.volume = sfxVolume;
       sfx.play().catch(() => {});
     };

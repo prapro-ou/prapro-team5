@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { playPressEnterSound } from "../components/SoundSettings";
 
 export type Feed = {
   text: string;
@@ -15,9 +16,11 @@ interface FeedState {
 
 export const useFeedStore = create<FeedState>((set) => ({
   feeds: [],
-  addFeed: (feed) =>
+  addFeed: (feed) => {
+    playPressEnterSound();
     set((state) => ({
       feeds: [feed, ...state.feeds].slice(0, 10), // 最大10件保持
-    })),
+    }));
+  },
   clearFeed: () => set({ feeds: [] }),
 }));

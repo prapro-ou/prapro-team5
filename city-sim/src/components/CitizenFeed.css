@@ -22,6 +22,9 @@
   flex: 1;
   word-break: break-word;
 }
+.feed-text-neutral {
+  color: #fff;
+}
 .feed-text-positive {
   color: #2ecc40;
 }

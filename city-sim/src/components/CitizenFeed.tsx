@@ -43,7 +43,7 @@ const feeds: Feed[] = useFeedStore((state: FeedStoreState) => state.feeds);
       {feeds.slice(0, 5).map((feed: Feed, idx: number) => (
         <div key={idx} className="feed-item">
           <span className="feed-icon">{iconMap[feed.icon] || "💬"}</span>
-          <span className={`feed-text ${feed.mood === "positive" ? "feed-text-positive" : "feed-text-negative"}`}>{feed.text}</span>
+          <span className={`feed-text ${feed.icon === "neutral" ? "feed-text-neutral" : (feed.mood === "positive" ? "feed-text-positive" : "feed-text-negative")}`}>{feed.text}</span>
         </div>
       ))}
     </div>
