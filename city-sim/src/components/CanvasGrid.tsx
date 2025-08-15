@@ -147,16 +147,26 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     
     // CSSクラス名から色を抽出
     if (cssClass.includes('bg-green-300')) return '#86EFAC';
+    if (cssClass.includes('bg-green-500')) return '#22C55E';
     if (cssClass.includes('bg-blue-300')) return '#93C5FD';
+    if (cssClass.includes('bg-blue-500')) return '#3B82F6';
     if (cssClass.includes('bg-yellow-200')) return '#FEF3C7';
+    if (cssClass.includes('bg-yellow-500')) return '#EAB308';
     if (cssClass.includes('bg-gray-400')) return '#9CA3AF';
+    if (cssClass.includes('bg-gray-700')) return '#374151';
+    if (cssClass.includes('bg-gray-900')) return '#111827';
     if (cssClass.includes('bg-purple-300')) return '#C4B5FD';
+    if (cssClass.includes('bg-purple-500')) return '#8B5CF6';
     if (cssClass.includes('bg-lime-200')) return '#D3FCAE';
+    if (cssClass.includes('bg-lime-400')) return '#A3E635';
     if (cssClass.includes('bg-red-300')) return '#FCA5A5';
     if (cssClass.includes('bg-red-500')) return '#EF4444';
     
+    // デバッグ用：未対応の色クラスをログ出力
+    console.warn('未対応の色クラス:', cssClass);
+    
     // デフォルト色
-    return '#90EE90';
+    return '#9CA3AF';
   }, []);
 
   // Canvas描画関数
@@ -176,16 +186,29 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       const isoPos = getIsometricPosition(x, y);
       
       // タイルの色を決定（プレビュー優先）
-      let tileColor = '#90EE90'; // デフォルトは薄い緑
+      let tileColor = '#9CA3AF'; // デフォルトは灰色
       
       // 既存施設の色を設定
       if (facilityColor) {
         tileColor = convertCssClassToColor(facilityColor);
+        // デバッグ用ログ
+        if (x === 0 && y === 0) {
+          console.log(`タイル(0,0): 既存施設色=${facilityColor} → ${tileColor}`);
+        }
       }
       
       // プレビュー色がある場合は上書き
       if (previewColorValue) {
         tileColor = convertCssClassToColor(previewColorValue);
+        // デバッグ用ログ
+        if (x === 0 && y === 0) {
+          console.log(`タイル(0,0): プレビュー色=${previewColorValue} → ${tileColor}`);
+        }
+      }
+      
+      // デバッグ用ログ（最初の数タイルのみ）
+      if (x < 3 && y < 3) {
+        console.log(`タイル(${x},${y}): 最終色=${tileColor}, 施設=${facility?.type || 'none'}, プレビュー=${previewColorValue || 'none'}`);
       }
       
       // アイソメトリックタイルを描画
