@@ -191,24 +191,11 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       // 既存施設の色を設定
       if (facilityColor) {
         tileColor = convertCssClassToColor(facilityColor);
-        // デバッグ用ログ
-        if (x === 0 && y === 0) {
-          console.log(`タイル(0,0): 既存施設色=${facilityColor} → ${tileColor}`);
-        }
       }
       
       // プレビュー色がある場合は上書き
       if (previewColorValue) {
         tileColor = convertCssClassToColor(previewColorValue);
-        // デバッグ用ログ
-        if (x === 0 && y === 0) {
-          console.log(`タイル(0,0): プレビュー色=${previewColorValue} → ${tileColor}`);
-        }
-      }
-      
-      // デバッグ用ログ（最初の数タイルのみ）
-      if (x < 3 && y < 3) {
-        console.log(`タイル(${x},${y}): 最終色=${tileColor}, 施設=${facility?.type || 'none'}, プレビュー=${previewColorValue || 'none'}`);
       }
       
       // アイソメトリックタイルを描画
@@ -227,11 +214,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       let borderColor = '#666';
       let borderWidth = 1;
       
-      // 選択状態の表示
-      if (isSelected(x, y)) {
-        borderColor = '#FFD700';
-        borderWidth = 3;
-      }
+      // if (isSelected(x, y)) {
+      //   borderColor = '#FFD700';
+      //   borderWidth = 3;
+      // }
       
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = borderWidth;
