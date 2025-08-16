@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
+import { generateNaturalTerrainMap } from '../utils/terrainGenerator';
 
 interface TerrainStore {
   // 状態
@@ -18,36 +19,7 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
 
   // 地形生成
   generateTerrain: (gridSize: GridSize) => {
-    const terrainMap = new Map<string, TerrainType>();
-    
-    for (let x = 0; x < gridSize.width; x++) {
-      for (let y = 0; y < gridSize.height; y++) {
-        // デフォルトは平地
-        let terrain: TerrainType = 'grass';
-        
-        // 境界付近は水辺
-        if (x < 5 || x >= gridSize.width - 5 || y < 5 || y >= gridSize.height - 5) {
-          terrain = 'water';
-        }
-        // 水辺の隣は砂浜
-        else if (x < 8 || x >= gridSize.width - 8 || y < 8 || y >= gridSize.height - 8) {
-          terrain = 'beach';
-        }
-        // 中心付近は森
-        else if (x > gridSize.width * 0.3 && x < gridSize.width * 0.7 && 
-                 y > gridSize.height * 0.3 && y < gridSize.height * 0.7) {
-          terrain = 'forest';
-        }
-        // ランダムで砂漠、岩場、山を配置
-        else if (Math.random() < 0.1) {
-          const randomTerrains: TerrainType[] = ['desert', 'rocky', 'mountain'];
-          terrain = randomTerrains[Math.floor(Math.random() * randomTerrains.length)];
-        }
-        
-        terrainMap.set(`${x},${y}`, terrain);
-      }
-    }
-    
+    const terrainMap = generateNaturalTerrainMap(gridSize);
     set({ terrainMap });
   },
 
