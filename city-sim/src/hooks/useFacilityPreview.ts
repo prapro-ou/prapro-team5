@@ -2,6 +2,8 @@ import React from 'react';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import { FACILITY_DATA } from '../types/facility';
+import { useTerrainStore } from '../stores/TerrainStore';
+import { getBuildability } from '../utils/terrainGenerator';
 
 interface UseFacilityPreviewProps {
   size: { width: number; height: number };
@@ -14,7 +16,7 @@ interface UseFacilityPreviewProps {
   selectedPosition: Position | null;
 }
 
-export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | null;
+export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
 export const useFacilityPreview = ({
   size,
@@ -83,6 +85,14 @@ export const useFacilityPreview = ({
       if (facilityMap.has(tileKey)) {
         return 'occupied';
       }
+      
+      // 地形による建設不可チェック
+      const { getTerrainAt } = useTerrainStore.getState();
+      const terrain = getTerrainAt(x, y);
+      if (!getBuildability(terrain)) {
+        return 'terrain-unbuildable';
+      }
+      
       return 'valid';
     }
 
@@ -108,6 +118,14 @@ export const useFacilityPreview = ({
     if (facilityMap.has(tileKey)) {
       return 'occupied';
     }
+    
+    // 地形による建設不可チェック
+    const { getTerrainAt } = useTerrainStore.getState();
+    const terrain = getTerrainAt(x, y);
+    if (!getBuildability(terrain)) {
+      return 'terrain-unbuildable';
+    }
+    
     return 'valid';
   }, [selectedFacilityType, hoveredTile, previewTiles, facilityMap, money, isPlacingFacility, dragRange, size]);
 
@@ -129,6 +147,7 @@ export const useFacilityPreview = ({
       case 'occupied': return 'bg-red-300 opacity-70';
       case 'insufficient-funds': return 'bg-red-300 opacity-70';
       case 'out-of-bounds': return 'bg-red-500 opacity-70';
+      case 'terrain-unbuildable': return 'bg-red-400 opacity-70';
       default: return '';
     }
   }, []);
@@ -203,7 +222,7 @@ export const useFacilityPreview = ({
         const x = hoveredTile.x + dx;
         const y = hoveredTile.y + dy;
         const status = getPreviewStatus(x, y);
-        if (status === 'occupied' || status === 'out-of-bounds' || status === 'insufficient-funds') {
+        if (status === 'occupied' || status === 'out-of-bounds' || status === 'insufficient-funds' || status === 'terrain-unbuildable') {
           return true;
         }
       }
