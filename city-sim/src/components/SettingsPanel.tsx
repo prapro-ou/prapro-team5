@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { BGMPlayer } from './SoundSettings';
 import { TbX, TbFileText, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
-import { useFacilityStore } from '../stores/FacilityStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
 
 interface SettingsPanelProps {
