@@ -56,9 +56,9 @@ export const TERRAIN_DATA: Record<TerrainType, TerrainInfo> = {
     mountain: {
       type: 'mountain',
       name: '山',
-      description: '山地。建設が困難でコストが高い',
+      description: '山地',
       imgPath: 'images/terrain/mountain.png',
-      buildable: true,
+      buildable: false,
       satisfactionModifier: 1,
     },
     beach: {
