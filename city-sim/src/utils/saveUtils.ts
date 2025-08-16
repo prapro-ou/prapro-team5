@@ -164,3 +164,24 @@ export function validateSaveData(saveData: any): ValidationResult {
     warnings
   };
 }
+
+// セーブデータをエクスポート
+export function exportSaveData(saveData: SaveData): void {
+  try {
+    const dataStr = JSON.stringify(saveData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `city-sim-${saveData.cityName}-${new Date(saveData.timestamp).toISOString().split('T')[0]}.json`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(link.href);
+  }
+	catch (error) {
+    console.error('セーブデータのエクスポートに失敗しました:', error);
+  }
+}
