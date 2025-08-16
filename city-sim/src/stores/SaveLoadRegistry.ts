@@ -49,6 +49,14 @@ class SaveLoadRegistry {
       }
     });
   }
+
+  getRegisteredStores(): string[] {
+    return Array.from(this.stores.keys());
+  }
+
+  hasStore(name: string): boolean {
+    return this.stores.has(name);
+  }
 }
 
 export const saveLoadRegistry = new SaveLoadRegistry();
