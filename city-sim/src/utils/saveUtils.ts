@@ -185,3 +185,49 @@ export function exportSaveData(saveData: SaveData): void {
     console.error('セーブデータのエクスポートに失敗しました:', error);
   }
 }
+
+export function importSaveDataFromFile(file: File): Promise<LoadResult> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const saveData: SaveData = JSON.parse(content);
+        
+        const validation = validateSaveData(saveData);
+        if (!validation.isValid) {
+          resolve({
+            success: false,
+            message: 'インポートしたファイルが破損しています',
+            error: validation.errors.join(', ')
+          });
+          return;
+        }
+
+        resolve({
+          success: true,
+          message: `セーブデータをインポートしました: ${saveData.cityName}`,
+          data: saveData
+        });
+      }
+			catch (error) {
+        resolve({
+          success: false,
+          message: 'ファイルの読み込みに失敗しました',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      resolve({
+        success: false,
+        message: 'ファイルの読み込みに失敗しました',
+        error: 'File read error'
+      });
+    };
+
+    reader.readAsText(file);
+  });
+}
