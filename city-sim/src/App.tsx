@@ -12,8 +12,10 @@ import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
+import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
+import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -21,6 +23,28 @@ import { useUIStore } from './stores/UIStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
+
+// SNSフィード表示用ボタンコンポーネント
+
+const SNSFeedButton = () => {
+  const [showSNS, setShowSNS] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setShowSNS(v => !v)}
+        className="fixed bottom-4 right-4 rounded-lg shadow-lg z-[1500]"
+        style={{ background: 'transparent', padding: 0, border: 'none' }}
+      >
+  <img src={SNSicon} alt="SNS" style={{ width: 256, height: 128 }} />
+      </button>
+      {showSNS && (
+        <div className="fixed bottom-20 right-4 z-[1500]">
+          <CitizenFeed />
+        </div>
+      )}
+    </>
+  );
+};
 
 function App() {
   // UI状態
@@ -72,7 +96,7 @@ function App() {
 
     const timerId = setInterval(() => {
       advanceTime();
-    }, 5000); // 5秒ごとに時間を進める
+    }, 1000); // 5秒ごとに時間を進める
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
@@ -184,6 +208,7 @@ function App() {
               alt="報酬" 
               className="w-25 h-15 object-cover rounded"
             />
+
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
@@ -260,7 +285,8 @@ function App() {
             </div>
         </div>
       )}
-
+ {/* SNSを見るボタンとフィード表示 */}
+ <SNSFeedButton />
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
@@ -271,6 +297,7 @@ function App() {
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>
+    
   );
 }
 

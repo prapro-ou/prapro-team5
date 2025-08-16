@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 export let playBuildSound = () => {};
 export let playLevelUpSound = () => {};
 export let playPanelSound = () => {};
+export let playPressEnterSound = () => {};
 export let playCoinSound = () => {};
 export let playSelectSound = () => {};
 export let playSelect1Sound = () => {};
@@ -15,11 +16,16 @@ import levelupSfxSrc from '../assets/levelup.mp3';
 import coinSfxSrc from '../assets/coin.mp3';
 import selectSfxSrc from '../assets/select.mp3';
 import select1SfxSrc from '../assets/select1.mp3';
+import pressEnterSfxSrc from '../assets/press_enter.mp3';
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
  */
 export function BGMPlayer() {
+  // SNS通知音専用ミュート状態・音量
+  const [snsVolume, setSNSVolume] = useState(0.1);
+  // SNS通知音専用ミュート状態
+  const [isSNSMuted, setIsSNSMuted] = useState(true);
   // --- State Declarations ---
   const [isBgmPlaying, setIsBgmPlaying] = useState(false);
   const [bgmVolume, setBgmVolume] = useState(0.2);
@@ -144,7 +150,13 @@ export function BGMPlayer() {
       sfx.volume = sfxVolume;
       sfx.play().catch(() => {});
     };
-  }, [isSfxMuted, sfxVolume]);
+    playPressEnterSound = () => {
+      if (isSNSMuted) return;
+      const sfx = new Audio(pressEnterSfxSrc);
+      sfx.volume = snsVolume;
+      sfx.play().catch(() => {});
+    };
+  }, [isSfxMuted, sfxVolume, isSNSMuted]);
 
   // --- Render ---
   return (
@@ -198,6 +210,27 @@ export function BGMPlayer() {
         </div>
       </div>
 
+      {/* SNS通知音ミュート・音量 */}
+      <div className="flex items-center justify-between mt-4">
+        <label className="text-white font-semibold">SNS通知音</label>
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={snsVolume}
+            onChange={e => setSNSVolume(Number(e.target.value))}
+            className="w-32 h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer"
+          />
+          <button
+            onClick={() => setIsSNSMuted(m => !m)}
+            className={`bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition-colors`}
+          >
+            {isSNSMuted ? "OFF" : "ON"}
+          </button>
+        </div>
+      </div>
       <audio ref={audioRef} src={bgmSrc} loop />
     </div>
   );
