@@ -24,7 +24,6 @@ interface GameStore {
   usedWorkforce: number;
   recalculateUsedWorkforce: () => void;
   
-  // 新しく追加するセーブ・ロード機能
   saveState: () => any;
   loadState: (savedState: any) => void;
   resetToInitial: () => void;
@@ -353,7 +352,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  // 新しく追加するセーブ・ロード機能
+  // セーブ・ロード機能
   saveState: () => {
     const state = get();
     return {
