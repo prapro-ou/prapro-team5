@@ -12,8 +12,9 @@ import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
-import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
 import { FACILITY_DATA } from '../types/facility';
+import { useTerrainStore } from '../stores/TerrainStore';
+import { TERRAIN_DATA } from '../types/terrain';
 import { 
   drawTile, 
   drawFacilityImage, 
@@ -47,6 +48,9 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   // 画像キャッシュの状態管理
   const [imageCache, setImageCache] = React.useState<ImageCache>({});
   const [imagesLoaded, setImagesLoaded] = React.useState(false);
+  
+  // 地形ストアの使用
+  const { terrainMap, generateTerrain, getTerrainAt } = useTerrainStore();
   
   // フックの呼び出し順序を固定
   const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
@@ -120,9 +124,34 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     MAP_OFFSET_Y
   });
 
+  // 描画範囲の最適化
   const visibleTiles = React.useMemo(() => {
     return getVisibleTiles();
   }, [getVisibleTiles]);
+
+  // 地形に応じた色を取得する関数
+  const getTerrainColor = React.useCallback((terrain: string): string => {
+    const terrainColors: Record<string, string> = {
+      grass: '#90EE90',      // 薄い緑
+      water: '#87CEEB',      // 空色
+      forest: '#228B22',     // 濃い緑
+      desert: '#F4A460',     // 砂色
+      mountain: '#696969',   // 暗いグレー
+      beach: '#F5DEB3',      // 小麦色
+      swamp: '#8B4513',      // 茶色
+      rocky: '#A0522D',      // シエナ
+    };
+    return terrainColors[terrain] || '#90EE90';
+  }, []);
+
+  // 地形描画の最適化
+  const terrainDrawData = React.useMemo(() => {
+    return visibleTiles.map(({ x, y }) => ({
+      x, y,
+      terrain: getTerrainAt(x, y),
+      color: getTerrainColor(getTerrainAt(x, y))
+    }));
+  }, [visibleTiles, getTerrainAt, getTerrainColor]);
 
   const {
     handleMouseDown,
@@ -214,10 +243,36 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
   }, [loadImage]);
 
+  // 地形画像のプリロード部分
+  const preloadTerrainImages = useCallback(async () => {
+    const terrainImagePaths = Object.values(TERRAIN_DATA).map(terrain => terrain.imgPath);
+    const loadedImages: ImageCache = {};
+    
+    for (const path of terrainImagePaths) {
+      try {
+        const img = await loadImage(path);
+        loadedImages[path] = img;
+      } catch (error) {
+        // 地形画像がロードできない場合は無視（色ベース描画にフォールバック）
+        console.log(`地形画像のロードをスキップ: ${path} (色ベース描画を使用)`);
+      }
+    }
+    
+    setImageCache(prev => ({ ...prev, ...loadedImages }));
+  }, [loadImage]);
+
+  // 地形の初期化
+  useEffect(() => {
+    if (terrainMap.size === 0) {
+      generateTerrain(size);
+    }
+  }, [terrainMap.size, generateTerrain, size]);
+
   // コンポーネントマウント時に画像をロード
   useEffect(() => {
     preloadFacilityImages();
-  }, [preloadFacilityImages]);
+    preloadTerrainImages();
+  }, [preloadFacilityImages, preloadTerrainImages]);
 
   // Canvas描画関数
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -228,25 +283,42 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
     
-    // タイルの描画
+    // 地形の描画（新規追加）
+    terrainDrawData.forEach(({ x, y, color }) => {
+      drawTile({
+        ctx,
+        x,
+        y,
+        tileColor: color,
+        mapOffsetX: MAP_OFFSET_X,
+        mapOffsetY: MAP_OFFSET_Y,
+        getIsometricPosition
+      });
+    });
+    
+    // タイルの描画（施設がある場合）
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       const facilityColor = getFacilityColor(facility);
       const previewColorValue = getPreviewColorValue(x, y);
       
-      const tileColor = previewColorValue 
-        ? convertCssClassToColor(previewColorValue)
-        : (facilityColor ? convertCssClassToColor(facilityColor) : DRAWING_CONSTANTS.DEFAULT_TILE_COLOR);
-      
-      drawTile({
-        ctx,
-        x,
-        y,
-        tileColor,
-        mapOffsetX: MAP_OFFSET_X,
-        mapOffsetY: MAP_OFFSET_Y,
-        getIsometricPosition
-      });
+      if (facility || previewColorValue) {
+        const tileColor = previewColorValue 
+          ? convertCssClassToColor(previewColorValue)
+          : (facilityColor ? convertCssClassToColor(facilityColor) : 'transparent');
+        
+        if (tileColor !== 'transparent') {
+          drawTile({
+            ctx,
+            x,
+            y,
+            tileColor,
+            mapOffsetX: MAP_OFFSET_X,
+            mapOffsetY: MAP_OFFSET_Y,
+            getIsometricPosition
+          });
+        }
+      }
     });
     
     // 施設画像の描画
@@ -294,7 +366,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData]);
 
   // Canvas描画の実行
   useEffect(() => {
@@ -331,8 +403,15 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
   }, [VIEWPORT_WIDTH, VIEWPORT_HEIGHT, drawGrid]);
 
+  // デバッグ用：地形情報表示
   return (
     <div className="relative overflow-hidden border-2 border-blue-500">
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
+          Terrain: {terrainMap.size} tiles
+        </div>
+      )}
+      
       {/* カメラ情報表示（デバッグ用） */}
       {/* <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
         Camera: ({camera.x}, {camera.y})
