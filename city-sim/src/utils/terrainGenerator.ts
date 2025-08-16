@@ -2,6 +2,77 @@ import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
 import { TERRAIN_DATA } from '../types/terrain';
 
+// 地形生成の定数
+const TERRAIN_CONSTANTS = {
+  // 水辺・砂浜の設定
+  WATER: {
+    EDGE_THRESHOLD_RATIO: 0.12,        // 境界付近の水辺エリア比率
+    POINT_STRENGTH_MIN: 0.9,           // 水辺ポイントの最小強度
+    POINT_STRENGTH_MAX: 1.2,           // 水辺ポイントの最大強度
+    DISTANCE_THRESHOLD: 5,             // 水辺エリアの距離閾値
+    NORTH_POINTS_RATIO: 0.4,           // 北側水辺ポイントの比率
+    EAST_POINTS_RATIO: 0.4,            // 東側水辺ポイントの比率
+    SOUTH_POINTS_RATIO: 0.4,           // 南側水辺ポイントの比率
+    WEST_POINTS_RATIO: 0.4,            // 西側水辺ポイントの比率
+    NORTH_Y_RATIO: 0.12,               // 北側水辺のY座標比率
+    EAST_X_RATIO: 0.88,                // 東側水辺のX座標比率
+    SOUTH_Y_RATIO: 0.88,               // 南側水辺のY座標比率
+    WEST_X_RATIO: 0.12,                // 西側水辺のX座標比率
+  },
+  
+  // 砂浜の設定
+  BEACH: {
+    THRESHOLD_OFFSET: 8,               // 水辺エリアからの砂浜オフセット
+    DISTANCE_MIN: 5,                   // 砂浜生成の最小距離
+    DISTANCE_MAX: 10,                  // 砂浜生成の最大距離
+    HEIGHT_THRESHOLD: 0.6,             // 砂浜生成の高さ閾値
+  },
+  
+  // 低地の設定
+  LOWLAND: {
+    DISTANCE_BASE: 10,                 // 低地生成の基本距離
+    DISTANCE_VARIANCE: 1,              // 低地生成の距離変動
+    HEIGHT_THRESHOLD: 0.45,            // 低地生成の高さ閾値
+    MOISTURE_THRESHOLD: 0.65,          // 低地生成の湿度閾値
+  },
+  
+  // 山岳の設定
+  MOUNTAIN: {
+    WATER_DISTANCE_MIN: 20,            // 山岳生成の最小水辺距離
+    HEIGHT_THRESHOLD: 0.65,            // 山岳生成の高さ閾値
+    BASE_CHANCE: 0.9,                  // 山岳生成の基本確率
+    HEIGHT_MULTIPLIER: 3,              // 高さによる確率倍率
+    CONTINUITY_THRESHOLD: 0.325,       // 山岳の連続性閾値
+    SECONDARY_HEIGHT: 0.53,            // 二次的な山岳生成の高さ閾値
+  },
+  
+  // 森林の設定
+  FOREST: {
+    WATER_DISTANCE_MIN: 20,            // 森林生成の最小水辺距離
+    WATER_DISTANCE_MID_MIN: 10,        // 中距離森林生成の最小距離
+    WATER_DISTANCE_MID_MAX: 15,        // 中距離森林生成の最大距離
+    HEIGHT_THRESHOLD_HIGH: 0.425,      // 高地森林生成の高さ閾値
+    HEIGHT_THRESHOLD_MID: 0.25,        // 中地森林生成の高さ閾値
+    HEIGHT_THRESHOLD_MID_DISTANCE: 0.4, // 中距離森林生成の高さ閾値
+    MOISTURE_THRESHOLD_HIGH: 0.525,    // 高地森林生成の湿度閾値
+    MOISTURE_THRESHOLD_MID: 0.6,       // 中地森林生成の湿度閾値
+    MOISTURE_THRESHOLD_LOW: 0.65,      // 低地森林生成の湿度閾値
+    MOISTURE_THRESHOLD_MID_DISTANCE: 0.6, // 中距離森林生成の湿度閾値
+    MOISTURE_THRESHOLD_MID_DISTANCE_HIGH: 0.7, // 中距離森林生成の高湿度閾値
+    CONTINUITY_THRESHOLD: 0.3,         // 森林の連続性閾値
+    SECONDARY_HEIGHT: 0.53,            // 二次的な山岳生成の高さ閾値
+  },
+  
+  // ノイズ生成の設定
+  NOISE: {
+    HEIGHT_SCALE: 0.025,               // 高度ノイズのスケール
+    MOISTURE_SCALE: 0.04,              // 湿度ノイズのスケール
+    OCTAVES: 5,                        // ノイズのオクターブ数
+    PERSISTENCE: 0.55,                 // ノイズの持続性
+    MOISTURE_OFFSET: 1000,             // 湿度ノイズのオフセット
+  }
+} as const;
+
 class SeededRandom {
   private seed: number;
 
@@ -98,41 +169,41 @@ function generateWaterPoints(gridSize: GridSize, random: SeededRandom): { waterP
   }
   
   if (selectedDirections.includes('north')) {
-    const northPoints = Math.floor(gridSize.width * 0.4);
+    const northPoints = Math.floor(gridSize.width * TERRAIN_CONSTANTS.WATER.NORTH_POINTS_RATIO);
     for (let i = 0; i < northPoints; i++) {
       const x = random.nextRange(0, gridSize.width);
-      const y = random.nextRange(0, gridSize.height * 0.12);
-      const strength = random.nextRange(0.9, 1.2);
+      const y = random.nextRange(0, gridSize.height * TERRAIN_CONSTANTS.WATER.NORTH_Y_RATIO);
+      const strength = random.nextRange(TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MIN, TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MAX);
       waterPoints.push({x, y, strength});
     }
   }
   
   if (selectedDirections.includes('east')) {
-    const eastPoints = Math.floor(gridSize.height * 0.4);
+    const eastPoints = Math.floor(gridSize.height * TERRAIN_CONSTANTS.WATER.EAST_POINTS_RATIO);
     for (let i = 0; i < eastPoints; i++) {
-      const x = random.nextRange(gridSize.width * 0.88, gridSize.width);
+      const x = random.nextRange(gridSize.width * TERRAIN_CONSTANTS.WATER.EAST_X_RATIO, gridSize.width);
       const y = random.nextRange(0, gridSize.height);
-      const strength = random.nextRange(0.9, 1.2);
+      const strength = random.nextRange(TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MIN, TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MAX);
       waterPoints.push({x, y, strength});
     }
   }
   
   if (selectedDirections.includes('south')) {
-    const southPoints = Math.floor(gridSize.width * 0.4);
+    const southPoints = Math.floor(gridSize.width * TERRAIN_CONSTANTS.WATER.SOUTH_POINTS_RATIO);
     for (let i = 0; i < southPoints; i++) {
       const x = random.nextRange(0, gridSize.width);
-      const y = random.nextRange(gridSize.height * 0.88, gridSize.height);
-      const strength = random.nextRange(0.9, 1.2);
+      const y = random.nextRange(gridSize.height * TERRAIN_CONSTANTS.WATER.SOUTH_Y_RATIO, gridSize.height);
+      const strength = random.nextRange(TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MIN, TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MAX);
       waterPoints.push({x, y, strength});
     }
   }
   
   if (selectedDirections.includes('west')) {
-    const westPoints = Math.floor(gridSize.height * 0.4);
+    const westPoints = Math.floor(gridSize.height * TERRAIN_CONSTANTS.WATER.WEST_POINTS_RATIO);
     for (let i = 0; i < westPoints; i++) {
-      const x = random.nextRange(0, gridSize.width * 0.12);
+      const x = random.nextRange(0, gridSize.width * TERRAIN_CONSTANTS.WATER.WEST_X_RATIO);
       const y = random.nextRange(0, gridSize.height);
-      const strength = random.nextRange(0.9, 1.2);
+      const strength = random.nextRange(TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MIN, TERRAIN_CONSTANTS.WATER.POINT_STRENGTH_MAX);
       waterPoints.push({x, y, strength});
     }
   }
@@ -155,7 +226,7 @@ function calculateWaterDistance(x: number, y: number, waterPoints: Array<{x: num
 }
 
 function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize, selectedDirections: string[]): boolean {
-  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
+  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * TERRAIN_CONSTANTS.WATER.EDGE_THRESHOLD_RATIO;
   
   if (selectedDirections.includes('north') && y < edgeThreshold) {
     return true;
@@ -174,12 +245,12 @@ function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: num
   }
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
-  return minDistance < 5;
+  return minDistance < TERRAIN_CONSTANTS.WATER.DISTANCE_THRESHOLD;
 }
 
 function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize, selectedDirections: string[]): boolean {
-  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
-  const beachThreshold = edgeThreshold + 8;
+  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * TERRAIN_CONSTANTS.WATER.EDGE_THRESHOLD_RATIO;
+  const beachThreshold = edgeThreshold + TERRAIN_CONSTANTS.BEACH.THRESHOLD_OFFSET;
   
   if (selectedDirections.includes('north') && y < beachThreshold && y >= edgeThreshold) {
     return true;
@@ -198,7 +269,7 @@ function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: num
   }
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
-  return minDistance >= 5 && minDistance < 10;
+  return minDistance >= TERRAIN_CONSTANTS.BEACH.DISTANCE_MIN && minDistance < TERRAIN_CONSTANTS.BEACH.DISTANCE_MAX;
 }
 
 export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, TerrainType> {
@@ -207,10 +278,10 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
   const seed = Math.floor(Math.random() * 1000000);
   const random = new SeededRandom(seed);
   
-  const heightScale = 0.025;
-  const moistureScale = 0.04;
-  const octaves = 5;
-  const persistence = 0.55;
+  const heightScale = TERRAIN_CONSTANTS.NOISE.HEIGHT_SCALE;
+  const moistureScale = TERRAIN_CONSTANTS.NOISE.MOISTURE_SCALE;
+  const octaves = TERRAIN_CONSTANTS.NOISE.OCTAVES;
+  const persistence = TERRAIN_CONSTANTS.NOISE.PERSISTENCE;
   
   const { waterPoints, selectedDirections } = generateWaterPoints(gridSize, random);
   
@@ -223,7 +294,7 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
       const height = perlinNoise(x, y, octaves, persistence, heightScale, seed);
       heightMap.set(`${x},${y}`, height);
       
-      const moisture = perlinNoise(x + 1000, y + 1000, octaves, persistence, moistureScale, seed + 1);
+      const moisture = perlinNoise(x + TERRAIN_CONSTANTS.NOISE.MOISTURE_OFFSET, y + TERRAIN_CONSTANTS.NOISE.MOISTURE_OFFSET, octaves, persistence, moistureScale, seed + 1);
       moistureMap.set(`${x},${y}`, moisture);
       
       const waterDistance = calculateWaterDistance(x, y, waterPoints);
@@ -270,56 +341,58 @@ function determineTerrainType(
     return 'water';
   }
   
-  if (isBeachArea(x, y, waterPoints, gridSize, selectedDirections) && height < 0.6) {
+  if (isBeachArea(x, y, waterPoints, gridSize, selectedDirections) && height < TERRAIN_CONSTANTS.BEACH.HEIGHT_THRESHOLD) {
     return 'beach';
   }
   
-  const lowlandDistance = 10 + random.nextRange(-1, 1);
-  if (waterDistance < lowlandDistance && height < 0.45) {
-    if (moisture > 0.65) {
+  const lowlandDistance = TERRAIN_CONSTANTS.LOWLAND.DISTANCE_BASE + random.nextRange(-TERRAIN_CONSTANTS.LOWLAND.DISTANCE_VARIANCE, TERRAIN_CONSTANTS.LOWLAND.DISTANCE_VARIANCE);
+  if (waterDistance < lowlandDistance && height < TERRAIN_CONSTANTS.LOWLAND.HEIGHT_THRESHOLD) {
+    if (moisture > TERRAIN_CONSTANTS.LOWLAND.MOISTURE_THRESHOLD) {
       return 'grass';
     }
     return 'grass';
   }
   
   // 水辺から十分離れた場所でのみ山岳・森林を生成
-  if (waterDistance > 20) {
-    if (height > 0.65) {
-      const mountainChance = 0.9 + (height - 0.65) * 3;
+  if (waterDistance > TERRAIN_CONSTANTS.MOUNTAIN.WATER_DISTANCE_MIN) {
+    if (height > TERRAIN_CONSTANTS.MOUNTAIN.HEIGHT_THRESHOLD) {
+      const mountainChance = TERRAIN_CONSTANTS.MOUNTAIN.BASE_CHANCE + (height - TERRAIN_CONSTANTS.MOUNTAIN.HEIGHT_THRESHOLD) * TERRAIN_CONSTANTS.MOUNTAIN.HEIGHT_MULTIPLIER;
       
       if (random.next() < mountainChance) {
         return 'mountain';
       }
     }
     
-    if (height > 0.425) {
-      if (moisture > 0.525) {
+    if (height > TERRAIN_CONSTANTS.FOREST.HEIGHT_THRESHOLD_MID_DISTANCE) {
+      if (moisture > TERRAIN_CONSTANTS.FOREST.MOISTURE_THRESHOLD_MID_DISTANCE_HIGH) {
         return 'forest';
       }
-      if (height > 0.53) {
+             if (height > TERRAIN_CONSTANTS.MOUNTAIN.SECONDARY_HEIGHT) {
         return 'mountain';
       }
       return 'grass';
     }
     
-    if (height > 0.25) {
-      if (moisture > 0.6) {
+    if (height > TERRAIN_CONSTANTS.FOREST.HEIGHT_THRESHOLD_MID) {
+      if (moisture > TERRAIN_CONSTANTS.FOREST.MOISTURE_THRESHOLD_MID) {
         return 'forest';
       }
       return 'grass';
     }
     
-    if (moisture > 0.65) {
-      return 'forest';
+    if (height > TERRAIN_CONSTANTS.FOREST.HEIGHT_THRESHOLD_MID_DISTANCE) {
+      if (moisture > TERRAIN_CONSTANTS.FOREST.MOISTURE_THRESHOLD_MID_DISTANCE) {
+        return 'forest';
+      }
     }
   }
   
   // 水辺から中程度の距離でも森林を生成
-  if (waterDistance > 10 && waterDistance <= 15) {
-    if (height > 0.4 && moisture > 0.6) {
+  if (waterDistance > TERRAIN_CONSTANTS.FOREST.WATER_DISTANCE_MID_MIN && waterDistance <= TERRAIN_CONSTANTS.FOREST.WATER_DISTANCE_MID_MAX) {
+    if (height > TERRAIN_CONSTANTS.FOREST.HEIGHT_THRESHOLD_MID_DISTANCE && moisture > TERRAIN_CONSTANTS.FOREST.MOISTURE_THRESHOLD_MID_DISTANCE) {
       return 'forest';
     }
-    if (moisture > 0.7) {
+    if (moisture > TERRAIN_CONSTANTS.FOREST.MOISTURE_THRESHOLD_MID_DISTANCE_HIGH) {
       return 'forest';
     }
   }
@@ -395,7 +468,7 @@ function improveTerrainContinuity(
       }
     }
     
-    if (totalNeighbors > 0 && mountainNeighbors / totalNeighbors > 0.325) {
+    if (totalNeighbors > 0 && mountainNeighbors / totalNeighbors > TERRAIN_CONSTANTS.MOUNTAIN.CONTINUITY_THRESHOLD) {
       return 'mountain';
     }
   }
@@ -415,7 +488,7 @@ function improveTerrainContinuity(
       }
     }
     
-    if (totalNeighbors > 0 && forestNeighbors / totalNeighbors > 0.3) { // 0.4 → 0.3 に下げて森林の連続性を向上
+    if (totalNeighbors > 0 && forestNeighbors / totalNeighbors > TERRAIN_CONSTANTS.FOREST.CONTINUITY_THRESHOLD) { // 0.4 → 0.3 に下げて森林の連続性を向上
       return 'forest';
     }
   }
