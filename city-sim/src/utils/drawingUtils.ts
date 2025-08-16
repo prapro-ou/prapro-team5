@@ -1,57 +1,13 @@
 import type { Position } from '../types/grid';
 import type { Facility } from '../types/facility';
+import type { 
+  TileDrawParams, 
+  FacilityImageParams, 
+  EffectDrawParams, 
+  DragRangeParams 
+} from '../types/drawing';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
-
-// タイル描画のための型定義
-interface TileDrawParams {
-  ctx: CanvasRenderingContext2D;
-  x: number;
-  y: number;
-  tileColor: string;
-  mapOffsetX: number;
-  mapOffsetY: number;
-  getIsometricPosition: (x: number, y: number) => Position;
-}
-
-// 施設画像描画のための型定義
-interface FacilityImageParams {
-  ctx: CanvasRenderingContext2D;
-  facility: Facility;
-  x: number;
-  y: number;
-  mapOffsetX: number;
-  mapOffsetY: number;
-  imageCache: { [key: string]: HTMLImageElement };
-  getIsometricPosition: (x: number, y: number) => Position;
-  isFacilityCenter: (facility: Facility, x: number, y: number) => boolean;
-  getFacilityImageData: (facility: Facility, x: number, y: number) => { imgPath: string; imgSize: { width: number; height: number }; size: number };
-  getRoadImageData: (facility: Facility, x: number, y: number) => { imgPath: string; imgSize: { width: number; height: number }; transform?: string };
-}
-
-// 効果範囲描画のための型定義
-interface EffectDrawParams {
-  ctx: CanvasRenderingContext2D;
-  facilityEffectTiles: Set<string>;
-  size: { width: number; height: number };
-  mapOffsetX: number;
-  mapOffsetY: number;
-  selectedPosition: Position | null;
-  facilities: Facility[];
-  getIsometricPosition: (x: number, y: number) => Position;
-  drawTile: (params: TileDrawParams) => void;
-}
-
-// ドラッグ範囲描画のための型定義
-interface DragRangeParams {
-  ctx: CanvasRenderingContext2D;
-  isPlacingFacility: boolean;
-  dragRange: Set<string>;
-  size: { width: number; height: number };
-  mapOffsetX: number;
-  mapOffsetY: number;
-  getIsometricPosition: (x: number, y: number) => Position;
-}
 
 // タイルの描画
 export const drawTile = ({
