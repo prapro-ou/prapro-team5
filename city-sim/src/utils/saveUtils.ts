@@ -244,3 +244,15 @@ export function getSaveMetadata(): { lastSaveTime: number; saveCount: number; ci
     return null;
   }
 }
+
+// セーブデータを削除
+export function deleteSaveData(): boolean {
+  try {
+    localStorage.removeItem(SAVE_DATA_KEY);
+    localStorage.removeItem(SAVE_METADATA_KEY);
+    return true;
+  } 
+	catch {
+    return false;
+  }
+}
