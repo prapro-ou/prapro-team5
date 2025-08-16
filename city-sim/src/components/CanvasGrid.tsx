@@ -91,7 +91,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
   const {
     facilityMap,
+    previewTiles,
     parkEffectTiles,
+    facilityEffectTiles,
+    getPreviewStatus,
+    getPreviewColor,
+    isPreviewInvalid,
     getFacilityColor,
     getPreviewColorValue
   } = useFacilityPreview({
@@ -334,15 +339,33 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       }
     });
     
-    // 公園効果範囲の描画
-    if (parkEffectTiles.size > 0) {
+    // 施設効果範囲の描画（汎用）
+    if (facilityEffectTiles.size > 0) {
       ctx.globalAlpha = 0.4; // 透明度設定
-      ctx.fillStyle = '#90EE90'; // 薄い緑
       
-      parkEffectTiles.forEach(tileKey => {
+      facilityEffectTiles.forEach(tileKey => {
         const [x, y] = tileKey.split('-').map(Number);
         if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
           const isoPos = getIsometricPosition(x, y);
+          
+          // 施設タイプに応じた色を設定
+          let effectColor = '#90EE90'; // デフォルトは薄い緑
+          
+          if (selectedPosition) {
+            const selectedFacility = facilities.find(f => 
+              f.position.x === selectedPosition.x && 
+              f.position.y === selectedPosition.y
+            );
+            
+            if (selectedFacility) {
+              switch (selectedFacility.type) {
+                case 'park': effectColor = '#90EE90'; break; // 緑
+                default: effectColor = '#90EE90'; break;
+              }
+            }
+          }
+          
+          ctx.fillStyle = effectColor;
           
           ctx.beginPath();
           ctx.moveTo(isoPos.x + MAP_OFFSET_X, isoPos.y + MAP_OFFSET_Y);
