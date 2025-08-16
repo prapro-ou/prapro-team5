@@ -149,12 +149,18 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
   };
 
   // セーブデータからロード
-  const handleLoadFromSlot = (slotId: string) => {
+  const handleLoadFromSlot = async (slotId: string) => {
     const slotKey = `city-sim-save-${slotId}`;
     const saveDataString = localStorage.getItem(slotKey);
     
     if (saveDataString) {
       try {
+        const saveData = JSON.parse(saveDataString);
+        // 全ストアの状態を復元
+        const { saveLoadRegistry } = await import('../stores/SaveLoadRegistry');
+        saveLoadRegistry.loadAllStores(saveData);
+        // ロード完了フラグを設定
+        localStorage.setItem('city-sim-loaded', 'true');
         // セーブデータをロードしてゲーム開始
         onLoadGame();
       } catch (error) {

@@ -113,9 +113,9 @@ function App() {
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   
-  // ゲーム開始時の地形生成
+  // ゲーム開始時の地形生成（新規ゲーム時のみ）
   useEffect(() => {
-    if (!showStartScreen) {
+    if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
       generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
     }
   }, [showStartScreen, generateTerrain]);
@@ -198,7 +198,10 @@ function App() {
     return (
       <>
         <StartScreen 
-          onStart={() => setShowStartScreen(false)} 
+          onStart={() => {
+            localStorage.removeItem('city-sim-loaded');
+            setShowStartScreen(false);
+          }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
             setShowStartScreen(false);
