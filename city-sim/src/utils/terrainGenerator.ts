@@ -48,10 +48,10 @@ const TERRAIN_CONSTANTS = {
   
   // 森林の設定
   FOREST: {
-    WATER_DISTANCE_MIN: 20,            // 森林生成の最小水辺距離
+    WATER_DISTANCE_MIN: 22,            // 森林生成の最小水辺距離
     WATER_DISTANCE_MID_MIN: 10,        // 中距離森林生成の最小距離
     WATER_DISTANCE_MID_MAX: 15,        // 中距離森林生成の最大距離
-    HEIGHT_THRESHOLD_HIGH: 0.425,      // 高地森林生成の高さ閾値
+    HEIGHT_THRESHOLD_HIGH: 0.4,      // 高地森林生成の高さ閾値
     HEIGHT_THRESHOLD_MID: 0.25,        // 中地森林生成の高さ閾値
     HEIGHT_THRESHOLD_MID_DISTANCE: 0.4, // 中距離森林生成の高さ閾値
     MOISTURE_THRESHOLD_HIGH: 0.525,    // 高地森林生成の湿度閾値
@@ -59,8 +59,8 @@ const TERRAIN_CONSTANTS = {
     MOISTURE_THRESHOLD_LOW: 0.65,      // 低地森林生成の湿度閾値
     MOISTURE_THRESHOLD_MID_DISTANCE: 0.6, // 中距離森林生成の湿度閾値
     MOISTURE_THRESHOLD_MID_DISTANCE_HIGH: 0.7, // 中距離森林生成の高湿度閾値
-    CONTINUITY_THRESHOLD: 0.3,         // 森林の連続性閾値
-    SECONDARY_HEIGHT: 0.53,            // 二次的な山岳生成の高さ閾値
+    CONTINUITY_THRESHOLD: 0.4,         // 森林の連続性閾値
+    SECONDARY_HEIGHT: 0.54,            // 二次的な生成の高さ閾値
   },
   
   // ノイズ生成の設定
