@@ -170,3 +170,100 @@ BEACH: {
 - ノイズのスケールを調整
 - 水辺ポイントの配置を確認
 - 連続性の設定を見直す
+
+## ユーザが調整しやすいパラメータ
+今後余裕があったらユーザが調整できるようにしたいので、まとめます。
+
+### 初心者向け（調整しやすい）
+
+#### 水辺・砂浜の調整
+```typescript
+WATER: {
+  EDGE_THRESHOLD_RATIO: 0.12,        // 水辺エリアの広さ（推奨範囲: 0.1-0.2）
+  POINT_STRENGTH_MIN: 0.9,           // 水辺の強度（推奨範囲: 0.7-1.5）
+  POINT_STRENGTH_MAX: 1.2,           // 水辺の強度（推奨範囲: 0.7-1.5）
+}
+
+BEACH: {
+  THRESHOLD_OFFSET: 8,               // 砂浜エリアの広さ（推奨範囲: 5-15）
+  HEIGHT_THRESHOLD: 0.6,             // 砂浜生成の高さ（推奨範囲: 0.4-0.8）
+}
+```
+
+**調整のコツ:**
+- `EDGE_THRESHOLD_RATIO`: 0.1（狭い水辺）→ 0.15（広い水辺）
+- `THRESHOLD_OFFSET`: 5（狭い砂浜）→ 12（広い砂浜）
+- `POINT_STRENGTH_MIN/MAX`: 0.7（弱い水辺）→ 1.5（強い水辺）
+
+#### 地形の生成量調整
+```typescript
+MOUNTAIN: {
+  HEIGHT_THRESHOLD: 0.575,           // 山岳生成の高さ（推奨範囲: 0.5-0.8）
+  BASE_CHANCE: 0.9,                  // 山岳生成確率（推奨範囲: 0.7-1.0）
+}
+
+FOREST: {
+  HEIGHT_THRESHOLD_HIGH: 0.425,      // 森林生成の高さ（推奨範囲: 0.3-0.6）
+  MOISTURE_THRESHOLD_HIGH: 0.525,    // 森林生成の湿度（推奨範囲: 0.4-0.7）
+}
+```
+
+**調整のコツ:**
+- 山岳を増やしたい: `HEIGHT_THRESHOLD`を0.5に下げる
+- 森林を増やしたい: `HEIGHT_THRESHOLD_HIGH`を0.35に下げる
+- 確率を上げたい: `BASE_CHANCE`を0.95に上げる
+
+### 中級者向け（効果が分かりやすい）
+
+#### ノイズの調整
+```typescript
+NOISE: {
+  HEIGHT_SCALE: 0.025,               // 地形の起伏（推奨範囲: 0.01-0.05）
+  MOISTURE_SCALE: 0.04,              // 湿度の変化（推奨範囲: 0.02-0.08）
+  OCTAVES: 5,                        // 地形の複雑さ（推奨範囲: 3-7）
+}
+```
+
+**調整のコツ:**
+- 平坦な地形: `HEIGHT_SCALE`を0.01に設定
+- 起伏の多い地形: `HEIGHT_SCALE`を0.04に設定
+- 単純な地形: `OCTAVES`を3に設定
+- 複雑な地形: `OCTAVES`を7に設定
+
+#### 連続性の調整
+```typescript
+MOUNTAIN: {
+  CONTINUITY_THRESHOLD: 0.325,       // 山岳の連続性（推奨範囲: 0.2-0.5）
+}
+
+FOREST: {
+  CONTINUITY_THRESHOLD: 0.4,         // 森林の連続性（推奨範囲: 0.2-0.5）
+}
+```
+
+**調整のコツ:**
+- 連続した地形: 値を0.2-0.3に設定
+- 分散した地形: 値を0.4-0.5に設定
+
+### 上級者向け（細かい調整）
+
+#### 距離系パラメータ
+```typescript
+MOUNTAIN: {
+  WATER_DISTANCE_MIN: 20,            // 山岳生成の最小水辺距離
+}
+
+FOREST: {
+  WATER_DISTANCE_MIN: 22,            // 森林生成の最小水辺距離
+  WATER_DISTANCE_MID_MIN: 10,        // 中距離森林生成の最小距離
+  WATER_DISTANCE_MID_MAX: 15,        // 中距離森林生成の最大距離
+}
+```
+
+#### 湿度系パラメータ
+```typescript
+FOREST: {
+  MOISTURE_THRESHOLD_MID: 0.6,       // 中地森林生成の湿度
+  MOISTURE_THRESHOLD_LOW: 0.65,      // 低地森林生成の湿度
+}
+```
