@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility, FacilityType } from "../types/facility";
+import type { ImageCache } from "../types/drawing";
 import { useCamera } from "../hooks/useCamera";
 import { useMouseDrag } from "../hooks/useMouseDrag";
 import { useGridCoordinates } from "../hooks/useGridCoordinates";
@@ -19,11 +20,6 @@ import {
   drawFacilityEffects, 
   drawDragRange 
 } from '../utils/drawingUtils';
-
-// 画像キャッシュの型定義
-interface ImageCache {
-  [key: string]: HTMLImageElement;
-}
 
 // CanvasGridコンポーネントのプロパティ
 interface CanvasGridProps {
