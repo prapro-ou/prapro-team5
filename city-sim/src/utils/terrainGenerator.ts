@@ -2,38 +2,62 @@ import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
 import { TERRAIN_DATA } from '../types/terrain';
 
-// ノイズ関数
-function simpleNoise(x: number, y: number): number {
-  const n = x + y * 57;
-  return ((n << 13) ^ n) * 0.000000000931322574615478515625;
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 9301 + 49297) % 233280;
+    return this.seed / 233280;
+  }
+
+  nextRange(min: number, max: number): number {
+    return min + (max - min) * this.next();
+  }
 }
 
-// ノイズ関数
-function smoothNoise(x: number, y: number): number {
-  const corners = (simpleNoise(x - 1, y - 1) + simpleNoise(x + 1, y - 1) + 
-                   simpleNoise(x - 1, y + 1) + simpleNoise(x + 1, y + 1)) / 16;
-  const sides = (simpleNoise(x - 1, y) + simpleNoise(x + 1, y) + 
-                 simpleNoise(x, y - 1) + simpleNoise(x, y + 1)) / 8;
-  const center = simpleNoise(x, y) / 4;
+function hash(x: number, y: number, seed: number): number {
+  let hash = x * 374761393 + y * 668265263 + seed;
+  hash = (hash ^ (hash >> 13)) * 1274124157;
+  hash = hash ^ (hash >> 16);
+  return (hash & 0x7fffffff) / 0x7fffffff;
+}
+
+function simpleNoise(x: number, y: number, seed: number): number {
+  return hash(x, y, seed);
+}
+
+function smoothNoise(x: number, y: number, seed: number): number {
+  const corners = (simpleNoise(x - 1, y - 1, seed) + simpleNoise(x + 1, y - 1, seed) + 
+                   simpleNoise(x - 1, y + 1, seed) + simpleNoise(x + 1, y + 1, seed)) / 16;
+  const sides = (simpleNoise(x - 1, y, seed) + simpleNoise(x + 1, y, seed) + 
+                 simpleNoise(x, y - 1, seed) + simpleNoise(x, y + 1, seed)) / 8;
+  const center = simpleNoise(x, y, seed) / 4;
   return corners + sides + center;
 }
 
-// 補間関数
-function interpolate(a: number, b: number, weight: number): number {
-  return a + (b - a) * weight;
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
 }
 
-// 補間ノイズ
-function interpolatedNoise(x: number, y: number): number {
+function interpolate(a: number, b: number, weight: number): number {
+  return a + (b - a) * smoothstep(0, 1, weight);
+}
+
+function interpolatedNoise(x: number, y: number, seed: number): number {
   const intX = Math.floor(x);
   const intY = Math.floor(y);
   const fracX = x - intX;
   const fracY = y - intY;
 
-  const v1 = smoothNoise(intX, intY);
-  const v2 = smoothNoise(intX + 1, intY);
-  const v3 = smoothNoise(intX, intY + 1);
-  const v4 = smoothNoise(intX + 1, intY + 1);
+  const v1 = smoothNoise(intX, intY, seed);
+  const v2 = smoothNoise(intX + 1, intY, seed);
+  const v3 = smoothNoise(intX, intY + 1, seed);
+  const v4 = smoothNoise(intX + 1, intY + 1, seed);
 
   const i1 = interpolate(v1, v2, fracX);
   const i2 = interpolate(v3, v4, fracX);
@@ -41,15 +65,14 @@ function interpolatedNoise(x: number, y: number): number {
   return interpolate(i1, i2, fracY);
 }
 
-// 複数オクターブのノイズ
-function perlinNoise(x: number, y: number, octaves: number, persistence: number, scale: number): number {
+function perlinNoise(x: number, y: number, octaves: number, persistence: number, scale: number, seed: number): number {
   let total = 0;
   let frequency = scale;
   let amplitude = 1;
   let maxValue = 0;
 
   for (let i = 0; i < octaves; i++) {
-    total += interpolatedNoise(x * frequency, y * frequency) * amplitude;
+    total += interpolatedNoise(x * frequency, y * frequency, seed) * amplitude;
     maxValue += amplitude;
     amplitude *= persistence;
     frequency *= 2;
@@ -58,97 +81,193 @@ function perlinNoise(x: number, y: number, octaves: number, persistence: number,
   return total / maxValue;
 }
 
-// 地形マップを生成
-export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, TerrainType> {
-  const terrainMap = new Map<string, TerrainType>();
+function generateWaterPoints(gridSize: GridSize, random: SeededRandom): Array<{x: number, y: number, strength: number}> {
+  const waterPoints: Array<{x: number, y: number, strength: number}> = [];
   
-  // ノイズパラメータ
-  const heightScale = 0.03;    // 高度のスケール
-  const moistureScale = 0.05;  // 湿度のスケール
-  const octaves = 4;           // ノイズの複雑さ
-  const persistence = 0.5;     // 各オクターブの影響度
+  const northPoints = Math.floor(gridSize.width * 0.4);
+  for (let i = 0; i < northPoints; i++) {
+    const x = random.nextRange(0, gridSize.width);
+    const y = random.nextRange(0, gridSize.height * 0.12);
+    const strength = random.nextRange(0.9, 1.2);
+    waterPoints.push({x, y, strength});
+  }
   
-  // 高度マップと湿度マップを生成
-  const heightMap = new Map<string, number>();
-  const moistureMap = new Map<string, number>();
+  const eastPoints = Math.floor(gridSize.height * 0.4);
+  for (let i = 0; i < eastPoints; i++) {
+    const x = random.nextRange(gridSize.width * 0.88, gridSize.width);
+    const y = random.nextRange(0, gridSize.height);
+    const strength = random.nextRange(0.9, 1.2);
+    waterPoints.push({x, y, strength});
+  }
   
-  for (let x = 0; x < gridSize.width; x++) {
-    for (let y = 0; y < gridSize.height; y++) {
-      // 高度を生成（0-1の範囲）
-      const height = perlinNoise(x, y, octaves, persistence, heightScale);
-      heightMap.set(`${x},${y}`, height);
-      
-      // 湿度を生成（高度とは異なるスケールで）
-      const moisture = perlinNoise(x + 1000, y + 1000, octaves, persistence, moistureScale);
-      moistureMap.set(`${x},${y}`, moisture);
+  if (random.next() < 0.5) {
+    const x = random.nextRange(0, gridSize.width * 0.15);
+    const y = random.nextRange(gridSize.height * 0.85, gridSize.height);
+    const strength = random.nextRange(0.7, 1.0);
+    waterPoints.push({x, y, strength});
+  }
+  
+  return waterPoints;
+}
+
+function calculateWaterDistance(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>): number {
+  let minDistance = Infinity;
+  
+  for (const point of waterPoints) {
+    const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+    const adjustedDistance = distance / point.strength;
+    if (adjustedDistance < minDistance) {
+      minDistance = adjustedDistance;
     }
   }
   
-  // 地形を決定
+  return minDistance;
+}
+
+function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
+  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
+  
+  if (y < edgeThreshold) {
+    return true;
+  }
+  
+  if (x >= gridSize.width - edgeThreshold) {
+    return true;
+  }
+  
+  if (x < edgeThreshold * 0.7 && y >= gridSize.height - edgeThreshold * 0.7) {
+    return true;
+  }
+  
+  const minDistance = calculateWaterDistance(x, y, waterPoints);
+  return minDistance < 5;
+}
+
+function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
+  const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
+  const beachThreshold = edgeThreshold + 4;
+  
+  if (y < beachThreshold && y >= edgeThreshold) {
+    return true;
+  }
+  
+  if (x >= gridSize.width - beachThreshold && x < gridSize.width - edgeThreshold) {
+    return true;
+  }
+  
+  if (x < beachThreshold * 0.7 && x >= edgeThreshold * 0.7 && 
+      y >= gridSize.height - beachThreshold * 0.7 && y < gridSize.height - edgeThreshold * 0.7) {
+    return true;
+  }
+  
+  const minDistance = calculateWaterDistance(x, y, waterPoints);
+  return minDistance >= 5 && minDistance < 10;
+}
+
+export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, TerrainType> {
+  const terrainMap = new Map<string, TerrainType>();
+  
+  const seed = Math.floor(Math.random() * 1000000);
+  const random = new SeededRandom(seed);
+  
+  const heightScale = 0.025;
+  const moistureScale = 0.04;
+  const octaves = 5;
+  const persistence = 0.55;
+  
+  const waterPoints = generateWaterPoints(gridSize, random);
+  
+  const heightMap = new Map<string, number>();
+  const moistureMap = new Map<string, number>();
+  const waterDistanceMap = new Map<string, number>();
+  
+  for (let x = 0; x < gridSize.width; x++) {
+    for (let y = 0; y < gridSize.height; y++) {
+      const height = perlinNoise(x, y, octaves, persistence, heightScale, seed);
+      heightMap.set(`${x},${y}`, height);
+      
+      const moisture = perlinNoise(x + 1000, y + 1000, octaves, persistence, moistureScale, seed + 1);
+      moistureMap.set(`${x},${y}`, moisture);
+      
+      const waterDistance = calculateWaterDistance(x, y, waterPoints);
+      waterDistanceMap.set(`${x},${y}`, waterDistance);
+    }
+  }
+  
   for (let x = 0; x < gridSize.width; x++) {
     for (let y = 0; y < gridSize.height; y++) {
       const height = heightMap.get(`${x},${y}`)!;
       const moisture = moistureMap.get(`${x},${y}`)!;
+      const waterDistance = waterDistanceMap.get(`${x},${y}`)!;
       
-      const terrain = determineTerrainType(x, y, height, moisture, gridSize);
+      const terrain = determineTerrainType(x, y, height, moisture, waterDistance, waterPoints, gridSize, random);
       terrainMap.set(`${x},${y}`, terrain);
     }
   }
+  
+  const improvedTerrainMap = new Map<string, TerrainType>();
+  for (let x = 0; x < gridSize.width; x++) {
+    for (let y = 0; y < gridSize.height; y++) {
+      const currentTerrain = terrainMap.get(`${x},${y}`)!;
+      const improvedTerrain = improveTerrainContinuity(x, y, currentTerrain, terrainMap, gridSize, random);
+      improvedTerrainMap.set(`${x},${y}`, improvedTerrain);
+    }
+  }
 
-  return terrainMap;
+  return improvedTerrainMap;
 }
 
-// 地形タイプを決定
-function determineTerrainType(x: number, y: number, height: number, moisture: number, gridSize: GridSize): TerrainType {
-  // 境界付近の処理
-  const edgeDistance = Math.min(gridSize.width, gridSize.height) * 0.08;
-  const isNearEdge = x < edgeDistance || x >= gridSize.width - edgeDistance ||
-                     y < edgeDistance || y >= gridSize.height - edgeDistance;
+function determineTerrainType(
+  x: number, 
+  y: number, 
+  height: number, 
+  moisture: number, 
+  waterDistance: number, 
+  waterPoints: Array<{x: number, y: number, strength: number}>,
+  gridSize: GridSize,
+  random: SeededRandom
+): TerrainType {
   
-  // 中心付近の処理
-  const centerX = gridSize.width / 2;
-  const centerY = gridSize.height / 2;
-  const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-  const maxDistance = Math.min(gridSize.width, gridSize.height) * 0.35;
-  const isNearCenter = distanceFromCenter < maxDistance;
-  
-  // 水辺の生成（境界付近、かつ低地）
-  if (isNearEdge && height < 0.25) {
-    if (Math.random() < 0.9) {
-      return 'water';
-    }
+  if (isWaterArea(x, y, waterPoints, gridSize)) {
+    return 'water';
   }
   
-  // 砂浜の生成（水辺の隣）
-  if (isNearEdge && height < 0.35 && height >= 0.25) {
-    if (Math.random() < 0.8) {
-      return 'beach';
-    }
+  if (isBeachArea(x, y, waterPoints, gridSize) && height < 0.5) {
+    return 'beach';
   }
   
-  // 山の生成（高地）
-  if (height > 0.75) {
-    if (moisture < 0.4) {
-      return 'mountain';
+  const lowlandDistance = 10 + random.nextRange(-1, 1);
+  if (waterDistance < lowlandDistance && height < 0.45) {
+    if (moisture > 0.65) {
+      return 'grass';
     }
     else {
+      return 'grass';
+    }
+  }
+  
+  if (height > 0.65) {
+    const mountainChance = 0.9 + (height - 0.65) * 3;
+    
+    if (random.next() < mountainChance) {
       return 'mountain';
     }
   }
   
-  // 中程度の高度
-  if (height > 0.55) {
-    if (moisture > 0.7) {
+  if (height > 0.5) {
+    if (moisture > 0.6) {
       return 'forest';
     }
-    else {
+    else if (height > 0.6) {
       return 'mountain';
+    }
+    else {
+      return 'grass';
     }
   }
   
-  // 低地
-  if (height > 0.35) {
-    if (moisture > 0.7) {
+  if (height > 0.3) {
+    if (moisture > 0.65) {
       return 'forest';
     }
     else {
@@ -156,7 +275,6 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
     }
   }
   
-  // 最も低い場所
   if (moisture > 0.7) {
     return 'forest';
   }
@@ -165,12 +283,125 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
   }
 }
 
-// 地形の建設適性を取得
+function improveTerrainContinuity(
+  x: number, 
+  y: number, 
+  currentTerrain: TerrainType, 
+  terrainMap: Map<string, TerrainType>, 
+  gridSize: GridSize,
+  random: SeededRandom
+): TerrainType {
+  
+  if (currentTerrain === 'water') {
+    const neighbors = getNeighborTiles(x, y, gridSize);
+    let waterNeighbors = 0;
+    let totalNeighbors = 0;
+    
+    for (const neighbor of neighbors) {
+      const neighborTerrain = terrainMap.get(neighbor);
+      if (neighborTerrain) {
+        totalNeighbors++;
+        if (neighborTerrain === 'water') {
+          waterNeighbors++;
+        }
+      }
+    }
+    
+    if (totalNeighbors > 0 && waterNeighbors / totalNeighbors > 0.5) {
+      return 'water';
+    }
+  }
+  
+  if (currentTerrain === 'beach') {
+    const neighbors = getNeighborTiles(x, y, gridSize);
+    let waterNeighbors = 0;
+    let beachNeighbors = 0;
+    let totalNeighbors = 0;
+    
+    for (const neighbor of neighbors) {
+      const neighborTerrain = terrainMap.get(neighbor);
+      if (neighborTerrain) {
+        totalNeighbors++;
+        if (neighborTerrain === 'water') {
+          waterNeighbors++;
+        }
+        else if (neighborTerrain === 'beach') {
+          beachNeighbors++;
+        }
+      }
+    }
+    
+    if (totalNeighbors > 0 && (waterNeighbors + beachNeighbors) / totalNeighbors > 0.3) {
+      return 'beach';
+    }
+  }
+  
+  if (currentTerrain === 'mountain') {
+    const neighbors = getNeighborTiles(x, y, gridSize);
+    let mountainNeighbors = 0;
+    let totalNeighbors = 0;
+    
+    for (const neighbor of neighbors) {
+      const neighborTerrain = terrainMap.get(neighbor);
+      if (neighborTerrain) {
+        totalNeighbors++;
+        if (neighborTerrain === 'mountain') {
+          mountainNeighbors++;
+        }
+      }
+    }
+    
+    if (totalNeighbors > 0 && mountainNeighbors / totalNeighbors > 0.4) {
+      return 'mountain';
+    }
+  }
+  
+  if (currentTerrain === 'forest') {
+    const neighbors = getNeighborTiles(x, y, gridSize);
+    let forestNeighbors = 0;
+    let totalNeighbors = 0;
+    
+    for (const neighbor of neighbors) {
+      const neighborTerrain = terrainMap.get(neighbor);
+      if (neighborTerrain) {
+        totalNeighbors++;
+        if (neighborTerrain === 'forest') {
+          forestNeighbors++;
+        }
+      }
+    }
+    
+    if (totalNeighbors > 0 && forestNeighbors / totalNeighbors > 0.4) {
+      return 'forest';
+    }
+  }
+  
+  return currentTerrain;
+}
+
+function getNeighborTiles(x: number, y: number, gridSize: GridSize): string[] {
+  const neighbors: string[] = [];
+  
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      if (dx === 0 && dy === 0) continue;
+      
+      const nx = x + dx;
+      const ny = y + dy;
+      
+      if (nx >= 0 && nx < gridSize.width && ny >= 0 && ny < gridSize.height) {
+        neighbors.push(`${nx},${ny}`);
+      }
+    }
+  }
+  
+  return neighbors;
+}
+
 export function getBuildability(terrain: TerrainType): boolean {
   return TERRAIN_DATA[terrain]?.buildable || false;
 }
 
-// 地形の満足度修正値を取得
 export function getTerrainSatisfactionModifier(terrain: TerrainType): number {
   return TERRAIN_DATA[terrain]?.satisfactionModifier || 0;
 }
