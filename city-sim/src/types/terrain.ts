@@ -1,5 +1,3 @@
-import type { Position } from "./grid";
-
 // 地形タイプの定義
 export type TerrainType = 
   | "grass"        // 平地（芝生）
