@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Facility } from '../types/facility';
 import { FACILITY_DATA } from '../types/facility';
+import { saveLoadRegistry } from './SaveLoadRegistry';
 
 export interface InfrastructureStatus {
   water: { demand: number; supply: number; balance: number };
@@ -15,6 +16,11 @@ interface InfrastructureStore {
   getInfrastructureStatus: () => InfrastructureStatus;
   getInfrastructureShortage: () => { water: number; electricity: number };
   getInfrastructureSurplus: () => { water: number; electricity: number };
+  
+  // セーブ・ロード機能
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: () => void;
 }
 
 export const useInfrastructureStore = create<InfrastructureStore>((set, get) => ({
@@ -79,5 +85,29 @@ export const useInfrastructureStore = create<InfrastructureStore>((set, get) => 
       water: Math.max(0, status.water.balance),
       electricity: Math.max(0, status.electricity.balance)
     };
+  },
+
+  saveState: () => {
+    const state = get();
+    return {
+      status: state.status
+    };
+  },
+
+  loadState: (savedState: any) => {
+    if (savedState && savedState.status) {
+      set({ status: savedState.status });
+    }
+  },
+
+  resetToInitial: () => {
+    set({
+      status: {
+        water: { demand: 0, supply: 0, balance: 0 },
+        electricity: { demand: 0, supply: 0, balance: 0 }
+      }
+    });
   }
 }));
+
+saveLoadRegistry.register('infrastructure', useInfrastructureStore.getState());

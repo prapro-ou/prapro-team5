@@ -113,9 +113,9 @@ function App() {
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   
-  // ゲーム開始時の地形生成
+  // ゲーム開始時の地形生成（新規ゲーム時のみ）
   useEffect(() => {
-    if (!showStartScreen) {
+    if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
       generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
     }
   }, [showStartScreen, generateTerrain]);
@@ -193,19 +193,36 @@ function App() {
     }
   }, [levelUpMessage, setLevelUpMessage]);
 
+  // スタート画面
   if (showStartScreen) {
     return (
       <>
-        <StartScreen
-          onStart={() => setShowStartScreen(false)}
+        <StartScreen 
+          onStart={() => {
+            localStorage.removeItem('city-sim-loaded');
+            setShowStartScreen(false);
+          }} 
           onShowSettings={openSettings}
+          onLoadGame={() => {
+            setShowStartScreen(false);
+            setTimeout(() => {
+              openSettings();
+            }, 100);
+          }}
         />
-        <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
+        
+        {/* スタート画面中でも設定パネルを表示可能にする */}
+        {isSettingsOpen && (
           <SettingsPanel 
             onClose={closeSettings} 
             onShowCredits={switchToCredits}
+            isGameStarted={false}
+            onReturnToTitle={() => {
+              closeSettings();
+              setShowStartScreen(true);
+            }}
           />
-        </div>
+        )}
       </>
     );
   }
@@ -288,6 +305,7 @@ function App() {
           />
         </div>
       </div>
+
       {/* パネル切り替えボタン */}
       <button 
         onClick={togglePanel}
@@ -308,15 +326,32 @@ function App() {
             </div>
         </div>
       )}
- {/* SNSを見るボタンとフィード表示 */}
- <SNSFeedButton />
+
+      {/* SNSを見るボタンとフィード表示 */}
+      <SNSFeedButton />
+
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
           onClose={closeSettings} 
           onShowCredits={switchToCredits}
+          isGameStarted={!showStartScreen}
+          onReturnToTitle={() => {
+            // 現在のゲーム状態をリセット
+            // 各ストアを初期状態に戻す
+            useGameStore.getState().resetToInitial();
+            useFacilityStore.getState().resetToInitial();
+            useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+            useInfrastructureStore.getState().resetToInitial();
+            useRewardStore.getState().resetToInitial();
+            
+            // 設定パネルを閉じて、スタート画面を表示
+            closeSettings();
+            setShowStartScreen(true);
+          }}
         />
       </div>
+      
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>

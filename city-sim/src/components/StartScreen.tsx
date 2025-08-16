@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
 
 type Props = {
   onStart: () => void;
   onShowSettings: () => void;
+  onLoadGame: () => void;
 };
 
 // ビル生成関数
@@ -29,12 +31,75 @@ const createBuilding = (rows: number, cols: number, width: string, height: strin
   );
 };
 
-const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
+interface SaveSlot {
+  id: string;
+  cityName: string;
+  timestamp: number;
+  stats: any;
+  hasData: boolean;
+}
+
+const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) => {
   const [logoVisible, setLogoVisible] = useState(false);
   const [buttonsVisible, setButtonsVisible] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayActive, setOverlayActive] = useState(false);
+  const [hasSaveData, setHasSaveData] = useState(false);
+  const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
+  const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
+
+  // セーブデータの確認
+  useEffect(() => {
+    checkSaveData();
+  }, []);
+
+  const checkSaveData = () => {
+    const slots: SaveSlot[] = [];
+    let hasAnySave = false;
+
+    // 6つのスロットをチェック
+    for (let i = 0; i < 6; i++) {
+      const slotId = `slot_${i}`;
+      const slotKey = `city-sim-save-${slotId}`;
+      const saveDataString = localStorage.getItem(slotKey);
+      
+      if (saveDataString) {
+        try {
+          const saveData = JSON.parse(saveDataString);
+          slots.push({
+            id: slotId,
+            cityName: saveData.cityName || `都市${i + 1}`,
+            timestamp: saveData.timestamp || Date.now(),
+            stats: saveData.gameStats,
+            hasData: true
+          });
+          hasAnySave = true;
+        } 
+        catch {
+          // 破損データの場合は空スロットとして扱う
+          slots.push({
+            id: slotId,
+            cityName: `スロット${i + 1}`,
+            timestamp: 0,
+            stats: null,
+            hasData: false
+          });
+        }
+      } else {
+        slots.push({
+          id: slotId,
+          cityName: `スロット${i + 1}`,
+          timestamp: 0,
+          stats: null,
+          hasData: false
+        });
+      }
+    }
+
+    setHasSaveData(hasAnySave);
+    setSaveSlots(slots);
+  };
 
   // アニメーション用
   useEffect(() => {
@@ -63,8 +128,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
     []
   );
 
-  // スタートアニメーション
-  const handleStartClick = () => {
+  // 新規ゲーム開始アニメーション
+  const handleNewGameClick = () => {
     setOverlayVisible(true);
     setTimeout(() => {
       setOverlayActive(true);
@@ -77,6 +142,123 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
       }, 800);
     }, 3000); // アニメーション時間
   };
+
+  // 続きから開始
+  const handleLoadGameClick = () => {
+    setIsSaveLoadOpen(true);
+  };
+
+  // セーブデータからロード
+  const handleLoadFromSlot = async (slotId: string) => {
+    const slotKey = `city-sim-save-${slotId}`;
+    const saveDataString = localStorage.getItem(slotKey);
+    
+    if (saveDataString) {
+      try {
+        const saveData = JSON.parse(saveDataString);
+        // 全ストアの状態を復元
+        const { saveLoadRegistry } = await import('../stores/SaveLoadRegistry');
+        saveLoadRegistry.loadAllStores(saveData);
+        // ロード完了フラグを設定
+        localStorage.setItem('city-sim-loaded', 'true');
+        // セーブデータをロードしてゲーム開始
+        onLoadGame();
+      } catch (error) {
+        console.error('セーブデータの読み込みに失敗しました:', error);
+      }
+    }
+  };
+
+  const formatDate = (timestamp: number) => {
+    if (timestamp === 0) return 'なし';
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  const formatStats = (stats: any) => {
+    if (!stats) return null;
+    return {
+      population: stats.population?.toLocaleString() || '0',
+      money: stats.money?.toLocaleString() || '0',
+      level: stats.level || '1',
+      date: stats.date ? `${stats.date.year}/${stats.date.month}/${stats.date.week}` : '1/1/1'
+    };
+  };
+
+  // セーブデータ選択パネルが開いている場合
+  if (isSaveLoadOpen) {
+    return (
+      <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center">
+        <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative border border-gray-600">
+          {/* ヘッダー */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">セーブデータを選択</h2>
+            <button 
+              onClick={() => setIsSaveLoadOpen(false)} 
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <TbArrowLeft size={24} />
+            </button>
+          </div>
+
+          {/* セーブスロット一覧 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {saveSlots.map((slot) => (
+              <div key={slot.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-white">{slot.cityName}</h3>
+                  <div className="text-sm text-gray-400">
+                    {formatDate(slot.timestamp)}
+                  </div>
+                </div>
+                
+                {slot.hasData && slot.stats && (
+                  <div className="mb-3 space-y-1 text-sm">
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <TbUsers className="text-blue-400" />
+                      {formatStats(slot.stats)?.population}
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <TbCash className="text-green-400" />
+                      ${formatStats(slot.stats)?.money}
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <TbStar className="text-yellow-400" />
+                      Lv.{formatStats(slot.stats)?.level}
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <TbClock className="text-purple-400" />
+                      {formatStats(slot.stats)?.date}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-2">
+                  {slot.hasData ? (
+                    <button
+                      onClick={() => handleLoadFromSlot(slot.id)}
+                      className="w-full flex items-center justify-center gap-1 bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-2 rounded transition-colors"
+                    >
+                      <TbFolderOpen />
+                      ロード
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNewGameClick}
+                      className="w-full flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded transition-colors"
+                    >
+                      <TbDeviceFloppy />
+                      新規ゲーム
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -125,13 +307,29 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
             : 'transform translate-y-full opacity-0'
         }`}
       >
+        {/* 新規ゲームボタン */}
         <button
-          onClick={handleStartClick}
+          onClick={handleNewGameClick}
           disabled={isTransitioning}
           className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          スタート
+          初めから
         </button>
+
+        {/* 続きからボタン */}
+        <button
+          onClick={handleLoadGameClick}
+          disabled={isTransitioning || !hasSaveData}
+          className={`border-2 border-white/20 px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed ${
+            hasSaveData 
+              ? 'bg-gray-500/75 hover:bg-gray-700/75 text-white' 
+              : 'bg-gray-500/50 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          続きから
+        </button>
+
+        {/* 設定ボタン */}
         <button
           onClick={onShowSettings}
           disabled={isTransitioning}
