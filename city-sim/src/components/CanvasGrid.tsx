@@ -15,6 +15,8 @@ import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
+import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
+import { FACILITY_DATA } from '../types/facility';
 
 // 画像キャッシュの型定義
 interface ImageCache {
@@ -188,19 +190,11 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   // 施設画像の事前ロード
   const preloadFacilityImages = useCallback(async () => {
     try {
-      const imagePaths = [
-        'images/buildings/residential.png',
-        'images/buildings/commercial.png',
-        'images/buildings/industrial.png',
-        'images/buildings/road_cross.png',
-        'images/buildings/road_right.png',
-        'images/buildings/road_t_r.png',
-        'images/buildings/road_t.png',
-        'images/buildings/road_turn_r.png',
-        'images/buildings/road_turn.png',
-        'images/buildings/city_hall.png',
-        'images/buildings/park.png'
-      ];
+      // 施設マスターデータから画像パスを取得
+      const imagePaths = Object.values(FACILITY_DATA)
+        .filter(facility => facility.imgPaths && facility.imgPaths.length > 0)
+        .flatMap(facility => facility.imgPaths!)
+        .filter((path, index, array) => array.indexOf(path) === index); // 重複除去
 
       const loadedImages: ImageCache = {};
       
@@ -242,7 +236,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       const isoPos = getIsometricPosition(x, y);
       
       // タイルの色を決定（プレビュー優先）
-      let tileColor = '#9CA3AF'; // デフォルトは灰色
+      let tileColor: string = DRAWING_CONSTANTS.DEFAULT_TILE_COLOR; // デフォルトは灰色
       
       // 既存施設の色を設定
       if (facilityColor) {
@@ -267,8 +261,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       ctx.fill();
       
       // 境界線の色を設定
-      let borderColor = '#666';
-      let borderWidth = 1;
+      let borderColor = DRAWING_CONSTANTS.TILE_BORDER_COLOR;
+      let borderWidth = DRAWING_CONSTANTS.TILE_BORDER_WIDTH;
       
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = borderWidth;
@@ -332,7 +326,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     
     // 施設効果範囲の描画（汎用）
     if (facilityEffectTiles.size > 0) {
-      ctx.globalAlpha = 0.4; // 透明度設定
+      ctx.globalAlpha = DRAWING_CONSTANTS.EFFECT_ALPHA; // 透明度設定
       
       facilityEffectTiles.forEach(tileKey => {
         const [x, y] = tileKey.split('-').map(Number);
@@ -340,7 +334,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
           const isoPos = getIsometricPosition(x, y);
           
           // 施設タイプに応じた色を設定
-          let effectColor = '#90EE90'; // デフォルトは薄い緑
+          let effectColor = DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR; // デフォルトは薄い緑
           
           if (selectedPosition) {
             const selectedFacility = facilities.find(f => 
@@ -350,8 +344,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
             
             if (selectedFacility) {
               switch (selectedFacility.type) {
-                case 'park': effectColor = '#90EE90'; break; // 緑
-                default: effectColor = '#90EE90'; break;
+                case 'park': effectColor = DRAWING_CONSTANTS.PARK_EFFECT_COLOR; break; // 緑
+                default: effectColor = DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR; break;
               }
             }
           }
@@ -373,10 +367,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     
     // ドラッグ範囲の視覚化
     if (isPlacingFacility && dragRange.size > 0) {
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#FFD700'; // 金色
-      ctx.strokeStyle = '#FFA500';
-      ctx.lineWidth = 2;
+      ctx.globalAlpha = DRAWING_CONSTANTS.DRAG_ALPHA;
+      ctx.fillStyle = DRAWING_CONSTANTS.DRAG_COLOR; // 金色
+      ctx.strokeStyle = DRAWING_CONSTANTS.DRAG_STROKE_COLOR;
+      ctx.lineWidth = DRAWING_CONSTANTS.DRAG_STROKE_WIDTH;
       
       dragRange.forEach(tileKey => {
         const [x, y] = tileKey.split('-').map(Number);
