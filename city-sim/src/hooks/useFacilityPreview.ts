@@ -162,6 +162,14 @@ export const useFacilityPreview = ({
               }
             }
           }
+          
+          // デバッグ用ログ
+          console.log('選択された施設の効果範囲:', {
+            facilityType: selectedFacility.type,
+            effectRadius,
+            tilesCount: tiles.size,
+            position: selectedFacility.position
+          });
         }
       }
     }
