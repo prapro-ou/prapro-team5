@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { TbSettings, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 
 type Props = {
   onStart: () => void;
   onShowSettings: () => void;
+  onLoadGame: () => void;
 };
 
 // ビル生成関数
@@ -29,12 +31,48 @@ const createBuilding = (rows: number, cols: number, width: string, height: strin
   );
 };
 
-const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
+const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) => {
   const [logoVisible, setLogoVisible] = useState(false);
   const [buttonsVisible, setButtonsVisible] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayActive, setOverlayActive] = useState(false);
+  const [hasSaveData, setHasSaveData] = useState(false);
+  const [latestSaveInfo, setLatestSaveInfo] = useState<any>(null);
+
+  // セーブデータの確認
+  useEffect(() => {
+    checkSaveData();
+  }, []);
+
+  const checkSaveData = () => {
+    let hasAnySave = false;
+    let latestSave: any = null;
+    let latestTimestamp = 0;
+
+    // 5つのスロットをチェック
+    for (let i = 0; i < 5; i++) {
+      const slotKey = `city-sim-save-slot_${i}`;
+      const saveDataString = localStorage.getItem(slotKey);
+      
+      if (saveDataString) {
+        try {
+          const saveData = JSON.parse(saveDataString);
+          if (saveData.timestamp > latestTimestamp) {
+            latestTimestamp = saveData.timestamp;
+            latestSave = saveData;
+          }
+          hasAnySave = true;
+        } 
+        catch {
+          // 破損データは無視
+        }
+      }
+    }
+
+    setHasSaveData(hasAnySave);
+    setLatestSaveInfo(latestSave);
+  };
 
   // アニメーション用
   useEffect(() => {
@@ -63,8 +101,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
     []
   );
 
-  // スタートアニメーション
-  const handleStartClick = () => {
+  // 新規ゲーム開始アニメーション
+  const handleNewGameClick = () => {
     setOverlayVisible(true);
     setTimeout(() => {
       setOverlayActive(true);
@@ -76,6 +114,27 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
         onStart();
       }, 800);
     }, 3000); // アニメーション時間
+  };
+
+  // 続きから開始
+  const handleLoadGameClick = () => {
+    onLoadGame();
+  };
+
+  const formatDate = (timestamp: number) => {
+    if (timestamp === 0) return 'なし';
+    const date = new Date(timestamp);
+    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  const formatStats = (stats: any) => {
+    if (!stats) return null;
+    return {
+      population: stats.population?.toLocaleString() || '0',
+      money: stats.money?.toLocaleString() || '0',
+      level: stats.level || '1',
+      date: stats.date ? `${stats.date.year}/${stats.date.month}/${stats.date.week}` : '1/1/1'
+    };
   };
 
   return (
@@ -125,18 +184,35 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings }) => {
             : 'transform translate-y-full opacity-0'
         }`}
       >
+        {/* 新規ゲームボタン */}
         <button
-          onClick={handleStartClick}
+          onClick={handleNewGameClick}
           disabled={isTransitioning}
           className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          スタート
+          初めから
         </button>
+
+        {/* 続きからボタン */}
+        <button
+          onClick={handleLoadGameClick}
+          disabled={isTransitioning || !hasSaveData}
+          className={`border-2 border-white/20 px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed ${
+            hasSaveData 
+              ? 'bg-gray-500/75 hover:bg-gray-700/75 text-white' 
+              : 'bg-gray-500/50 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          続きから
+        </button>
+
+        {/* 設定ボタン */}
         <button
           onClick={onShowSettings}
           disabled={isTransitioning}
-          className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-2xl shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-lg shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
+          <TbSettings size={20} />
           設定
         </button>
       </div>
