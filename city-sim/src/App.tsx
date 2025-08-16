@@ -204,6 +204,7 @@ function App() {
           <SettingsPanel 
             onClose={closeSettings} 
             onShowCredits={switchToCredits}
+            isGameStarted={!showStartScreen}
           />
         </div>
       </>
@@ -315,6 +316,7 @@ function App() {
         <SettingsPanel 
           onClose={closeSettings} 
           onShowCredits={switchToCredits}
+          isGameStarted={!showStartScreen}
         />
       </div>
       {/* クレジットパネル */}
