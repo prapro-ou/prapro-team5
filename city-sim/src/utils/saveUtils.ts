@@ -6,6 +6,11 @@ import type { Reward } from '../components/RewardPanel';
 import type { InfrastructureStatus } from '../stores/InfrastructureStore';
 import { SAVE_DATA_VERSION } from '../types/save';
 
+// ローカルストレージのキー
+const SAVE_DATA_KEY = 'city-sim-save-data';
+const SAVE_METADATA_KEY = 'city-sim-save-metadata';
+
+// ゲーム状態をセーブデータに変換
 export function createSaveData(
 	gameStats: GameStats,
 	facilities: Facility[],
@@ -46,4 +51,34 @@ export function createSaveData(
 			saveCount: 1
 		}
 	};
+}
+
+// ゲームデータをローカルストレージに保存
+export function saveToLocalStorage(saveData: SaveData): SaveResult {
+  try {
+    // セーブデータを保存
+    localStorage.setItem(SAVE_DATA_KEY, JSON.stringify(saveData));
+    
+    // メタデータを更新
+    const metadata = {
+      lastSaveTime: Date.now(),
+      saveCount: (saveData.metadata.saveCount || 0) + 1,
+      cityName: saveData.cityName,
+      timestamp: saveData.timestamp
+    };
+    localStorage.setItem(SAVE_METADATA_KEY, JSON.stringify(metadata));
+    
+    return {
+      success: true,
+      message: `ゲームが保存されました: ${saveData.cityName}`,
+      timestamp: Date.now()
+    };
+  } 
+	catch (error) {
+    return {
+      success: false,
+      message: 'セーブに失敗しました',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 }
