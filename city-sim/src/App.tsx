@@ -176,7 +176,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
       <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
         <div className="relative">
@@ -240,15 +240,17 @@ function App() {
       )}
 
       {/* ゲームグリッド */}
-      <div className="pt-20 flex justify-center items-center">
-        <CanvasGrid 
-          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-          onTileClick={handleTileClick}
-          selectedPosition={selectedTile}
-          facilities={facilities}
-          selectedFacilityType={selectedFacilityType}
-          money={stats.money}
-        />
+      <div className="pt-20 w-full h-full overflow-hidden">
+        <div className="w-full h-full">
+          <CanvasGrid 
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={stats.money}
+          />
+        </div>
       </div>
       {/* パネル切り替えボタン */}
       <button 

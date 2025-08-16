@@ -28,18 +28,14 @@ export const useGridConstants = ({ size }: UseGridConstantsProps) => {
 
   // 動的ビューポートサイズ計算
   const VIEWPORT_WIDTH = React.useMemo(() => {
-    // 画面幅から余白を引く（左右各20px、パネル類のスペース）
-    const availableWidth = screenSize.width - 40;
-    return Math.max(800, availableWidth); // 最小800px
+    const availableWidth = screenSize.width;
+    return availableWidth;
   }, [screenSize.width]);
 
   const VIEWPORT_HEIGHT = React.useMemo(() => {
-    // 画面高さからヘッダー、パネル、ボタン類のスペースを引く
-    const headerHeight = 80; // ヘッダー部分
-    const bottomPanelHeight = 120; // 下部パネル
-    const buttonHeight = 80; // 各種ボタン
-    const availableHeight = screenSize.height - headerHeight - bottomPanelHeight - buttonHeight;
-    return Math.max(400, availableHeight); // 最小400px
+    const headerHeight = 50;
+    const availableHeight = screenSize.height - headerHeight;
+    return availableHeight;
   }, [screenSize.height]);
   
   // アイソメトリックマップ全体のオフセット
@@ -56,4 +52,4 @@ export const useGridConstants = ({ size }: UseGridConstantsProps) => {
     MAP_OFFSET_Y,
     screenSize
   };
-}; 
+};
