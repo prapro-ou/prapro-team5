@@ -14,6 +14,9 @@ import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
 import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
 import { FACILITY_DATA } from '../types/facility';
+import { useTerrainStore } from '../stores/TerrainStore';
+import { TERRAIN_DATA } from '../types/terrain';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { 
   drawTile, 
   drawFacilityImage, 
@@ -47,6 +50,9 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   // 画像キャッシュの状態管理
   const [imageCache, setImageCache] = React.useState<ImageCache>({});
   const [imagesLoaded, setImagesLoaded] = React.useState(false);
+  
+  // 地形ストアの使用
+  const { terrainMap, generateTerrain, getTerrainAt } = useTerrainStore();
   
   // フックの呼び出し順序を固定
   const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
@@ -214,10 +220,35 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
   }, [loadImage]);
 
+  // 地形画像のプリロード
+  const preloadTerrainImages = useCallback(async () => {
+    const terrainImagePaths = Object.values(TERRAIN_DATA).map(terrain => terrain.imgPath);
+    const loadedImages: ImageCache = {};
+    
+    for (const path of terrainImagePaths) {
+      try {
+        const img = await loadImage(path);
+        loadedImages[path] = img;
+      } catch (error) {
+        console.warn(`地形画像のロードに失敗: ${path}`, error);
+      }
+    }
+    
+    setImageCache(prev => ({ ...prev, ...loadedImages }));
+  }, [loadImage]);
+
+  // 地形の初期化
+  useEffect(() => {
+    if (terrainMap.size === 0) {
+      generateTerrain(size);
+    }
+  }, [terrainMap.size, generateTerrain, size]);
+
   // コンポーネントマウント時に画像をロード
   useEffect(() => {
     preloadFacilityImages();
-  }, [preloadFacilityImages]);
+    preloadTerrainImages();
+  }, [preloadFacilityImages, preloadTerrainImages]);
 
   // Canvas描画関数
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -228,25 +259,64 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
     
-    // タイルの描画
+    // 地形の描画（新規追加）
+    visibleTiles.forEach(({ x, y }) => {
+      const terrain = getTerrainAt(x, y);
+      const terrainInfo = TERRAIN_DATA[terrain];
+      
+      // 地形画像がある場合は画像を描画、ない場合は色で描画
+      if (terrainInfo.imgPath && imageCache[terrainInfo.imgPath]) {
+        // 地形画像を描画
+        const img = imageCache[terrainInfo.imgPath];
+        const isoPos = getIsometricPosition(x, y);
+        const drawX = isoPos.x + MAP_OFFSET_X;
+        const drawY = isoPos.y + MAP_OFFSET_Y;
+        
+        ctx.drawImage(
+          img,
+          drawX - ISO_TILE_WIDTH / 2,
+          drawY - ISO_TILE_HEIGHT / 2,
+          ISO_TILE_WIDTH,
+          ISO_TILE_HEIGHT
+        );
+      } else {
+        // 地形に応じた色で描画
+        const terrainColor = getTerrainColor(terrain);
+        drawTile({
+          ctx,
+          x,
+          y,
+          tileColor: terrainColor,
+          mapOffsetX: MAP_OFFSET_X,
+          mapOffsetY: MAP_OFFSET_Y,
+          getIsometricPosition
+        });
+      }
+    });
+    
+    // タイルの描画（施設がある場合）
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       const facilityColor = getFacilityColor(facility);
       const previewColorValue = getPreviewColorValue(x, y);
       
-      const tileColor = previewColorValue 
-        ? convertCssClassToColor(previewColorValue)
-        : (facilityColor ? convertCssClassToColor(facilityColor) : DRAWING_CONSTANTS.DEFAULT_TILE_COLOR);
-      
-      drawTile({
-        ctx,
-        x,
-        y,
-        tileColor,
-        mapOffsetX: MAP_OFFSET_X,
-        mapOffsetY: MAP_OFFSET_Y,
-        getIsometricPosition
-      });
+      if (facility || previewColorValue) {
+        const tileColor = previewColorValue 
+          ? convertCssClassToColor(previewColorValue)
+          : (facilityColor ? convertCssClassToColor(facilityColor) : 'transparent');
+        
+        if (tileColor !== 'transparent') {
+          drawTile({
+            ctx,
+            x,
+            y,
+            tileColor,
+            mapOffsetX: MAP_OFFSET_X,
+            mapOffsetY: MAP_OFFSET_Y,
+            getIsometricPosition
+          });
+        }
+      }
     });
     
     // 施設画像の描画
@@ -294,7 +364,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache]);
 
   // Canvas描画の実行
   useEffect(() => {
@@ -330,6 +400,23 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       drawGrid(ctx);
     }
   }, [VIEWPORT_WIDTH, VIEWPORT_HEIGHT, drawGrid]);
+
+  // 地形に応じた色を取得する関数
+  const getTerrainColor = (terrain: string): string => {
+    const terrainColors: Record<string, string> = {
+      grass: '#90EE90',      // 薄い緑
+      water: '#87CEEB',      // 空色
+      forest: '#228B22',     // 森の緑
+      desert: '#F4A460',     // 砂色
+      mountain: '#696969',   // 暗いグレー
+      beach: '#F5DEB3',      // 小麦色
+      swamp: '#8B4513',     // 茶色
+      rocky: '#A0522D',     // シエナ
+      snow: '#F0F8FF',      // アリスブルー
+      volcanic: '#8B0000',   // 暗い赤
+    };
+    return terrainColors[terrain] || '#90EE90';
+  };
 
   return (
     <div className="relative overflow-hidden border-2 border-blue-500">

@@ -1,8 +1,10 @@
 import { create } from 'zustand';
-import type { Facility, FacilityType } from '../types/facility'
-import { FACILITY_DATA } from '../types/facility'
-import type { Position } from '../types/grid';
+import type { Position, GridSize } from '../types/grid';
+import type { Facility, FacilityType } from '../types/facility';
+import { FACILITY_DATA } from '../types/facility';
 import { useGameStore } from './GameStore';
+import { useTerrainStore } from './TerrainStore';
+import { getBuildability } from '../utils/terrainGenerator';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -58,6 +60,8 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   
   checkCanPlace: (position, facilityType, gridSize) => {
     const { facilities } = get();
+    const { getTerrainAt } = useTerrainStore.getState();
+    
     // --- ここから追加 ---
     // もし建設しようとしているのが市役所なら、既に存在しないかチェック
     if (facilityType === 'city_hall') {
@@ -79,6 +83,21 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         const y = position.y + dy;
         
         if (x < 0 || x >= gridSize.width || y < 0 || y >= gridSize.height) {
+          return false;
+        }
+      }
+    }
+    
+    // 地形チェック（新規追加）
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = position.x + dx;
+        const y = position.y + dy;
+        const terrain = getTerrainAt(x, y);
+        
+        // 地形が建設可能かチェック
+        if (!getBuildability(terrain)) {
+          console.warn(`地形 ${terrain} には建設できません`);
           return false;
         }
       }
