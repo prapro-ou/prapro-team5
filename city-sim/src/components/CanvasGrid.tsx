@@ -130,6 +130,21 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     return getVisibleTiles();
   }, [getVisibleTiles]);
 
+  // 地形に応じた色を取得する関数
+  const getTerrainColor = React.useCallback((terrain: string): string => {
+    const terrainColors: Record<string, string> = {
+      grass: '#90EE90',      // 薄い緑
+      water: '#87CEEB',      // 空色
+      forest: '#228B22',     // 濃い緑
+      desert: '#F4A460',     // 砂色
+      mountain: '#696969',   // 暗いグレー
+      beach: '#F5DEB3',      // 小麦色
+      swamp: '#8B4513',      // 茶色
+      rocky: '#A0522D',      // シエナ
+    };
+    return terrainColors[terrain] || '#90EE90';
+  }, []);
+
   // 地形描画の最適化
   const terrainDrawData = React.useMemo(() => {
     return visibleTiles.map(({ x, y }) => ({
@@ -137,7 +152,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       terrain: getTerrainAt(x, y),
       color: getTerrainColor(getTerrainAt(x, y))
     }));
-  }, [visibleTiles, getTerrainAt]);
+  }, [visibleTiles, getTerrainAt, getTerrainColor]);
 
   const {
     handleMouseDown,
@@ -388,23 +403,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       drawGrid(ctx);
     }
   }, [VIEWPORT_WIDTH, VIEWPORT_HEIGHT, drawGrid]);
-
-  // 地形に応じた色を取得する関数
-  const getTerrainColor = (terrain: string): string => {
-    const terrainColors: Record<string, string> = {
-      grass: '#90EE90',      // 薄い緑
-      water: '#87CEEB',      // 空色
-      forest: '#228B22',     // 森の緑
-      desert: '#F4A460',     // 砂色
-      mountain: '#696969',   // 暗いグレー
-      beach: '#F5DEB3',      // 小麦色
-      swamp: '#8B4513',     // 茶色
-      rocky: '#A0522D',     // シエナ
-      snow: '#F0F8FF',      // アリスブルー
-      volcanic: '#8B0000',   // 暗い赤
-    };
-    return terrainColors[terrain] || '#90EE90';
-  };
 
   // デバッグ用：地形情報表示
   return (
