@@ -210,9 +210,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
         <button
           onClick={onShowSettings}
           disabled={isTransitioning}
-          className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white px-8 py-2 rounded-lg text-lg shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="border-2 border-white/20 bg-gray-500/75 hover:bg-gray-700/75 text-white text-2xl px-8 py-2 rounded-lg shadow-lg w-48 backdrop-blur-sm mix-blend-screen shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <TbSettings size={20} />
           設定
         </button>
       </div>
