@@ -24,6 +24,7 @@ import { useUIStore } from './stores/UIStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
+import { useTerrainStore } from './stores/TerrainStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -108,6 +109,16 @@ function App() {
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(facilities);
   }, [facilities]);
+
+  // 地形生成
+  const { generateTerrain } = useTerrainStore();
+  
+  // ゲーム開始時の地形生成
+  useEffect(() => {
+    if (!showStartScreen) {
+      generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+    }
+  }, [showStartScreen, generateTerrain]);
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
