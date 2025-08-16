@@ -296,7 +296,7 @@ function determineTerrainType(
       if (moisture > 0.525) {
         return 'forest';
       }
-      if (height > 0.6) {
+      if (height > 0.53) {
         return 'mountain';
       }
       return 'grass';
@@ -395,7 +395,7 @@ function improveTerrainContinuity(
       }
     }
     
-    if (totalNeighbors > 0 && mountainNeighbors / totalNeighbors > 0.4) {
+    if (totalNeighbors > 0 && mountainNeighbors / totalNeighbors > 0.325) {
       return 'mountain';
     }
   }
