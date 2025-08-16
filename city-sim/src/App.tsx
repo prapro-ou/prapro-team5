@@ -193,23 +193,21 @@ function App() {
     }
   }, [levelUpMessage, setLevelUpMessage]);
 
-  if (showStartScreen) {
-    return (
-      <>
-        <StartScreen
-          onStart={() => setShowStartScreen(false)}
-          onShowSettings={openSettings}
-        />
-        <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
-          <SettingsPanel 
-            onClose={closeSettings} 
-            onShowCredits={switchToCredits}
-            isGameStarted={!showStartScreen}
-          />
-        </div>
-      </>
-    );
-  }
+  // スタート画面
+  {showStartScreen && (
+    <StartScreen 
+      onStart={() => setShowStartScreen(false)} 
+      onShowSettings={openSettings}
+      onLoadGame={() => {
+        // スタート画面を閉じて、設定パネルを開く
+        setShowStartScreen(false);
+        // 少し遅延させてから設定パネルを開く
+        setTimeout(() => {
+          openSettings();
+        }, 100);
+      }}
+    />
+  )}
 
   return (
     <div className="h-screen bg-gray-900">
