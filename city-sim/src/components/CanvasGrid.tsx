@@ -91,12 +91,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
   const {
     facilityMap,
-    previewTiles,
     parkEffectTiles,
     facilityEffectTiles,
-    getPreviewStatus,
-    getPreviewColor,
-    isPreviewInvalid,
     getFacilityColor,
     getPreviewColorValue
   } = useFacilityPreview({
@@ -114,7 +110,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     getFacilityImageData,
     getRoadImageData,
     isFacilityCenter,
-    calculateZIndex,
     getIsometricPosition
   } = useFacilityDisplay({
     facilityMap,
@@ -461,11 +456,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onClick={(e) => {
-          // クリックイベントを追加
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          
           // マウス座標をグリッド座標に変換
           const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget);
           if (gridPos) {
