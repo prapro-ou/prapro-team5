@@ -179,7 +179,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
 
           {/* セーブスロット一覧 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 5 }, (_, i) => {
+            {Array.from({ length: 6 }, (_, i) => {
               const slotId = `slot_${i}`;
               const slotInfo = getSaveSlotInfo(slotId);
               const hasData = slotInfo !== null;

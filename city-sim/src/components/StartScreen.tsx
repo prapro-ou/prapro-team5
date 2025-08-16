@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TbX, TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
+import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
 
 type Props = {
   onStart: () => void;
@@ -58,8 +58,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
     const slots: SaveSlot[] = [];
     let hasAnySave = false;
 
-    // 5つのスロットをチェック
-    for (let i = 0; i < 5; i++) {
+    // 6つのスロットをチェック
+    for (let i = 0; i < 6; i++) {
       const slotId = `slot_${i}`;
       const slotKey = `city-sim-save-${slotId}`;
       const saveDataString = localStorage.getItem(slotKey);

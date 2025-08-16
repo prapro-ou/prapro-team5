@@ -43,8 +43,8 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const initializeSaveSlots = () => {
     const slots: SaveSlot[] = [];
     
-    // 5つのスロットを作成
-    for (let i = 0; i < 5; i++) {
+    // 6つのスロットを作成
+    for (let i = 0; i < 6; i++) {
       const slotId = `slot_${i}`;
       const slotData = localStorage.getItem(`city-sim-save-${slotId}`);
       
