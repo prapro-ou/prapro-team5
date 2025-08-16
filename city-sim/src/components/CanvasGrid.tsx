@@ -177,9 +177,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     if (cssClass.includes('bg-red-500')) return '#EF4444';
     
     // デバッグ用：未対応の色クラスをログ出力
-    console.warn('未対応の色クラス:', cssClass);
-    
-    // デフォルト色
     return '#9CA3AF';
   }, []);
 
@@ -223,7 +220,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
       setImageCache(loadedImages);
       setImagesLoaded(true);
-      console.log('施設画像のロードが完了しました');
     } catch (error) {
       console.error('画像ロード中にエラーが発生:', error);
     }
@@ -473,7 +469,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
           // マウス座標をグリッド座標に変換
           const gridPos = mouseToGrid(e.clientX, e.clientY, e.currentTarget);
           if (gridPos) {
-            console.log('Canvasクリック:', gridPos);
             handleTileClick(gridPos.x, gridPos.y);
           }
         }}

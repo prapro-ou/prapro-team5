@@ -131,11 +131,20 @@ function App() {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
+    
+    // 同じ位置をクリックした場合は選択を解除
+    if (selectedTile && 
+        selectedTile.x === correctedPosition.x && 
+        selectedTile.y === correctedPosition.y) {
+      setSelectedTile(null);
+      return;
+    }
+    
+    // 新しい位置を選択
     setSelectedTile(correctedPosition);
+    
     if (selectedFacilityType) {
       placeFacility(correctedPosition, selectedFacilityType);
-    } else {
-      console.log(`click: (${correctedPosition.x}, ${correctedPosition.y})`);
     }
   };
 
