@@ -62,3 +62,10 @@ export interface LoadResult {
   data?: SaveData;
   error?: string;
 }
+
+// 自動保存の設定
+export interface AutoSaveConfig {
+  enabled: boolean;
+  interval: number; // ミリ秒
+  maxSlots: number; // 最大自動保存スロット数
+}
