@@ -48,11 +48,11 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   const [imageCache, setImageCache] = React.useState<ImageCache>({});
   const [imagesLoaded, setImagesLoaded] = React.useState(false);
   
-  // 既存のフックをそのまま使用
+  // フックの呼び出し順序を固定
   const { hoveredTile, debouncedSetHover } = useHover({ debounceDelay: 50 });
-  
+
   const { VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y } = useGridConstants({ size });
-  
+
   const { camera, setCamera, getCameraBounds } = useCamera({
     size,
     viewportWidth: VIEWPORT_WIDTH,
@@ -86,7 +86,11 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     size,
     selectedFacilityType,
     mouseToGrid,
-    onTileClick: (x, y) => handleTileClick(x, y)
+    onTileClick: (x: number, y: number) => {
+      if (onTileClick) {
+        onTileClick({ x, y });
+      }
+    }
   });
 
   const {
@@ -117,8 +121,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   });
 
   const visibleTiles = React.useMemo(() => {
-    return getVisibleTiles(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-  }, [getVisibleTiles, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
+    return getVisibleTiles();
+  }, [getVisibleTiles]);
 
   const {
     handleMouseDown,

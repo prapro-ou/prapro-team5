@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import type { Position } from '../types/grid';
 import type { Camera } from './useCamera';
-import { screenToGrid, getViewportBounds } from '../utils/coordinates';
+import { screenToGrid } from '../utils/coordinates';
 
 interface UseGridCoordinatesProps {
   camera: Camera;
@@ -13,14 +13,14 @@ interface UseGridCoordinatesProps {
 
 export const useGridCoordinates = ({ 
   camera, 
-  getCameraBounds,
+  getCameraBounds, 
   mapOffsetX, 
   mapOffsetY, 
   gridSize 
 }: UseGridCoordinatesProps) => {
   
   // マウス座標からグリッド座標への変換
-  const mouseToGrid = React.useCallback((
+  const mouseToGrid = useCallback((
     mouseX: number, 
     mouseY: number, 
     element: HTMLElement
@@ -47,34 +47,30 @@ export const useGridCoordinates = ({
     return null;
   }, [camera, mapOffsetX, mapOffsetY, gridSize]);
 
-  // ビューポート内の可視タイルを計算
-  const getVisibleTiles = React.useCallback((
-    viewportWidth: number,
-    viewportHeight: number
-  ): Position[] => {
-    const bounds = getViewportBounds(
-      viewportWidth,
-      viewportHeight,
-      camera.x,
-      camera.y,
-      mapOffsetX,
-      mapOffsetY
-    );
+  // カメラ内のタイルのみを取得する関数
+  const getVisibleTilesInCamera = useCallback(() => {
+    const cameraBounds = getCameraBounds();
+    
+    // カメラの表示範囲を少し拡張（タイルが途中で切れるのを防ぐ）
+    const buffer = 100;
+    const left = Math.max(0, Math.floor((cameraBounds.minX - buffer) / 16)); // ISO_TILE_WIDTH
+    const right = Math.min(gridSize.width, Math.ceil((cameraBounds.maxX + buffer) / 16)); // ISO_TILE_WIDTH
+    const top = Math.max(0, Math.floor((cameraBounds.minY - buffer) / 16)); // ISO_TILE_HEIGHT
+    const bottom = Math.min(gridSize.height, Math.ceil((cameraBounds.maxY + buffer) / 16)); // ISO_TILE_HEIGHT
     
     const tiles: Position[] = [];
-    const startX = Math.max(0, bounds.minX - 1);
-    const endX = Math.min(gridSize.width, bounds.maxX + 2);
-    const startY = Math.max(0, bounds.minY - 1);
-    const endY = Math.min(gridSize.height, bounds.maxY + 2);
-    
-    for (let y = startY; y < endY; y++) {
-      for (let x = startX; x < endX; x++) {
+    for (let x = left; x < right; x++) {
+      for (let y = top; y < bottom; y++) {
         tiles.push({ x, y });
       }
     }
     
     return tiles;
-  }, [camera, mapOffsetX, mapOffsetY, gridSize, getCameraBounds]);
+  }, [getCameraBounds, gridSize.width, gridSize.height]);
+
+  const getVisibleTiles = useCallback(() => {
+    return getVisibleTilesInCamera();
+  }, [getVisibleTilesInCamera]);
 
   // カメラ境界内かチェック
   const isWithinCameraBounds = React.useCallback((x: number, y: number): boolean => {
@@ -85,6 +81,7 @@ export const useGridCoordinates = ({
   return {
     mouseToGrid,
     getVisibleTiles,
+    getVisibleTilesInCamera,
     isWithinCameraBounds
   };
 };
