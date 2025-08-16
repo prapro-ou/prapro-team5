@@ -126,20 +126,10 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
     }
   }
   
-  // 岩場の生成（中心付近、かつ高地）
-  if (isNearCenter && height > 0.85) {
-    if (Math.random() < 0.4) {
-      return 'rocky';
-    }
-  }
-  
   // 山の生成（高地）
   if (height > 0.75) {
-    if (moisture < 0.3) {
+    if (moisture < 0.4) {
       return 'mountain';
-    }
-    else if (moisture < 0.6) {
-      return 'rocky';
     }
     else {
       return 'mountain';
@@ -151,9 +141,6 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
     if (moisture > 0.7) {
       return 'forest';
     }
-    else if (moisture < 0.3) {
-      return 'rocky';
-    }
     else {
       return 'mountain';
     }
@@ -161,14 +148,8 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
   
   // 低地
   if (height > 0.35) {
-    if (moisture > 0.8) {
-      return 'swamp';
-    }
-    else if (moisture > 0.6) {
+    if (moisture > 0.7) {
       return 'forest';
-    }
-    else if (moisture < 0.2) {
-      return 'desert';
     }
     else {
       return 'grass';
@@ -177,10 +158,7 @@ function determineTerrainType(x: number, y: number, height: number, moisture: nu
   
   // 最も低い場所
   if (moisture > 0.7) {
-    return 'swamp';
-  }
-  else if (moisture < 0.3) {
-    return 'desert';
+    return 'forest';
   }
   else {
     return 'grass';
