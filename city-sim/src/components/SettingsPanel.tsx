@@ -8,9 +8,10 @@ interface SettingsPanelProps {
   onClose: () => void;
   onShowCredits: () => void;
   isGameStarted: boolean;
+  onReturnToTitle?: () => void;
 }
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCredits, isGameStarted }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCredits, isGameStarted, onReturnToTitle }) => {
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
@@ -295,6 +296,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
             <TbFileText />
             クレジットを表示
           </button>
+
+          {/* ゲーム中のみタイトルに戻るボタンを表示 */}
+          {isGameInProgress && onReturnToTitle && (
+            <button 
+              onClick={onReturnToTitle}
+              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold p-4 rounded-lg transition-colors"
+            >
+              タイトルに戻る
+            </button>
+          )}
         </div>
       </div>
     </div>

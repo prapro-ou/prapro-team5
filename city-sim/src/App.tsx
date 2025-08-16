@@ -194,20 +194,22 @@ function App() {
   }, [levelUpMessage, setLevelUpMessage]);
 
   // スタート画面
-  {showStartScreen && (
-    <StartScreen 
-      onStart={() => setShowStartScreen(false)} 
-      onShowSettings={openSettings}
-      onLoadGame={() => {
-        // スタート画面を閉じて、設定パネルを開く
-        setShowStartScreen(false);
-        // 少し遅延させてから設定パネルを開く
-        setTimeout(() => {
-          openSettings();
-        }, 100);
-      }}
-    />
-  )}
+  if (showStartScreen) {
+    return (
+      <StartScreen 
+        onStart={() => setShowStartScreen(false)} 
+        onShowSettings={openSettings}
+        onLoadGame={() => {
+          // スタート画面を閉じて、設定パネルを開く
+          setShowStartScreen(false);
+          // 少し遅延させてから設定パネルを開く
+          setTimeout(() => {
+            openSettings();
+          }, 100);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="h-screen bg-gray-900">
@@ -287,6 +289,7 @@ function App() {
           />
         </div>
       </div>
+
       {/* パネル切り替えボタン */}
       <button 
         onClick={togglePanel}
@@ -307,16 +310,32 @@ function App() {
             </div>
         </div>
       )}
- {/* SNSを見るボタンとフィード表示 */}
- <SNSFeedButton />
+
+      {/* SNSを見るボタンとフィード表示 */}
+      <SNSFeedButton />
+
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
           onClose={closeSettings} 
           onShowCredits={switchToCredits}
           isGameStarted={!showStartScreen}
+          onReturnToTitle={() => {
+            // 現在のゲーム状態をリセット
+            // 各ストアを初期状態に戻す
+            useGameStore.getState().resetToInitial();
+            useFacilityStore.getState().resetToInitial();
+            useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+            useInfrastructureStore.getState().resetToInitial();
+            useRewardStore.getState().resetToInitial();
+            
+            // 設定パネルを閉じて、スタート画面を表示
+            closeSettings();
+            setShowStartScreen(true);
+          }}
         />
       </div>
+      
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>
