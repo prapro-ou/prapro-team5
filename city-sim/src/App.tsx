@@ -96,7 +96,7 @@ function App() {
 
     const timerId = setInterval(() => {
       advanceTime();
-    }, 1000); // 5秒ごとに時間を進める
+    }, 5000); // 5秒ごとに時間を進める
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
