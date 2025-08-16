@@ -292,8 +292,8 @@ function determineTerrainType(
       }
     }
     
-    if (height > 0.5) {
-      if (moisture > 0.6) {
+    if (height > 0.425) {
+      if (moisture > 0.525) {
         return 'forest';
       }
       if (height > 0.6) {
@@ -302,13 +302,23 @@ function determineTerrainType(
       return 'grass';
     }
     
-    if (height > 0.3) {
-      if (moisture > 0.65) {
+    if (height > 0.25) {
+      if (moisture > 0.6) {
         return 'forest';
       }
       return 'grass';
     }
     
+    if (moisture > 0.65) {
+      return 'forest';
+    }
+  }
+  
+  // 水辺から中程度の距離でも森林を生成
+  if (waterDistance > 10 && waterDistance <= 15) {
+    if (height > 0.4 && moisture > 0.6) {
+      return 'forest';
+    }
     if (moisture > 0.7) {
       return 'forest';
     }
@@ -405,7 +415,7 @@ function improveTerrainContinuity(
       }
     }
     
-    if (totalNeighbors > 0 && forestNeighbors / totalNeighbors > 0.4) {
+    if (totalNeighbors > 0 && forestNeighbors / totalNeighbors > 0.3) { // 0.4 → 0.3 に下げて森林の連続性を向上
       return 'forest';
     }
   }
