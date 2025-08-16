@@ -82,3 +82,85 @@ export function saveToLocalStorage(saveData: SaveData): SaveResult {
     };
   }
 }
+
+// ゲームデータをローカルストレージから読み込み
+export function loadFromLocalStorage(): LoadResult {
+  try {
+    const saveDataString = localStorage.getItem(SAVE_DATA_KEY);
+    if (!saveDataString) {
+      return {
+        success: false,
+        message: 'セーブデータが見つかりません',
+        error: 'No save data found'
+      };
+    }
+
+    const saveData: SaveData = JSON.parse(saveDataString);
+    
+    // データの検証
+    const validation = validateSaveData(saveData);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message: 'セーブデータが破損しています',
+        error: validation.errors.join(', ')
+      };
+    }
+
+    return {
+      success: true,
+      message: `ゲームを読み込みました: ${saveData.cityName}`,
+      data: saveData
+    };
+  } 
+	catch (error) {
+    return {
+      success: false,
+      message: 'セーブデータの読み込みに失敗しました',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+// セーブデータの検証
+export function validateSaveData(saveData: any): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // 必須フィールドのチェック
+  if (!saveData.version) {
+    errors.push('バージョン情報がありません');
+  }
+  
+  if (!saveData.gameStats) {
+    errors.push('ゲーム統計データがありません');
+  }
+  
+  if (!saveData.facilities) {
+    errors.push('施設データがありません');
+  }
+  
+  if (!saveData.terrainMap) {
+    errors.push('地形データがありません');
+  }
+
+  // バージョン互換性のチェック
+  if (saveData.version !== SAVE_DATA_VERSION) {
+    warnings.push(`セーブデータのバージョンが異なります: ${saveData.version} (現在: ${SAVE_DATA_VERSION})`);
+  }
+
+  // データの整合性チェック
+  if (saveData.gameStats && typeof saveData.gameStats.money !== 'number') {
+    errors.push('資金データが不正です');
+  }
+
+  if (saveData.facilities && !Array.isArray(saveData.facilities)) {
+    errors.push('施設データの形式が不正です');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
