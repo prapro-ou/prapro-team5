@@ -13,6 +13,11 @@ interface TerrainStore {
   setTerrainAt: (x: number, y: number, terrain: TerrainType) => void;
   getTerrainAt: (x: number, y: number) => TerrainType;
   resetTerrain: (gridSize: GridSize) => void;
+  
+  // セーブ・ロード機能
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: (gridSize: GridSize) => void;
 }
 
 export const useTerrainStore = create<TerrainStore>((set, get) => ({
@@ -43,6 +48,34 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
     const { generateTerrain } = get();
     generateTerrain(gridSize);
   },
+
+  resetToInitial: (gridSize: GridSize) => {
+    const { generateTerrain } = get();
+    generateTerrain(gridSize);
+  },
+
+  saveState: () => {
+    const { terrainMap } = get();
+    const terrainArray: Array<{ x: number; y: number; terrain: TerrainType }> = [];
+    terrainMap.forEach((terrain, key) => {
+      const [x, y] = key.split(',').map(Number);
+      terrainArray.push({ x, y, terrain });
+    });
+    
+    return { terrainArray };
+  },
+
+  loadState: (savedState: any) => {
+    if (savedState && savedState.terrainArray && Array.isArray(savedState.terrainArray)) {
+      const newTerrainMap = new Map<string, TerrainType>();
+      
+      savedState.terrainArray.forEach((item: { x: number; y: number; terrain: TerrainType }) => {
+        newTerrainMap.set(`${item.x},${item.y}`, item.terrain);
+      });
+      
+      set({ terrainMap: newTerrainMap });
+    }
+  }
 }));
 
 // 自動登録

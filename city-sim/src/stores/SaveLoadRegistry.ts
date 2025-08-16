@@ -1,7 +1,7 @@
 interface SaveableStore {
   saveState: () => any;
   loadState: (data: any) => void;
-  resetToInitial: () => void;
+  resetToInitial: (...args: any[]) => void;
 }
 
 class SaveLoadRegistry {
