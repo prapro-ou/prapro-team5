@@ -293,7 +293,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
             const cachedImage = imageCache[imgPath];
             if (cachedImage) {
               const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
-              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facility.size || 1) / 2;
+              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (1) / 2;
               
               // 変形情報を適用
               ctx.save();
