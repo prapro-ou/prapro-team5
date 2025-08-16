@@ -84,6 +84,7 @@ function perlinNoise(x: number, y: number, octaves: number, persistence: number,
 function generateWaterPoints(gridSize: GridSize, random: SeededRandom): Array<{x: number, y: number, strength: number}> {
   const waterPoints: Array<{x: number, y: number, strength: number}> = [];
   
+  // 北側の水辺
   const northPoints = Math.floor(gridSize.width * 0.4);
   for (let i = 0; i < northPoints; i++) {
     const x = random.nextRange(0, gridSize.width);
@@ -92,6 +93,7 @@ function generateWaterPoints(gridSize: GridSize, random: SeededRandom): Array<{x
     waterPoints.push({x, y, strength});
   }
   
+  // 東側の水辺
   const eastPoints = Math.floor(gridSize.height * 0.4);
   for (let i = 0; i < eastPoints; i++) {
     const x = random.nextRange(gridSize.width * 0.88, gridSize.width);
@@ -100,12 +102,7 @@ function generateWaterPoints(gridSize: GridSize, random: SeededRandom): Array<{x
     waterPoints.push({x, y, strength});
   }
   
-  if (random.next() < 0.5) {
-    const x = random.nextRange(0, gridSize.width * 0.15);
-    const y = random.nextRange(gridSize.height * 0.85, gridSize.height);
-    const strength = random.nextRange(0.7, 1.0);
-    waterPoints.push({x, y, strength});
-  }
+  // 南西側の水辺は削除（不自然な配置を防ぐ）
   
   return waterPoints;
 }
@@ -127,17 +124,17 @@ function calculateWaterDistance(x: number, y: number, waterPoints: Array<{x: num
 function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
   const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
   
+  // 北側の境界
   if (y < edgeThreshold) {
     return true;
   }
   
+  // 東側の境界
   if (x >= gridSize.width - edgeThreshold) {
     return true;
   }
   
-  if (x < edgeThreshold * 0.7 && y >= gridSize.height - edgeThreshold * 0.7) {
-    return true;
-  }
+  // 南西側の水辺は削除（不自然な配置を防ぐ）
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
   return minDistance < 5;
@@ -145,20 +142,19 @@ function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: num
 
 function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
   const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
-  const beachThreshold = edgeThreshold + 4;
+  const beachThreshold = edgeThreshold + 8;
   
+  // 北側の砂浜
   if (y < beachThreshold && y >= edgeThreshold) {
     return true;
   }
   
+  // 東側の砂浜
   if (x >= gridSize.width - beachThreshold && x < gridSize.width - edgeThreshold) {
     return true;
   }
   
-  if (x < beachThreshold * 0.7 && x >= edgeThreshold * 0.7 && 
-      y >= gridSize.height - beachThreshold * 0.7 && y < gridSize.height - edgeThreshold * 0.7) {
-    return true;
-  }
+  // 南西側の砂浜は削除（不自然な配置を防ぐ）
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
   return minDistance >= 5 && minDistance < 10;
@@ -232,7 +228,7 @@ function determineTerrainType(
     return 'water';
   }
   
-  if (isBeachArea(x, y, waterPoints, gridSize) && height < 0.5) {
+  if (isBeachArea(x, y, waterPoints, gridSize) && height < 0.6) {
     return 'beach';
   }
   
@@ -241,46 +237,43 @@ function determineTerrainType(
     if (moisture > 0.65) {
       return 'grass';
     }
-    else {
-      return 'grass';
-    }
-  }
-  
-  if (height > 0.65) {
-    const mountainChance = 0.9 + (height - 0.65) * 3;
-    
-    if (random.next() < mountainChance) {
-      return 'mountain';
-    }
-  }
-  
-  if (height > 0.5) {
-    if (moisture > 0.6) {
-      return 'forest';
-    }
-    else if (height > 0.6) {
-      return 'mountain';
-    }
-    else {
-      return 'grass';
-    }
-  }
-  
-  if (height > 0.3) {
-    if (moisture > 0.65) {
-      return 'forest';
-    }
-    else {
-      return 'grass';
-    }
-  }
-  
-  if (moisture > 0.7) {
-    return 'forest';
-  }
-  else {
     return 'grass';
   }
+  
+  // 水辺から十分離れた場所でのみ山岳・森林を生成
+  if (waterDistance > 20) {
+    if (height > 0.65) {
+      const mountainChance = 0.9 + (height - 0.65) * 3;
+      
+      if (random.next() < mountainChance) {
+        return 'mountain';
+      }
+    }
+    
+    if (height > 0.5) {
+      if (moisture > 0.6) {
+        return 'forest';
+      }
+      if (height > 0.6) {
+        return 'mountain';
+      }
+      return 'grass';
+    }
+    
+    if (height > 0.3) {
+      if (moisture > 0.65) {
+        return 'forest';
+      }
+      return 'grass';
+    }
+    
+    if (moisture > 0.7) {
+      return 'forest';
+    }
+  }
+  
+  // 水辺の近くは基本的に平地
+  return 'grass';
 }
 
 function improveTerrainContinuity(
