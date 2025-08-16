@@ -46,3 +46,19 @@ export interface SaveData {
     saveCount: number;     // 保存回数
   };
 }
+
+// 保存操作の結果
+export interface SaveResult {
+  success: boolean;
+  message: string;
+  timestamp?: number;
+  error?: string;
+}
+
+// 読み込み操作の結果
+export interface LoadResult {
+  success: boolean;
+  message: string;
+  data?: SaveData;
+  error?: string;
+}
