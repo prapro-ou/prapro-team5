@@ -69,3 +69,10 @@ export interface AutoSaveConfig {
   interval: number; // ミリ秒
   maxSlots: number; // 最大自動保存スロット数
 }
+
+// 保存データの検証結果
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
