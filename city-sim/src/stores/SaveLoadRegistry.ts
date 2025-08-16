@@ -17,7 +17,8 @@ class SaveLoadRegistry {
     this.stores.forEach((store, name) => {
       try {
         saveData[name] = store.saveState();
-      } catch (error) {
+      }
+      catch (error) {
         console.error(`Failed to save store: ${name}`, error);
       }
     });
@@ -31,7 +32,8 @@ class SaveLoadRegistry {
         if (data[name]) {
           store.loadState(data[name]);
         }
-      } catch (error) {
+      }
+      catch (error) {
         console.error(`Failed to load store: ${name}`, error);
       }
     });
@@ -41,7 +43,8 @@ class SaveLoadRegistry {
     this.stores.forEach((store) => {
       try {
         store.resetToInitial();
-      } catch (error) {
+      }
+      catch (error) {
         console.error('Failed to reset store', error);
       }
     });
