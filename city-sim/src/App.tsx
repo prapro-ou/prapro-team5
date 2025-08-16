@@ -1,4 +1,5 @@
-import { Grid } from './components/grid'
+// import { Grid } from './components/grid'
+import { CanvasGrid } from './components/CanvasGrid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -154,11 +155,20 @@ function App() {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
+    
+    // 同じ位置をクリックした場合は選択を解除
+    if (selectedTile && 
+        selectedTile.x === correctedPosition.x && 
+        selectedTile.y === correctedPosition.y) {
+      setSelectedTile(null);
+      return;
+    }
+    
+    // 新しい位置を選択
     setSelectedTile(correctedPosition);
+    
     if (selectedFacilityType) {
       placeFacility(correctedPosition, selectedFacilityType);
-    } else {
-      console.log(`click: (${correctedPosition.x}, ${correctedPosition.y})`);
     }
   };
 
@@ -190,7 +200,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
       <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
         <div className="relative">
@@ -255,15 +265,17 @@ function App() {
       )}
 
       {/* ゲームグリッド */}
-      <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
-        <Grid 
-          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-          onTileClick={handleTileClick}
-          selectedPosition={selectedTile}
-          facilities={facilities}
-          selectedFacilityType={selectedFacilityType}
-          money={stats.money}
-        />
+      <div className="pt-20 w-full h-full overflow-hidden">
+        <div className="w-full h-full">
+          <CanvasGrid 
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={stats.money}
+          />
+        </div>
       </div>
       {/* パネル切り替えボタン */}
       <button 

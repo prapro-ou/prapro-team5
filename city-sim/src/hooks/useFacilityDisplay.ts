@@ -15,7 +15,7 @@ export const useFacilityDisplay = ({
 }: UseFacilityDisplayProps) => {
 
   // 施設の画像情報を取得
-  const getFacilityImageData = React.useCallback((facility: Facility, x: number, y: number) => {
+  const getFacilityImageData = React.useCallback((facility: Facility) => {
     const facilityData = FACILITY_DATA[facility.type];
     const idx = facility.variantIndex ?? 0;
     const size = facilityData.size;

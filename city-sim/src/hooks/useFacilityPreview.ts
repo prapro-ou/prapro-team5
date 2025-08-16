@@ -133,41 +133,51 @@ export const useFacilityPreview = ({
     }
   }, []);
 
-  // 公園効果範囲の計算
-  const parkEffectTiles = React.useMemo(() => {
+  // 施設効果範囲の計算（汎用）
+  const facilityEffectTiles = React.useMemo(() => {
     const tiles = new Set<string>();
     
-    // プレビュー中
-    if (selectedFacilityType === 'park' && hoveredTile) {
-      const effectRadius = FACILITY_DATA['park'].effectRadius ?? 0;
-      for (let dx = -effectRadius; dx <= effectRadius; dx++) {
-        for (let dy = -effectRadius; dy <= effectRadius; dy++) {
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist <= effectRadius) {
-            const x = hoveredTile.x + dx;
-            const y = hoveredTile.y + dy;
-            if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-              tiles.add(`${x}-${y}`);
+    // 選択された施設の効果範囲を表示
+    if (selectedPosition) {
+      const selectedFacility = facilities.find(f => 
+        f.position.x === selectedPosition.x && 
+        f.position.y === selectedPosition.y
+      );
+      
+      if (selectedFacility) {
+        const facilityData = FACILITY_DATA[selectedFacility.type];
+        const effectRadius = facilityData.effectRadius ?? 0;
+        
+        // 効果範囲がある施設の場合のみ表示
+        if (effectRadius > 0) {
+          for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+            for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist <= effectRadius) {
+                const x = selectedFacility.position.x + dx;
+                const y = selectedFacility.position.y + dy;
+                if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+                  tiles.add(`${x}-${y}`);
+                }
+              }
             }
           }
         }
       }
     }
-    // 設置済み公園が選択状態のとき
-    else if (selectedPosition) {
-      const selectedPark = facilities.find(f => 
-        f.type === 'park' && 
-        f.position.x === selectedPosition.x && 
-        f.position.y === selectedPosition.y
-      );
-      if (selectedPark) {
-        const effectRadius = FACILITY_DATA['park'].effectRadius ?? 0;
+    
+    // プレビュー中の施設効果範囲（ホバー時のみ）
+    if (selectedFacilityType && hoveredTile && !isPlacingFacility) {
+      const facilityData = FACILITY_DATA[selectedFacilityType];
+      const effectRadius = facilityData.effectRadius ?? 0;
+      
+      if (effectRadius > 0) {
         for (let dx = -effectRadius; dx <= effectRadius; dx++) {
           for (let dy = -effectRadius; dy <= effectRadius; dy++) {
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist <= effectRadius) {
-              const x = selectedPark.position.x + dx;
-              const y = selectedPark.position.y + dy;
+              const x = hoveredTile.x + dx;
+              const y = hoveredTile.y + dy;
               if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
                 tiles.add(`${x}-${y}`);
               }
@@ -178,7 +188,10 @@ export const useFacilityPreview = ({
     }
     
     return tiles;
-  }, [selectedFacilityType, hoveredTile, selectedPosition, facilities, size]);
+  }, [selectedPosition, facilities, selectedFacilityType, hoveredTile, isPlacingFacility, size]);
+
+  // 公園効果範囲は削除し、facilityEffectTilesに統合
+  const parkEffectTiles = facilityEffectTiles;
 
   // プレビューが無効かどうかの判定
   const isPreviewInvalid = React.useMemo(() => {
@@ -245,7 +258,8 @@ export const useFacilityPreview = ({
     getPreviewStatus,
     getPreviewColor,
     isPreviewInvalid,
-    getFacilityColor,        // 追加
-    getPreviewColorValue     // 追加
+    getFacilityColor,
+    getPreviewColorValue,
+    facilityEffectTiles
   };
 }; 
