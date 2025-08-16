@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TbSettings, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 
 type Props = {
   onStart: () => void;
@@ -38,7 +37,6 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayActive, setOverlayActive] = useState(false);
   const [hasSaveData, setHasSaveData] = useState(false);
-  const [latestSaveInfo, setLatestSaveInfo] = useState<any>(null);
 
   // セーブデータの確認
   useEffect(() => {
@@ -47,7 +45,6 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
 
   const checkSaveData = () => {
     let hasAnySave = false;
-    let latestSave: any = null;
     let latestTimestamp = 0;
 
     // 5つのスロットをチェック
@@ -60,7 +57,6 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
           const saveData = JSON.parse(saveDataString);
           if (saveData.timestamp > latestTimestamp) {
             latestTimestamp = saveData.timestamp;
-            latestSave = saveData;
           }
           hasAnySave = true;
         } 
@@ -71,7 +67,6 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
     }
 
     setHasSaveData(hasAnySave);
-    setLatestSaveInfo(latestSave);
   };
 
   // アニメーション用
@@ -119,22 +114,6 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
   // 続きから開始
   const handleLoadGameClick = () => {
     onLoadGame();
-  };
-
-  const formatDate = (timestamp: number) => {
-    if (timestamp === 0) return 'なし';
-    const date = new Date(timestamp);
-    return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-  };
-
-  const formatStats = (stats: any) => {
-    if (!stats) return null;
-    return {
-      population: stats.population?.toLocaleString() || '0',
-      money: stats.money?.toLocaleString() || '0',
-      level: stats.level || '1',
-      date: stats.date ? `${stats.date.year}/${stats.date.month}/${stats.date.week}` : '1/1/1'
-    };
   };
 
   return (
