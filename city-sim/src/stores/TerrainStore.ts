@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
 import { generateNaturalTerrainMap } from '../utils/terrainGenerator';
+import { saveLoadRegistry } from './SaveLoadRegistry';
 
 interface TerrainStore {
   // 状態
@@ -43,3 +44,6 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
     generateTerrain(gridSize);
   },
 }));
+
+// 自動登録
+saveLoadRegistry.register('terrain', useTerrainStore.getState());

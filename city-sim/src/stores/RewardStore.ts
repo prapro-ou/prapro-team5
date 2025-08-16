@@ -2,12 +2,18 @@ import { create } from 'zustand';
 import type { Reward } from '../components/RewardPanel';
 import { useGameStore } from './GameStore';
 import { useFacilityStore } from './FacilityStore';
+import { saveLoadRegistry } from './SaveLoadRegistry';
 
 interface RewardStore {
   rewards: Reward[];
   claimReward: (id: string) => void;
   updateAchievements: () => void;
   hasClaimableRewards: () => boolean;
+  
+  // セーブ・ロード機能
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: () => void;
 }
 
 const initialRewards: Reward[] = [
@@ -142,55 +148,68 @@ export const useRewardStore = create<RewardStore>((set, get) => ({
   },
 
   updateAchievements: () => {
-    const stats = useGameStore.getState().stats;
+    const { stats } = useGameStore.getState();
     const facilities = useFacilityStore.getState().facilities;
-    console.log('updateAchievements called, current stats:', stats);
+    
     set(state => ({
-      rewards: state.rewards.map(r => {
-        if (r.id === 'pop1000') {
-          return { ...r, achieved: stats.population >= 1000 };
+      rewards: state.rewards.map(reward => {
+        let achieved = false;
+        
+        switch (reward.id) {
+          case 'pop1000':
+            achieved = stats.population >= 1000;
+            break;
+          case 'park5':
+            achieved = facilities.filter(f => f.type === 'park').length >= 5;
+            break;
+          case 'level2':
+            achieved = stats.level >= 2;
+            break;
+          case 'level5':
+            achieved = stats.level >= 5;
+            break;
+          case 'halfYear':
+            achieved = stats.date.totalWeeks >= 26;
+            break;
+          case 'oneYear':
+            achieved = stats.date.totalWeeks >= 52;
+            break;
+          case 'commercial10':
+            achieved = facilities.filter(f => f.type === 'commercial').length >= 10;
+            break;
+          case 'megacity':
+            achieved = stats.population >= 5000;
+            break;
+          case 'richMayor':
+            achieved = stats.money >= 500000;
+            break;
         }
-        if (r.id === 'park5') {
-          const parkCount = facilities.filter(f => f.type === 'park').length;
-          return { ...r, achieved: parkCount >= 5 };
-        }
-        if (r.id === 'level2') {
-          return { ...r, achieved: stats.level >= 2 };
-        }
-        if (r.id === 'level5') {
-          return { ...r, achieved: stats.level >= 5 };
-        }
-        if (r.id === 'halfYear') {
-          // ゲーム内時間で半年経過（26週）
-          console.log(`HalfYear reward check - Current totalWeeks: ${stats.date.totalWeeks}, Required: 26, Achieved: ${stats.date.totalWeeks >= 26}`);
-          return { ...r, achieved: stats.date.totalWeeks >= 26 };
-        }
-        if (r.id === 'oneYear') {
-          // ゲーム内時間で1年経過（52週）
-          console.log(`OneYear reward check - Current totalWeeks: ${stats.date.totalWeeks}, Required: 52, Achieved: ${stats.date.totalWeeks >= 52}`);
-          return { ...r, achieved: stats.date.totalWeeks >= 52 };
-        }
-        if (r.id === 'commercial10') {
-          // 商業施設10個建設
-          const commercialCount = facilities.filter(f => f.type === 'commercial').length;
-          console.log(`Commercial reward check - Current count: ${commercialCount}, Required: 10, Achieved: ${commercialCount >= 10}`);
-          return { ...r, achieved: commercialCount >= 10 };
-        }
-        if (r.id === 'megacity') {
-          // 人口5000人達成
-          return { ...r, achieved: stats.population >= 5000 };
-        }
-        if (r.id === 'richMayor') {
-          // 所持金500,000円達成
-          return { ...r, achieved: stats.money >= 500000 };
-        }
-        return r;
+        
+        return { ...reward, achieved };
       })
     }));
   },
 
   hasClaimableRewards: () => {
-    const rewards = get().rewards;
-    return rewards.some(r => r.achieved && !r.claimed);
+    return get().rewards.some(r => r.achieved && !r.claimed);
   },
+
+  saveState: () => {
+    const state = get();
+    return {
+      rewards: state.rewards
+    };
+  },
+
+  loadState: (savedState: any) => {
+    if (savedState && savedState.rewards) {
+      set({ rewards: savedState.rewards });
+    }
+  },
+
+  resetToInitial: () => {
+    set({ rewards: initialRewards });
+  }
 }));
+
+saveLoadRegistry.register('reward', useRewardStore.getState());

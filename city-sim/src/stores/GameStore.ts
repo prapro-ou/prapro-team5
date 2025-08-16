@@ -8,6 +8,8 @@ import { calculateProduction, calculateConsumptionAndRevenue } from './EconomySt
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
+import { saveLoadRegistry } from './SaveLoadRegistry';
+
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -380,3 +382,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   }
 }));
+
+// 自動登録
+saveLoadRegistry.register('game', useGameStore.getState());

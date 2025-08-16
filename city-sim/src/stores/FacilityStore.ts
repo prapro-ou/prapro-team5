@@ -5,6 +5,7 @@ import { FACILITY_DATA } from '../types/facility';
 import { useGameStore } from './GameStore';
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
+import { saveLoadRegistry } from './SaveLoadRegistry';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -175,3 +176,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     useGameStore.getState().recalculateUsedWorkforce();
   }
 }));
+
+// 自動登録
+saveLoadRegistry.register('facility', useFacilityStore.getState());
