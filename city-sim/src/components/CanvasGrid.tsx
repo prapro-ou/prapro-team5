@@ -15,7 +15,6 @@ import { useTileInteraction } from "../hooks/useTileInteraction";
 import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { TERRAIN_DATA } from '../types/terrain';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { 
   drawTile, 
   drawFacilityImage, 

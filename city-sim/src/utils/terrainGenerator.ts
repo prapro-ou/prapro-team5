@@ -209,7 +209,7 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
   for (let x = 0; x < gridSize.width; x++) {
     for (let y = 0; y < gridSize.height; y++) {
       const currentTerrain = terrainMap.get(`${x},${y}`)!;
-      const improvedTerrain = improveTerrainContinuity(x, y, currentTerrain, terrainMap, gridSize, random);
+      const improvedTerrain = improveTerrainContinuity(x, y, currentTerrain, terrainMap, gridSize);
       improvedTerrainMap.set(`${x},${y}`, improvedTerrain);
     }
   }
@@ -288,8 +288,7 @@ function improveTerrainContinuity(
   y: number, 
   currentTerrain: TerrainType, 
   terrainMap: Map<string, TerrainType>, 
-  gridSize: GridSize,
-  random: SeededRandom
+  gridSize: GridSize
 ): TerrainType {
   
   if (currentTerrain === 'water') {
