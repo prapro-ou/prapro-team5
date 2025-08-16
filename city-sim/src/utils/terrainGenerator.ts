@@ -81,30 +81,63 @@ function perlinNoise(x: number, y: number, octaves: number, persistence: number,
   return total / maxValue;
 }
 
-function generateWaterPoints(gridSize: GridSize, random: SeededRandom): Array<{x: number, y: number, strength: number}> {
+function generateWaterPoints(gridSize: GridSize, random: SeededRandom): { waterPoints: Array<{x: number, y: number, strength: number}>, selectedDirections: string[] } {
   const waterPoints: Array<{x: number, y: number, strength: number}> = [];
   
-  // 北側の水辺
-  const northPoints = Math.floor(gridSize.width * 0.4);
-  for (let i = 0; i < northPoints; i++) {
-    const x = random.nextRange(0, gridSize.width);
-    const y = random.nextRange(0, gridSize.height * 0.12);
-    const strength = random.nextRange(0.9, 1.2);
-    waterPoints.push({x, y, strength});
+  // 4方向からランダムに2方向を選択
+  const directions = ['north', 'east', 'south', 'west'];
+  const selectedDirections: string[] = [];
+  
+  // ランダムに2方向を選択
+  while (selectedDirections.length < 2) {
+    const randomIndex = Math.floor(random.next() * directions.length);
+    const direction = directions[randomIndex];
+    if (!selectedDirections.includes(direction)) {
+      selectedDirections.push(direction);
+    }
   }
   
-  // 東側の水辺
-  const eastPoints = Math.floor(gridSize.height * 0.4);
-  for (let i = 0; i < eastPoints; i++) {
-    const x = random.nextRange(gridSize.width * 0.88, gridSize.width);
-    const y = random.nextRange(0, gridSize.height);
-    const strength = random.nextRange(0.9, 1.2);
-    waterPoints.push({x, y, strength});
+  if (selectedDirections.includes('north')) {
+    const northPoints = Math.floor(gridSize.width * 0.4);
+    for (let i = 0; i < northPoints; i++) {
+      const x = random.nextRange(0, gridSize.width);
+      const y = random.nextRange(0, gridSize.height * 0.12);
+      const strength = random.nextRange(0.9, 1.2);
+      waterPoints.push({x, y, strength});
+    }
   }
   
-  // 南西側の水辺は削除（不自然な配置を防ぐ）
+  if (selectedDirections.includes('east')) {
+    const eastPoints = Math.floor(gridSize.height * 0.4);
+    for (let i = 0; i < eastPoints; i++) {
+      const x = random.nextRange(gridSize.width * 0.88, gridSize.width);
+      const y = random.nextRange(0, gridSize.height);
+      const strength = random.nextRange(0.9, 1.2);
+      waterPoints.push({x, y, strength});
+    }
+  }
   
-  return waterPoints;
+  if (selectedDirections.includes('south')) {
+    const southPoints = Math.floor(gridSize.width * 0.4);
+    for (let i = 0; i < southPoints; i++) {
+      const x = random.nextRange(0, gridSize.width);
+      const y = random.nextRange(gridSize.height * 0.88, gridSize.height);
+      const strength = random.nextRange(0.9, 1.2);
+      waterPoints.push({x, y, strength});
+    }
+  }
+  
+  if (selectedDirections.includes('west')) {
+    const westPoints = Math.floor(gridSize.height * 0.4);
+    for (let i = 0; i < westPoints; i++) {
+      const x = random.nextRange(0, gridSize.width * 0.12);
+      const y = random.nextRange(0, gridSize.height);
+      const strength = random.nextRange(0.9, 1.2);
+      waterPoints.push({x, y, strength});
+    }
+  }
+  
+  return { waterPoints, selectedDirections };
 }
 
 function calculateWaterDistance(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>): number {
@@ -121,40 +154,48 @@ function calculateWaterDistance(x: number, y: number, waterPoints: Array<{x: num
   return minDistance;
 }
 
-function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
+function isWaterArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize, selectedDirections: string[]): boolean {
   const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
   
-  // 北側の境界
-  if (y < edgeThreshold) {
+  if (selectedDirections.includes('north') && y < edgeThreshold) {
     return true;
   }
   
-  // 東側の境界
-  if (x >= gridSize.width - edgeThreshold) {
+  if (selectedDirections.includes('east') && x >= gridSize.width - edgeThreshold) {
     return true;
   }
   
-  // 南西側の水辺は削除（不自然な配置を防ぐ）
+  if (selectedDirections.includes('south') && y >= gridSize.height - edgeThreshold) {
+    return true;
+  }
+  
+  if (selectedDirections.includes('west') && x < edgeThreshold) {
+    return true;
+  }
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
   return minDistance < 5;
 }
 
-function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize): boolean {
+function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: number, strength: number}>, gridSize: GridSize, selectedDirections: string[]): boolean {
   const edgeThreshold = Math.min(gridSize.width, gridSize.height) * 0.12;
   const beachThreshold = edgeThreshold + 8;
   
-  // 北側の砂浜
-  if (y < beachThreshold && y >= edgeThreshold) {
+  if (selectedDirections.includes('north') && y < beachThreshold && y >= edgeThreshold) {
     return true;
   }
   
-  // 東側の砂浜
-  if (x >= gridSize.width - beachThreshold && x < gridSize.width - edgeThreshold) {
+  if (selectedDirections.includes('east') && x >= gridSize.width - beachThreshold && x < gridSize.width - edgeThreshold) {
     return true;
   }
   
-  // 南西側の砂浜は削除（不自然な配置を防ぐ）
+  if (selectedDirections.includes('south') && y >= gridSize.height - beachThreshold && y < gridSize.height - edgeThreshold) {
+    return true;
+  }
+  
+  if (selectedDirections.includes('west') && x < beachThreshold && x >= edgeThreshold) {
+    return true;
+  }
   
   const minDistance = calculateWaterDistance(x, y, waterPoints);
   return minDistance >= 5 && minDistance < 10;
@@ -171,7 +212,7 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
   const octaves = 5;
   const persistence = 0.55;
   
-  const waterPoints = generateWaterPoints(gridSize, random);
+  const { waterPoints, selectedDirections } = generateWaterPoints(gridSize, random);
   
   const heightMap = new Map<string, number>();
   const moistureMap = new Map<string, number>();
@@ -196,7 +237,7 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
       const moisture = moistureMap.get(`${x},${y}`)!;
       const waterDistance = waterDistanceMap.get(`${x},${y}`)!;
       
-      const terrain = determineTerrainType(x, y, height, moisture, waterDistance, waterPoints, gridSize, random);
+      const terrain = determineTerrainType(x, y, height, moisture, waterDistance, waterPoints, gridSize, random, selectedDirections);
       terrainMap.set(`${x},${y}`, terrain);
     }
   }
@@ -221,14 +262,15 @@ function determineTerrainType(
   waterDistance: number, 
   waterPoints: Array<{x: number, y: number, strength: number}>,
   gridSize: GridSize,
-  random: SeededRandom
+  random: SeededRandom,
+  selectedDirections: string[]
 ): TerrainType {
   
-  if (isWaterArea(x, y, waterPoints, gridSize)) {
+  if (isWaterArea(x, y, waterPoints, gridSize, selectedDirections)) {
     return 'water';
   }
   
-  if (isBeachArea(x, y, waterPoints, gridSize) && height < 0.6) {
+  if (isBeachArea(x, y, waterPoints, gridSize, selectedDirections) && height < 0.6) {
     return 'beach';
   }
   
