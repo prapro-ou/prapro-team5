@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TbX, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUpload, TbTrash, TbEdit, TbClock, TbUsers, TbCash, TbStar } from 'react-icons/tb';
+import { TbX, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useSaveLoad } from '../hooks/useSaveLoad';
 import { useGameStore } from '../stores/GameStore';
 import { useFacilityStore } from '../stores/FacilityStore';
@@ -22,7 +22,6 @@ interface SaveLoadPanelProps {
 
 export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
@@ -34,7 +33,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const rewards = useRewardStore(state => state.rewards);
   
   // セーブ・ロードフック
-  const { saveGame, loadGame, exportGame, hasSaveData, getSaveInfo } = useSaveLoad();
+  const { saveGame, loadGame, exportGame } = useSaveLoad();
 
   // セーブスロットの初期化
   useEffect(() => {
@@ -60,7 +59,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
             hasData: true
           });
         }
-				catch {
+        catch {
           // 破損データの場合は空スロットとして扱う
           slots.push({
             id: slotId,
@@ -71,7 +70,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
           });
         }
       }
-			else {
+      else {
         slots.push({
           id: slotId,
           cityName: `スロット${i + 1}`,
@@ -110,21 +109,19 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         setMessage({ type: 'success', text: result.message });
         initializeSaveSlots(); // スロット一覧を更新
       }
-			else {
+      else {
         setMessage({ type: 'error', text: result.message });
       }
     }
-		catch (error) {
+    catch (error) {
       setMessage({ type: 'error', text: 'セーブに失敗しました' });
     }
-		finally {
+    finally {
       setIsLoading(false);
     }
   };
 
-  const handleLoad = async (slotId: string) => {
-    if (!selectedSlot) return;
-    
+  const handleLoad = async (_slotId: string) => {
     setIsLoading(true);
     setMessage(null);
     
@@ -138,14 +135,14 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         setMessage({ type: 'success', text: 'ゲームを読み込みました' });
         onClose(); // パネルを閉じる
       } 
-			else {
+      else {
         setMessage({ type: 'error', text: result.message });
       }
     }
-		catch (error) {
+    catch (error) {
       setMessage({ type: 'error', text: 'ロードに失敗しました' });
     }
-		finally {
+    finally {
       setIsLoading(false);
     }
   };
@@ -170,7 +167,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
       
       setMessage({ type: 'success', text: 'ゲームをエクスポートしました' });
     }
-		catch (error) {
+    catch (error) {
       setMessage({ type: 'error', text: 'エクスポートに失敗しました' });
     }
   };
