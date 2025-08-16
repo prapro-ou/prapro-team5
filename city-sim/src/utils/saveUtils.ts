@@ -231,3 +231,16 @@ export function importSaveDataFromFile(file: File): Promise<LoadResult> {
     reader.readAsText(file);
   });
 }
+
+// セーブメタデータを取得
+export function getSaveMetadata(): { lastSaveTime: number; saveCount: number; cityName: string; timestamp: number } | null {
+  try {
+    const metadataString = localStorage.getItem(SAVE_METADATA_KEY);
+    if (!metadataString) return null;
+    
+    return JSON.parse(metadataString);
+  }
+	catch {
+    return null;
+  }
+}
