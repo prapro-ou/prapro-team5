@@ -1,10 +1,6 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import type { Position, GridSize } from "../types/grid";
 import type { Facility, FacilityType } from "../types/facility";
-import { 
-  ISO_TILE_WIDTH, 
-  ISO_TILE_HEIGHT 
-} from "../utils/coordinates";
 import { useCamera } from "../hooks/useCamera";
 import { useMouseDrag } from "../hooks/useMouseDrag";
 import { useGridCoordinates } from "../hooks/useGridCoordinates";
@@ -17,6 +13,12 @@ import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
 import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
 import { FACILITY_DATA } from '../types/facility';
+import { 
+  drawTile, 
+  drawFacilityImage, 
+  drawFacilityEffects, 
+  drawDragRange 
+} from '../utils/drawingUtils';
 
 // 画像キャッシュの型定義
 interface ImageCache {
@@ -93,7 +95,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
   const {
     facilityMap,
-    parkEffectTiles,
     facilityEffectTiles,
     getFacilityColor,
     getPreviewColorValue
@@ -143,8 +144,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   });
 
   const {
-    handleTileClick,
-    isSelected
+    handleTileClick
   } = useTileInteraction({
     facilities,
     onSelectParkCenter,
@@ -228,172 +228,73 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     ctx.save();
     ctx.translate(-camera.x, -camera.y);
     
-    // タイルの描画（背景のみ）
+    // タイルの描画
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       const facilityColor = getFacilityColor(facility);
       const previewColorValue = getPreviewColorValue(x, y);
-      const isoPos = getIsometricPosition(x, y);
       
-      // タイルの色を決定（プレビュー優先）
-      let tileColor: string = DRAWING_CONSTANTS.DEFAULT_TILE_COLOR; // デフォルトは灰色
+      const tileColor = previewColorValue 
+        ? convertCssClassToColor(previewColorValue)
+        : (facilityColor ? convertCssClassToColor(facilityColor) : DRAWING_CONSTANTS.DEFAULT_TILE_COLOR);
       
-      // 既存施設の色を設定
-      if (facilityColor) {
-        tileColor = convertCssClassToColor(facilityColor);
-      }
-      
-      // プレビュー色がある場合は上書き
-      if (previewColorValue) {
-        tileColor = convertCssClassToColor(previewColorValue);
-      }
-      
-      // アイソメトリックタイルを描画（背景のみ）
-      ctx.beginPath();
-      ctx.moveTo(isoPos.x + MAP_OFFSET_X, isoPos.y + MAP_OFFSET_Y);
-      ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y - ISO_TILE_HEIGHT / 2);
-      ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH, isoPos.y + MAP_OFFSET_Y);
-      ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y + ISO_TILE_HEIGHT / 2);
-      ctx.closePath();
-      
-      // タイルの色を設定
-      ctx.fillStyle = tileColor;
-      ctx.fill();
-      
-      // 境界線の色を設定
-      let borderColor = DRAWING_CONSTANTS.TILE_BORDER_COLOR;
-      let borderWidth = DRAWING_CONSTANTS.TILE_BORDER_WIDTH;
-      
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = borderWidth;
-      ctx.stroke();
+      drawTile({
+        ctx,
+        x,
+        y,
+        tileColor,
+        mapOffsetX: MAP_OFFSET_X,
+        mapOffsetY: MAP_OFFSET_Y,
+        getIsometricPosition
+      });
     });
-
+    
     // 施設画像の描画
     visibleTiles.forEach(({ x, y }) => {
       const facility = facilityMap.get(`${x}-${y}`);
       if (facility && imagesLoaded) {
-        const isCenter = isFacilityCenter(facility, x, y);
-        if (isCenter) {
-          const isoPos = getIsometricPosition(x, y);
-          
-          if (facility.type === 'road') {
-            const { imgPath, imgSize, transform } = getRoadImageData(facility, x, y);
-            
-            const cachedImage = imageCache[imgPath];
-            if (cachedImage) {
-              const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
-              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (1) / 2;
-              
-              // 変形情報を適用
-              ctx.save();
-              if (transform) {
-                ctx.translate(drawX + imgSize.width / 2, drawY + imgSize.height / 2);
-                
-                // transform文字列を解析して適用
-                if (transform.includes('rotate')) {
-                  const rotation = transform.match(/rotate\(([^)]+)\)/)?.[1];
-                  if (rotation) {
-                    ctx.rotate((parseFloat(rotation) * Math.PI) / 180);
-                  }
-                }
-                
-                if (transform.includes('scaleX(-1)')) {
-                  ctx.scale(-1, 1);
-                }
-                
-                ctx.translate(-(drawX + imgSize.width / 2), -(drawY + imgSize.height / 2));
-              }
-              
-              ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
-              ctx.restore();
-            }
-          } 
-					else {
-            const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
-            
-            const cachedImage = imageCache[imgPath];
-            if (cachedImage) {
-              const drawX = isoPos.x + MAP_OFFSET_X - imgSize.width / 2 + 16;
-              const drawY = isoPos.y + MAP_OFFSET_Y - imgSize.height + 16 * (facilitySize) / 2;
-              
-              ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
-            }
-          }
-        }
+        drawFacilityImage({
+          ctx,
+          facility,
+          x,
+          y,
+          mapOffsetX: MAP_OFFSET_X,
+          mapOffsetY: MAP_OFFSET_Y,
+          imageCache,
+          getIsometricPosition,
+          isFacilityCenter,
+          getFacilityImageData,
+          getRoadImageData
+        });
       }
     });
     
-    // 施設効果範囲の描画（汎用）
-    if (facilityEffectTiles.size > 0) {
-      ctx.globalAlpha = DRAWING_CONSTANTS.EFFECT_ALPHA; // 透明度設定
-      
-      facilityEffectTiles.forEach(tileKey => {
-        const [x, y] = tileKey.split('-').map(Number);
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          const isoPos = getIsometricPosition(x, y);
-          
-          // 施設タイプに応じた色を設定
-          let effectColor = DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR; // デフォルトは薄い緑
-          
-          if (selectedPosition) {
-            const selectedFacility = facilities.find(f => 
-              f.position.x === selectedPosition.x && 
-              f.position.y === selectedPosition.y
-            );
-            
-            if (selectedFacility) {
-              switch (selectedFacility.type) {
-                case 'park': effectColor = DRAWING_CONSTANTS.PARK_EFFECT_COLOR; break; // 緑
-                default: effectColor = DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR; break;
-              }
-            }
-          }
-          
-          ctx.fillStyle = effectColor;
-          
-          ctx.beginPath();
-          ctx.moveTo(isoPos.x + MAP_OFFSET_X, isoPos.y + MAP_OFFSET_Y);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y - ISO_TILE_HEIGHT / 2);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH, isoPos.y + MAP_OFFSET_Y);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y + ISO_TILE_HEIGHT / 2);
-          ctx.closePath();
-          ctx.fill();
-        }
-      });
-      
-      ctx.globalAlpha = 1.0; // 透明度をリセット
-    }
+    // 施設効果範囲の描画
+    drawFacilityEffects({
+      ctx,
+      facilityEffectTiles,
+      size,
+      mapOffsetX: MAP_OFFSET_X,
+      mapOffsetY: MAP_OFFSET_Y,
+      selectedPosition: selectedPosition || null,
+      facilities,
+      getIsometricPosition,
+      drawTile
+    });
     
-    // ドラッグ範囲の視覚化
-    if (isPlacingFacility && dragRange.size > 0) {
-      ctx.globalAlpha = DRAWING_CONSTANTS.DRAG_ALPHA;
-      ctx.fillStyle = DRAWING_CONSTANTS.DRAG_COLOR; // 金色
-      ctx.strokeStyle = DRAWING_CONSTANTS.DRAG_STROKE_COLOR;
-      ctx.lineWidth = DRAWING_CONSTANTS.DRAG_STROKE_WIDTH;
-      
-      dragRange.forEach(tileKey => {
-        const [x, y] = tileKey.split('-').map(Number);
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          const isoPos = getIsometricPosition(x, y);
-          
-          ctx.beginPath();
-          ctx.moveTo(isoPos.x + MAP_OFFSET_X, isoPos.y + MAP_OFFSET_Y);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y - ISO_TILE_HEIGHT / 2);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH, isoPos.y + MAP_OFFSET_Y);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y + ISO_TILE_HEIGHT / 2);
-          ctx.lineTo(isoPos.x + MAP_OFFSET_X + ISO_TILE_WIDTH / 2, isoPos.y + MAP_OFFSET_Y + ISO_TILE_HEIGHT / 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        }
-      });
-      
-      ctx.globalAlpha = 1.0;
-    }
+    // ドラッグ範囲の描画
+    drawDragRange({
+      ctx,
+      isPlacingFacility,
+      dragRange,
+      size,
+      mapOffsetX: MAP_OFFSET_X,
+      mapOffsetY: MAP_OFFSET_Y,
+      getIsometricPosition
+    });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, getIsometricPosition, isSelected, parkEffectTiles, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, convertCssClassToColor, imagesLoaded, getFacilityImageData, getRoadImageData]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y]);
 
   // Canvas描画の実行
   useEffect(() => {
