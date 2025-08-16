@@ -12,7 +12,6 @@ import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
-import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
 import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { TERRAIN_DATA } from '../types/terrain';
@@ -126,9 +125,19 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     MAP_OFFSET_Y
   });
 
+  // 描画範囲の最適化
   const visibleTiles = React.useMemo(() => {
     return getVisibleTiles();
   }, [getVisibleTiles]);
+
+  // 地形描画の最適化
+  const terrainDrawData = React.useMemo(() => {
+    return visibleTiles.map(({ x, y }) => ({
+      x, y,
+      terrain: getTerrainAt(x, y),
+      color: getTerrainColor(getTerrainAt(x, y))
+    }));
+  }, [visibleTiles, getTerrainAt]);
 
   const {
     handleMouseDown,
@@ -220,7 +229,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
   }, [loadImage]);
 
-  // 地形画像のプリロード
+  // 地形画像のプリロード部分
   const preloadTerrainImages = useCallback(async () => {
     const terrainImagePaths = Object.values(TERRAIN_DATA).map(terrain => terrain.imgPath);
     const loadedImages: ImageCache = {};
@@ -230,7 +239,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         const img = await loadImage(path);
         loadedImages[path] = img;
       } catch (error) {
-        console.warn(`地形画像のロードに失敗: ${path}`, error);
+        // 地形画像がロードできない場合は無視（色ベース描画にフォールバック）
+        console.log(`地形画像のロードをスキップ: ${path} (色ベース描画を使用)`);
       }
     }
     
@@ -260,38 +270,16 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     ctx.translate(-camera.x, -camera.y);
     
     // 地形の描画（新規追加）
-    visibleTiles.forEach(({ x, y }) => {
-      const terrain = getTerrainAt(x, y);
-      const terrainInfo = TERRAIN_DATA[terrain];
-      
-      // 地形画像がある場合は画像を描画、ない場合は色で描画
-      if (terrainInfo.imgPath && imageCache[terrainInfo.imgPath]) {
-        // 地形画像を描画
-        const img = imageCache[terrainInfo.imgPath];
-        const isoPos = getIsometricPosition(x, y);
-        const drawX = isoPos.x + MAP_OFFSET_X;
-        const drawY = isoPos.y + MAP_OFFSET_Y;
-        
-        ctx.drawImage(
-          img,
-          drawX - ISO_TILE_WIDTH / 2,
-          drawY - ISO_TILE_HEIGHT / 2,
-          ISO_TILE_WIDTH,
-          ISO_TILE_HEIGHT
-        );
-      } else {
-        // 地形に応じた色で描画
-        const terrainColor = getTerrainColor(terrain);
-        drawTile({
-          ctx,
-          x,
-          y,
-          tileColor: terrainColor,
-          mapOffsetX: MAP_OFFSET_X,
-          mapOffsetY: MAP_OFFSET_Y,
-          getIsometricPosition
-        });
-      }
+    terrainDrawData.forEach(({ x, y, color }) => {
+      drawTile({
+        ctx,
+        x,
+        y,
+        tileColor: color,
+        mapOffsetX: MAP_OFFSET_X,
+        mapOffsetY: MAP_OFFSET_Y,
+        getIsometricPosition
+      });
     });
     
     // タイルの描画（施設がある場合）
@@ -364,7 +352,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData]);
 
   // Canvas描画の実行
   useEffect(() => {
@@ -418,8 +406,15 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     return terrainColors[terrain] || '#90EE90';
   };
 
+  // デバッグ用：地形情報表示
   return (
     <div className="relative overflow-hidden border-2 border-blue-500">
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
+          Terrain: {terrainMap.size} tiles
+        </div>
+      )}
+      
       {/* カメラ情報表示（デバッグ用） */}
       {/* <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
         Camera: ({camera.x}, {camera.y})
