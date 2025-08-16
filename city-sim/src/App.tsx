@@ -196,18 +196,31 @@ function App() {
   // スタート画面
   if (showStartScreen) {
     return (
-      <StartScreen 
-        onStart={() => setShowStartScreen(false)} 
-        onShowSettings={openSettings}
-        onLoadGame={() => {
-          // スタート画面を閉じて、設定パネルを開く
-          setShowStartScreen(false);
-          // 少し遅延させてから設定パネルを開く
-          setTimeout(() => {
-            openSettings();
-          }, 100);
-        }}
-      />
+      <>
+        <StartScreen 
+          onStart={() => setShowStartScreen(false)} 
+          onShowSettings={openSettings}
+          onLoadGame={() => {
+            setShowStartScreen(false);
+            setTimeout(() => {
+              openSettings();
+            }, 100);
+          }}
+        />
+        
+        {/* スタート画面中でも設定パネルを表示可能にする */}
+        {isSettingsOpen && (
+          <SettingsPanel 
+            onClose={closeSettings} 
+            onShowCredits={switchToCredits}
+            isGameStarted={false}
+            onReturnToTitle={() => {
+              closeSettings();
+              setShowStartScreen(true);
+            }}
+          />
+        )}
+      </>
     );
   }
 
