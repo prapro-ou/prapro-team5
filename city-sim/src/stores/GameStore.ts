@@ -3,9 +3,11 @@ import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
+import { citizenFeedTask } from './CitizenFeedTask';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
+import { playLevelUpSound } from '../components/SoundSettings';
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -189,6 +191,9 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
     levelUpMsg = `レベル${newLevel}にアップしました！`;
   }
   if (newLevel !== stats.level) {
+    // レベルアップ効果音を再生
+    playLevelUpSound();
+    
     set({
       stats: {
         ...stats,
@@ -212,6 +217,7 @@ const INITIAL_STATS: GameStats = {
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
+
 export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
   monthlyTasks: [
@@ -221,7 +227,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     adjustPopulationByGrowth,
-    // 他の月次タスクをここに追加可能
+    citizenFeedTask,
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
