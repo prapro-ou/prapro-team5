@@ -131,16 +131,7 @@ function App() {
       console.warn(`資金が不足しています: ¥${facilityData.cost}`);
       return;
     }
-    // 工業区画の場合、労働力チェック
-    if (type === 'industrial') {
-      const required = facilityData.requiredWorkforce || 0;
-      // 既存のusedWorkforceも取得
-      const usedWorkforce = useGameStore.getState().usedWorkforce;
-      if (stats.workforce - usedWorkforce < required) {
-        alert(`労働力が不足しています（必要: ${required}、残り: ${stats.workforce - usedWorkforce}）`);
-        return;
-      }
-    }
+
     // 施設の配置
     const newFacility = createFacility(position, type);
     addFacility(newFacility);
@@ -269,7 +260,7 @@ function App() {
         </div>
       )}
       {/* 情報パネル */}
-      <InfoPanel stats={stats} />
+      <InfoPanel />
       
       {/* インフラパネルボタン */}
       <button
