@@ -1,78 +1,59 @@
-import { FACILITY_DATA } from "../types/facility";
-import type { Facility } from "../types/facility";
+import { FACILITY_DATA } from '../types/facility';
+import type { Facility } from '../types/facility';
+import type { GameStats } from '../types/game';
+import { calculateWorkforceEfficiency } from '../hooks/useWorkforce';
 
-// 労働力が必要な施設かどうかの判定
-export const needsWorkforce = (facility: Facility): boolean => {
-    return FACILITY_DATA[facility.type].workforceRequired !== undefined;
-  };
-  
-// 労働力が必要な施設のみをフィルタリング
-export const getWorkforceFacilities = (facilities: Facility[]): Facility[] => {
-	return facilities.filter(needsWorkforce);
-};
+// 工業施設による製品生産量を計算する
+export function calculateProduction(stats: GameStats, facilities: Facility[]): number {
+  const industrials = facilities.filter(f => f.type === 'industrial');
+  let availableWorkforce = stats.workforce;
+  let totalProduced = 0;
 
-// 魅力度順に施設をソート
-export const sortFacilitiesByAttractiveness = (facilities: Facility[]): Facility[] => {
-	return facilities
-		.filter(needsWorkforce) // 労働力が必要な施設のみ
-		.sort((a, b) => {
-			const attractivenessA = FACILITY_DATA[a.type].attractiveness || 0;
-			const attractivenessB = FACILITY_DATA[b.type].attractiveness || 0;
-			return attractivenessB - attractivenessA; // 高い順
-		});
-};
-
-// 労働力配分の結果を表すインターフェース
-export interface WorkforceAllocation {
-	facility: Facility;
-	assignedWorkforce: number;
-	efficiency: number;
+  industrials.forEach(facility => {
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData) return; // 労働力不要な施設はスキップ
+    
+    const efficiency = calculateWorkforceEfficiency(availableWorkforce, facility);
+    const production = (workforceData.baseProduction || 0) * efficiency;
+    
+    if (efficiency > 0) {
+      totalProduced += production;
+      // 労働力を消費（効率に応じて）
+      const consumed = Math.min(availableWorkforce, workforceData.max);
+      availableWorkforce -= consumed;
+    }
+  });
+  return totalProduced;
 }
 
-// 魅力度順に労働力を配分
-export const allocateWorkforce = (
-	facilities: Facility[],
-	availableWorkforce: number
-): WorkforceAllocation[] => {
-	const sortedFacilities = sortFacilitiesByAttractiveness(facilities);
-	const allocations: WorkforceAllocation[] = [];
-	let remainingWorkforce = availableWorkforce;
+// 商業施設による製品消費量と，それによって生まれる収益を計算する
+export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Facility[]): { consumed: number, revenue: number } {
+  const commercials = facilities.filter(f => f.type === 'commercial');
+  let availableGoods = stats.goods;
+  let availableWorkforce = stats.workforce;
+  let totalConsumed = 0;
+  let totalRevenue = 0;
 
-	sortedFacilities.forEach(facility => {
-		const workforceData = FACILITY_DATA[facility.type].workforceRequired;
-		if (!workforceData) return;
-
-		const { min, max } = workforceData;
-		let assigned = 0;
-
-		if (remainingWorkforce >= min) {
-			// 必要労働力を確保
-			assigned = Math.min(remainingWorkforce, max);
-			remainingWorkforce -= assigned;
-		}
-
-		const efficiency = calculateWorkforceEfficiency(assigned, facility);
-		
-		allocations.push({
-			facility,
-			assignedWorkforce: assigned,
-			efficiency
-		});
-	});
-
-	return allocations;
-};
-
-// 施設の労働力効率を計算
-export const calculateWorkforceEfficiency = (
-  assignedWorkforce: number,
-  facility: Facility
-): number => {
-  const workforceData = FACILITY_DATA[facility.type].workforceRequired;
-  if (!workforceData) return 1.0; // 労働力不要な施設は100%効率
-  
-  const { min, max } = workforceData;
-  if (assignedWorkforce < min) return 0;        // 停止
-  if (assignedWorkforce >= max) return 1.0;     // 100%稼働
-  return assignedWorkforce / max;               // 比例稼働
-};
+  commercials.forEach(facility => {
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData) return; // 労働力不要な施設はスキップ
+    
+    const efficiency = calculateWorkforceEfficiency(availableWorkforce, facility);
+    const baseConsumption = workforceData.baseConsumption || 0;
+    const baseRevenue = workforceData.baseRevenue || 0;
+    
+    if (efficiency > 0) {
+      const consumption = baseConsumption * efficiency;
+      if (availableGoods >= consumption) {
+        availableGoods -= consumption;
+        totalConsumed += consumption;
+        totalRevenue += baseRevenue * efficiency;
+        
+        // 労働力を消費（効率に応じて）
+        const consumed = Math.min(availableWorkforce, workforceData.max);
+        availableWorkforce -= consumed;
+      }
+    }
+  });
+  return { consumed: totalConsumed, revenue: totalRevenue };
+}
