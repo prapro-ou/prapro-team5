@@ -38,6 +38,7 @@ export interface FacilityInfo {
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
   satisfaction: number;
+  attractiveness?: number;   // 魅力度（労働力配分の優先度、労働力が必要な施設のみ）
   // --- インフラ用プロパティ ---
   infrastructureDemand?: InfrastructureDemand; // インフラ需要
   infrastructureSupply?: InfrastructureSupply; // インフラ供給
@@ -93,6 +94,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/commercial.png'],
     imgSizes: [{ width: 96, height: 68 }],
     satisfaction: 7,
+    attractiveness: 80,
     workforceRequired: {
       min: 3,
       max: 10,
@@ -112,6 +114,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/industrial.png'],
     imgSizes: [{ width: 96, height: 91 }],
     satisfaction: -5,
+    attractiveness: 80,
     workforceRequired: {
       min: 5,
       max: 50,
@@ -179,6 +182,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '電力を生産する施設',
     category: 'infrastructure',
     satisfaction: 0,
+    attractiveness: 100,
     infrastructureSupply: { water: 0, electricity: 5000 },
   },
 
@@ -191,6 +195,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '水を生産する施設',
     category: 'infrastructure',
     satisfaction: 0,
+    attractiveness: 100,
     infrastructureSupply: { water: 5000, electricity: 0 },
   }
 }
