@@ -116,3 +116,72 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
   
   return { consumed: totalConsumed, revenue: totalRevenue };
 }
+
+// 各施設の資産価値を計算
+export function calculateFacilityAssetValue(facility: Facility, satisfaction: number): number {
+  const facilityData = FACILITY_DATA[facility.type];
+  const baseAssetValue = facilityData.baseAssetValue;
+  
+  if (!baseAssetValue) return 0; // 資産価値が設定されていない施設は0
+  
+  // 住宅なら満足度倍率、工業・商業なら固定値
+  if (facility.type === 'residential') {
+    // 満足度による倍率: 0.5-1.5の範囲
+    const satisfactionMultiplier = Math.max(0.5, Math.min(1.5, satisfaction / 50));
+    return Math.floor(baseAssetValue * satisfactionMultiplier);
+  }
+  else {
+    // 工業・商業は固定値
+    return baseAssetValue;
+  }
+}
+
+// 総資産を計算
+export function calculateTotalAssets(facilities: Facility[], satisfaction: number): number {
+  return facilities.reduce((total, facility) => {
+    return total + calculateFacilityAssetValue(facility, satisfaction);
+  }, 0);
+}
+
+// 平均資産を計算
+export function calculateAverageAssets(facilities: Facility[], satisfaction: number): number {
+  const totalAssets = calculateTotalAssets(facilities, satisfaction);
+  return facilities.length > 0 ? Math.floor(totalAssets / facilities.length) : 0;
+}
+
+// 各施設の利益を計算
+export function calculateFacilityProfit(facility: Facility, efficiency: number): number {
+  const facilityData = FACILITY_DATA[facility.type];
+  const workforceData = facilityData.workforceRequired;
+  
+  if (!workforceData || !workforceData.baseRevenue) return 0; // 収益が設定されていない施設は0
+  
+  // 収益 = 基本収益 × 稼働効率
+  const revenue = workforceData.baseRevenue * efficiency;
+  
+  // 利益 = 収益 - 維持費
+  const profit = revenue - facilityData.maintenanceCost;
+  
+  return Math.max(0, profit); // 利益は最低0
+}
+
+// 総利益を計算
+export function calculateTotalProfit(facilities: Facility[], stats: GameStats): number {
+  return facilities.reduce((total, facility) => {
+    // 労働力配分から効率を取得
+    const allocation = getFacilityWorkforceAllocation(facility.id, stats);
+    const efficiency = allocation ? allocation.efficiency : 0;
+    
+    return total + calculateFacilityProfit(facility, efficiency);
+  }, 0);
+}
+
+// 平均利益を計算
+export function calculateAverageProfit(facilities: Facility[], stats: GameStats): number {
+  const totalProfit = calculateTotalProfit(facilities, stats);
+  const businessFacilities = facilities.filter(f => 
+    f.type === 'commercial' || f.type === 'industrial'
+  );
+  
+  return businessFacilities.length > 0 ? Math.floor(totalProfit / businessFacilities.length) : 0;
+}
