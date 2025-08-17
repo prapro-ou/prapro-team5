@@ -33,6 +33,7 @@ export interface FacilityInfo {
   size: number;             // 施設のサイズ（奇数のみ 3x3とか）
   cost: number;             // 建設コスト
   maintenanceCost: number;  // 維持費
+  basePopulation?: number;   // 基本人口
   description: string;
   category: CategoryKey;    // カテゴリ
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
@@ -77,6 +78,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
     infrastructureDemand: { water: 50, electricity: 50 },
+    basePopulation: 100,
   },
   commercial: {
     type: 'commercial', 
