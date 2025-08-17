@@ -281,7 +281,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
           {isGameInProgress && (
             <button 
               onClick={() => setIsSaveLoadOpen(true)}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold p-4 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold p-4 rounded-lg transition-colors"
             >
               <TbDeviceFloppy />
               セーブ・ロード
@@ -301,7 +301,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
           {isGameInProgress && onReturnToTitle && (
             <button 
               onClick={onReturnToTitle}
-              className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold p-4 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-gray-700/50 hover:bg-gray-700 text-white font-semibold p-4 rounded-lg transition-colors"
             >
               タイトルに戻る
             </button>
