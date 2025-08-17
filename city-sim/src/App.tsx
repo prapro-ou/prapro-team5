@@ -230,7 +230,7 @@ function App() {
   return (
     <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
+      <div className="fixed top-2 right-5 flex gap-2 z-[1200]">
         <div className="relative">
           <button
             onClick={() => {
@@ -255,9 +255,9 @@ function App() {
         </div>
         <button 
           onClick={openSettings}
-          className="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors"
+          className="bg-gray-600 hover:bg-gray-700 text-white p-5 rounded-full shadow-lg transition-colors"
         >
-          <TbSettings size={24} />
+          <TbSettings size={26} />
         </button>
       </div>
       {/* 報酬パネル */}
