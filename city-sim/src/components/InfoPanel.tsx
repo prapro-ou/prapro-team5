@@ -1,5 +1,5 @@
 import React from 'react';
-import { TbCash, TbUsers, TbMoodHappy, TbCalendar ,TbStar, TbBriefcase, TbBox} from 'react-icons/tb';
+import { TbCash, TbUsers, TbMoodHappy, TbCalendar ,TbStar} from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
 
 interface InfoPanelProps {
@@ -9,7 +9,6 @@ interface InfoPanelProps {
 export const InfoPanel: React.FC<InfoPanelProps> = () => {
   // すべての情報をストアから直接取得
   const stats = useGameStore(state => state.stats);
-  const usedWorkforce = useGameStore(state => state.usedWorkforce);
 
 	return (
     <div className="fixed top-0 left-0 right-0 z-[1000] bg-gray-800 p-4 shadow-lg border-b border-gray-700">
@@ -33,20 +32,6 @@ export const InfoPanel: React.FC<InfoPanelProps> = () => {
           <TbUsers className="text-blue-400 text-xl" />
           <div className="text-lg font-bold text-white">
             {stats.population.toLocaleString()}
-          </div>
-        </div>
-        {/* 労働力 */}
-        <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2" title="労働力">
-          <TbBriefcase className="text-orange-400 text-xl" />
-          <div className="text-lg font-bold text-white">
-            {usedWorkforce.toLocaleString()} / {stats.workforce.toLocaleString()}
-          </div>
-        </div>
-        {/* 製品 */}
-        <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2" title="製品備蓄">
-          <TbBox className="text-yellow-600 text-xl" />
-          <div className="text-lg font-bold text-white">
-            {stats.goods.toLocaleString()}
           </div>
         </div>
         {/* 満足度 */}
