@@ -3,6 +3,9 @@ export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-o
 
 export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
 
+// 製品
+export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
+
 // インフラ需要・供給
 export interface InfrastructureDemand {
   water: number;
