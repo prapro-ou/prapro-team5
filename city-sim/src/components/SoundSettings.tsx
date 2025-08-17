@@ -8,7 +8,7 @@ export let playCoinSound = () => {};
 export let playSelectSound = () => {};
 export let playSelect1Sound = () => {};
 // TbBellOffアイコンを追加
-import { TbMusic, TbMusicOff, TbVolume, TbBell, TbBellOff } from "react-icons/tb";
+import { TbMusic, TbMusicOff, TbVolume, TbVolumeOff, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
 import clickSfxSrc from '../assets/click.mp3';
 import buildSfxSrc from '../assets/build.mp3';
@@ -189,7 +189,7 @@ export function BGMPlayer() {
       <div className="flex items-center justify-between">
         <label htmlFor="sfx-volume-slider" className="text-white font-semibold">SE 音量</label>
         <div className="flex items-center gap-3">
-          <TbBell className="text-white" />
+          <TbVolume className="text-white" />
           <input
             id="sfx-volume-slider"
             type="range"
@@ -205,7 +205,7 @@ export function BGMPlayer() {
             onClick={toggleSfxMute}
             className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors"
           >
-            {isSfxMuted ? <TbBellOff /> : <TbBell />}
+            {isSfxMuted ? <TbVolumeOff /> : <TbVolume />}
           </button>
         </div>
       </div>
@@ -214,6 +214,7 @@ export function BGMPlayer() {
       <div className="flex items-center justify-between mt-4">
         <label className="text-white font-semibold">SNS通知音</label>
         <div className="flex items-center gap-3">
+          <TbBell className="text-white" />
           <input
             type="range"
             min="0"
@@ -227,7 +228,7 @@ export function BGMPlayer() {
             onClick={() => setIsSNSMuted(m => !m)}
             className={`bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition-colors`}
           >
-            {isSNSMuted ? "OFF" : "ON"}
+            {isSNSMuted ? <TbBellOff /> : <TbBell />}
           </button>
         </div>
       </div>
