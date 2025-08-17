@@ -15,7 +15,6 @@ import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
-import RewardButtonImg from './assets/RewardButton.png';
 import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
