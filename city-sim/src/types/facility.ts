@@ -53,6 +53,7 @@ export interface FacilityInfo {
   };
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
+  baseAssetValue?: number;    // 基本資産価値
 }
 
 
@@ -81,6 +82,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/residential.png'],
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
+    baseAssetValue: 100,
     infrastructureDemand: { water: 50, electricity: 50 },
   },
   commercial: {
@@ -101,6 +103,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
       baseRevenue: 100,
       baseConsumption: 5
     },
+    baseAssetValue: 150,
     infrastructureDemand: { water: 100, electricity: 100 },
   },
   industrial: {
@@ -121,6 +124,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
       baseProduction: 20,
       baseConsumption: 0
     },
+    baseAssetValue: 200,
     infrastructureDemand: { water: 200, electricity: 200 },
   },
   road: {
