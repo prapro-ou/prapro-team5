@@ -43,7 +43,13 @@ export interface FacilityInfo {
   infrastructureSupply?: InfrastructureSupply; // インフラ供給
 
   // --- 経済サイクル用プロパティ ---
-  requiredWorkforce?: number; // 必要労働力（工業・商業用）
+  workforceRequired?: {
+    min: number;              // 必要労働者数
+    max: number;              // 最大労働者数
+    baseRevenue?: number;     // 基本収益（労働力100%時）
+    baseProduction?: number;  // 基本生産量（労働力100%時）
+    baseConsumption?: number; // 基本消費量（労働力100%時）
+  };
   produceGoods?: number;      // 生産量（工業用）
   consumeGoods?: number;      // 消費量（商業用）
   // --- 公園など範囲効果用 ---
@@ -89,7 +95,11 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/commercial.png'],
     imgSizes: [{ width: 96, height: 68 }],
     satisfaction: 7,
-    requiredWorkforce: 5, // 仮値
+    workforceRequired: {
+      min: 3,
+      max: 10,
+      baseRevenue: 100
+    },
     consumeGoods: 5,      // 1週で消費する製品数（仮値）
     infrastructureDemand: { water: 100, electricity: 100 },
   },
@@ -104,7 +114,11 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/industrial.png'],
     imgSizes: [{ width: 96, height: 91 }],
     satisfaction: -5,
-    requiredWorkforce: 200, // 仮値
+    workforceRequired: {
+      min: 5,
+      max: 50,
+      baseProduction: 20
+    },
     produceGoods: 10,      // 1週で生産する製品数（仮値）
     infrastructureDemand: { water: 200, electricity: 200 },
   },
