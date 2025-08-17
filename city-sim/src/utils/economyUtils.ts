@@ -11,6 +11,17 @@ export const getWorkforceFacilities = (facilities: Facility[]): Facility[] => {
 	return facilities.filter(needsWorkforce);
 };
 
+// 魅力度順に施設をソート
+export const sortFacilitiesByAttractiveness = (facilities: Facility[]): Facility[] => {
+	return facilities
+		.filter(needsWorkforce) // 労働力が必要な施設のみ
+		.sort((a, b) => {
+			const attractivenessA = FACILITY_DATA[a.type].attractiveness || 0;
+			const attractivenessB = FACILITY_DATA[b.type].attractiveness || 0;
+			return attractivenessB - attractivenessA; // 高い順
+		});
+};
+
 // 施設の労働力効率を計算
 export const calculateWorkforceEfficiency = (
   assignedWorkforce: number,
