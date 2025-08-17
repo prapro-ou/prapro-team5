@@ -6,6 +6,14 @@ export interface GameStats {
   // 新規資源
   workforce: number;   // 労働力（自動計算 or 表示用）
   goods: number;       // 製品（工業生産・商業消費）
+  // 労働力配分情報
+  workforceAllocations: {
+    facilityId: string;
+    facilityType: string;      // 施設タイプ
+    position: { x: number; y: number }; // 位置情報
+    assignedWorkforce: number;
+    efficiency: number;
+  }[];
   date: {
     year: number;
     month: number;

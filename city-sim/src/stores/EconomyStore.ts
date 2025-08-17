@@ -3,28 +3,61 @@ import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
 
-// 労働力配分の状態管理
-let currentAllocations: WorkforceAllocation[] = [];
-
 // 労働力配分を更新
-export function updateWorkforceAllocations(facilities: Facility[], availableWorkforce: number): WorkforceAllocation[] {
-  currentAllocations = allocateWorkforce(facilities, availableWorkforce);
-  return currentAllocations;
+export function updateWorkforceAllocations(
+  facilities: Facility[], 
+  availableWorkforce: number
+): { facilityId: string; facilityType: string; position: { x: number; y: number }; assignedWorkforce: number; efficiency: number }[] {
+  const allocations = allocateWorkforce(facilities, availableWorkforce);
+  
+  // 配分結果を返す
+  return allocations.map(allocation => ({
+    facilityId: allocation.facility.id,
+    facilityType: allocation.facility.type,
+    position: allocation.facility.position,
+    assignedWorkforce: allocation.assignedWorkforce,
+    efficiency: allocation.efficiency
+  }));
 }
 
 // 現在の労働力配分を取得
-export function getCurrentWorkforceAllocations(): WorkforceAllocation[] {
-  return currentAllocations;
+export function getCurrentWorkforceAllocations(stats: GameStats): WorkforceAllocation[] {
+  return stats.workforceAllocations.map(allocation => {
+    // 保存された施設情報を使用
+    return {
+      facility: {
+        id: allocation.facilityId,
+        type: allocation.facilityType as any, // 型安全性のため
+        position: allocation.position,
+        occupiedTiles: [], // 簡易的な実装
+        variantIndex: 0
+      } as Facility,
+      assignedWorkforce: allocation.assignedWorkforce,
+      efficiency: allocation.efficiency
+    };
+  });
 }
 
 // 特定の施設の労働力配分を取得
-export function getFacilityWorkforceAllocation(facilityId: string): WorkforceAllocation | undefined {
-  return currentAllocations.find(allocation => allocation.facility.id === facilityId);
+export function getFacilityWorkforceAllocation(
+  facilityId: string, 
+  stats: GameStats
+): { assignedWorkforce: number; efficiency: number } | undefined {
+  const allocation = stats.workforceAllocations.find(a => a.facilityId === facilityId);
+  if (!allocation) return undefined;
+  
+  return {
+    assignedWorkforce: allocation.assignedWorkforce,
+    efficiency: allocation.efficiency
+  };
 }
 
 // 月次タスク用の労働力配分を実行
-export function executeMonthlyWorkforceAllocation(facilities: Facility[], availableWorkforce: number): void {
-  updateWorkforceAllocations(facilities, availableWorkforce);
+export function executeMonthlyWorkforceAllocation(
+  facilities: Facility[], 
+  availableWorkforce: number
+): { facilityId: string; facilityType: string; position: { x: number; y: number }; assignedWorkforce: number; efficiency: number }[] {
+  return updateWorkforceAllocations(facilities, availableWorkforce);
 }
 
 /**
@@ -38,7 +71,7 @@ export function calculateProduction(_stats: GameStats, facilities: Facility[]): 
   let totalProduced = 0;
 
   industrials.forEach(facility => {
-    const allocation = getFacilityWorkforceAllocation(facility.id);
+    const allocation = getFacilityWorkforceAllocation(facility.id, _stats);
     if (!allocation) return; // 労働力配分がない場合はスキップ
     
     const workforceData = FACILITY_DATA[facility.type].workforceRequired;
@@ -64,7 +97,7 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
   let totalRevenue = 0;
 
   commercials.forEach(facility => {
-    const allocation = getFacilityWorkforceAllocation(facility.id);
+    const allocation = getFacilityWorkforceAllocation(facility.id, stats);
     if (!allocation) return; // 労働力配分がない場合はスキップ
     
     const workforceData = FACILITY_DATA[facility.type].workforceRequired;

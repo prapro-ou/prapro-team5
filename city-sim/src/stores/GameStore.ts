@@ -114,10 +114,16 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   let currentStats = get().stats;
 
   // 労働力配分を最初に一度だけ実行
-  executeMonthlyWorkforceAllocation(facilities, currentStats.workforce);
+  const newAllocations = executeMonthlyWorkforceAllocation(facilities, currentStats.workforce);
+  
+  // 配分結果をGameStoreの状態に反映
+  currentStats = {
+    ...currentStats,
+    workforceAllocations: newAllocations
+  };
 
   // 労働力配分の状況をログ出力
-  const allocations = getCurrentWorkforceAllocations();
+  const allocations = getCurrentWorkforceAllocations(currentStats);
   
   if (allocations.length > 0) {
     console.log('=== 労働力配分状況 ===');
@@ -232,6 +238,7 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     workforce: 0, // 労働力（初期値0、人口から計算する場合は後で上書き）
     goods: 0,     // 製品（初期値0）
+    workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
