@@ -10,3 +10,17 @@ export const needsWorkforce = (facility: Facility): boolean => {
 export const getWorkforceFacilities = (facilities: Facility[]): Facility[] => {
 	return facilities.filter(needsWorkforce);
 };
+
+// 施設の労働力効率を計算
+export const calculateWorkforceEfficiency = (
+  assignedWorkforce: number,
+  facility: Facility
+): number => {
+  const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+  if (!workforceData) return 1.0; // 労働力不要な施設は100%効率
+  
+  const { min, max } = workforceData;
+  if (assignedWorkforce < min) return 0;        // 停止
+  if (assignedWorkforce >= max) return 1.0;     // 100%稼働
+  return assignedWorkforce / max;               // 比例稼働
+};
