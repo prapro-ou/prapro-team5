@@ -296,10 +296,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { recalculateSatisfaction } = get();
     recalculateSatisfaction(facilities);
     
-    set({ stats: newStats });
+    // 月次処理や再計算で更新された最新のstatsを保持しつつ、日付だけを更新
+    set((state) => ({
+      stats: {
+        ...state.stats,
+        date: newStats.date
+      }
+    }));
     
-    // レベルアップチェック
-    checkLevelUp(newStats, set);
+    // レベルアップチェックは最新のstatsで行う
+    const latestStats = get().stats;
+    checkLevelUp(latestStats, set);
   },
 
   addPopulation: (count) => {
