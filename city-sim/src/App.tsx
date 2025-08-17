@@ -1,4 +1,5 @@
-import { Grid } from './components/grid'
+// import { Grid } from './components/grid'
+import { CanvasGrid } from './components/CanvasGrid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -11,10 +12,9 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
-import RewardButtonImg from './assets/RewardButton.png';
 import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
@@ -23,6 +23,7 @@ import { useUIStore } from './stores/UIStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
+import { useTerrainStore } from './stores/TerrainStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -108,6 +109,16 @@ function App() {
     calculateInfrastructure(facilities);
   }, [facilities]);
 
+  // 地形生成
+  const { generateTerrain } = useTerrainStore();
+  
+  // ゲーム開始時の地形生成（新規ゲーム時のみ）
+  useEffect(() => {
+    if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
+      generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+    }
+  }, [showStartScreen, generateTerrain]);
+
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
@@ -154,11 +165,20 @@ function App() {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
+    
+    // 同じ位置をクリックした場合は選択を解除
+    if (selectedTile && 
+        selectedTile.x === correctedPosition.x && 
+        selectedTile.y === correctedPosition.y) {
+      setSelectedTile(null);
+      return;
+    }
+    
+    // 新しい位置を選択
     setSelectedTile(correctedPosition);
+    
     if (selectedFacilityType) {
       placeFacility(correctedPosition, selectedFacilityType);
-    } else {
-      console.log(`click: (${correctedPosition.x}, ${correctedPosition.y})`);
     }
   };
 
@@ -172,27 +192,44 @@ function App() {
     }
   }, [levelUpMessage, setLevelUpMessage]);
 
+  // スタート画面
   if (showStartScreen) {
     return (
       <>
-        <StartScreen
-          onStart={() => setShowStartScreen(false)}
+        <StartScreen 
+          onStart={() => {
+            localStorage.removeItem('city-sim-loaded');
+            setShowStartScreen(false);
+          }} 
           onShowSettings={openSettings}
+          onLoadGame={() => {
+            setShowStartScreen(false);
+            setTimeout(() => {
+              openSettings();
+            }, 100);
+          }}
         />
-        <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
+        
+        {/* スタート画面中でも設定パネルを表示可能にする */}
+        {isSettingsOpen && (
           <SettingsPanel 
             onClose={closeSettings} 
             onShowCredits={switchToCredits}
+            isGameStarted={false}
+            onReturnToTitle={() => {
+              closeSettings();
+              setShowStartScreen(true);
+            }}
           />
-        </div>
+        )}
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-3 right-5 flex gap-2 z-[1200]">
+      <div className="fixed top-4 right-5 flex gap-4 z-[1200] items-center">
         <div className="relative">
           <button
             onClick={() => {
@@ -201,14 +238,9 @@ function App() {
                 return !v;
               });
             }}
-            className="hover:opacity-80 transition-opacity"
+            className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
           >
-            <img 
-              src={RewardButtonImg} 
-              alt="報酬" 
-              className="w-25 h-15 object-cover rounded"
-            />
-
+            <TbTrophy size={24} className="text-yellow-400" />
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
@@ -217,9 +249,9 @@ function App() {
         </div>
         <button 
           onClick={openSettings}
-          className="bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-full shadow-lg transition-colors"
+          className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-colors"
         >
-          <TbSettings size={24} />
+          <TbSettings size={26} />
         </button>
       </div>
       {/* 報酬パネル */}
@@ -255,16 +287,19 @@ function App() {
       )}
 
       {/* ゲームグリッド */}
-      <div className="pt-20 flex justify-center items-center h-[calc(100vh-5rem)]">
-        <Grid 
-          size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-          onTileClick={handleTileClick}
-          selectedPosition={selectedTile}
-          facilities={facilities}
-          selectedFacilityType={selectedFacilityType}
-          money={stats.money}
-        />
+      <div className="pt-20 w-full h-full overflow-hidden">
+        <div className="w-full h-full">
+          <CanvasGrid 
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={stats.money}
+          />
+        </div>
       </div>
+
       {/* パネル切り替えボタン */}
       <button 
         onClick={togglePanel}
@@ -285,15 +320,32 @@ function App() {
             </div>
         </div>
       )}
- {/* SNSを見るボタンとフィード表示 */}
- <SNSFeedButton />
+
+      {/* SNSを見るボタンとフィード表示 */}
+      <SNSFeedButton />
+
       {/* 設定パネルをCSSで非表示にする */}
       <div style={{ display: isSettingsOpen ? 'block' : 'none' }}>
         <SettingsPanel 
           onClose={closeSettings} 
           onShowCredits={switchToCredits}
+          isGameStarted={!showStartScreen}
+          onReturnToTitle={() => {
+            // 現在のゲーム状態をリセット
+            // 各ストアを初期状態に戻す
+            useGameStore.getState().resetToInitial();
+            useFacilityStore.getState().resetToInitial();
+            useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+            useInfrastructureStore.getState().resetToInitial();
+            useRewardStore.getState().resetToInitial();
+            
+            // 設定パネルを閉じて、スタート画面を表示
+            closeSettings();
+            setShowStartScreen(true);
+          }}
         />
       </div>
+      
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
     </div>

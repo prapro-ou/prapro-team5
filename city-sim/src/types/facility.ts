@@ -1,5 +1,5 @@
 import type { Position } from "./grid";
-export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | null;
+export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
 export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
 
