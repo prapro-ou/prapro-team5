@@ -12,7 +12,7 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2 } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import RewardButtonImg from './assets/RewardButton.png';
@@ -230,7 +230,7 @@ function App() {
   return (
     <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-1.5 right-5 flex gap-2 z-[1200]">
+      <div className="fixed top-4 right-5 flex gap-4 z-[1200] items-center">
         <div className="relative">
           <button
             onClick={() => {
@@ -239,23 +239,18 @@ function App() {
                 return !v;
               });
             }}
-            className="hover:opacity-80 transition-opacity"
+            className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
           >
-            <img 
-              src={RewardButtonImg} 
-              alt="報酬" 
-              className="w-25 h-15 object-cover rounded"
-            />
-
+            <TbTrophy size={24} className="text-yellow-400" />
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
-            <div className="absolute top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
           )}
         </div>
         <button 
           onClick={openSettings}
-          className="bg-gray-600 hover:bg-gray-700 text-white p-5 rounded-full shadow-lg transition-colors"
+          className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-colors"
         >
           <TbSettings size={26} />
         </button>
