@@ -6,11 +6,11 @@ interface StatisticsPanelProps {
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   return (
-    <div className="h-screen bg-gray-900 text-white">
+    <div className="h-screen bg-gray-900 text-white overflow-hidden">
       {/* ヘッダー */}
-      <div className="bg-gray-800 p-6 shadow-lg border-b border-gray-700">
+      <div className="bg-gray-800 p-3 shadow-lg border-b border-gray-700">
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-bold">統計画面</h1>
+          <h1 className="text-4xl font-bold">統計情報</h1>
           <button
             onClick={onClose}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors"
