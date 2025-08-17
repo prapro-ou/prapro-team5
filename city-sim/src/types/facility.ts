@@ -58,6 +58,9 @@ export interface FacilityInfo {
     baseProduction?: number;  // 基本生産量（労働力100%時）
     baseConsumption?: number; // 基本消費量（労働力100%時）
   };
+  productDemand?: ProductDemand;         // 製品需要
+  productProduction?: ProductProduction; // 製品生産
+
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
   baseAssetValue?: number;    // 基本資産価値
@@ -91,6 +94,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 0,
     baseAssetValue: 100,
     infrastructureDemand: { water: 50, electricity: 50 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 0],
   },
   commercial: {
     type: 'commercial', 
@@ -112,6 +117,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 150,
     infrastructureDemand: { water: 100, electricity: 100 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 10],
   },
   industrial: {
     type: 'industrial',
@@ -133,6 +140,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 200,
     infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [10, 0, 0, 0],
+    productProduction: [0, 20, 0, 0],
   },
   road: {
     type: 'road',
