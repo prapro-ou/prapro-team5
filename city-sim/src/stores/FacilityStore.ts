@@ -40,19 +40,16 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     set(state => ({
       facilities: [...state.facilities, facility]
     }));
-    useGameStore.getState().recalculateUsedWorkforce();
   },
 
   removeFacility: (facilityId) => {
     set(state => ({
       facilities: state.facilities.filter(f => f.id !== facilityId)
     }));
-    useGameStore.getState().recalculateUsedWorkforce();
   },
   
   clearFacilities: () => {
     set({ facilities: [] });
-    useGameStore.getState().recalculateUsedWorkforce();
   },  
 
   getFacilityAt: (position) => {
@@ -162,9 +159,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         facilities: savedState.facilities,
         selectedFacilityType: savedState.selectedFacilityType || null
       });
-      
-      // 労働力を再計算
-      useGameStore.getState().recalculateUsedWorkforce();
     }
   },
 
@@ -173,7 +167,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       facilities: [],
       selectedFacilityType: null
     });
-    useGameStore.getState().recalculateUsedWorkforce();
   }
 }));
 

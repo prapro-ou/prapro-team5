@@ -16,7 +16,6 @@ export interface SaveData {
   // ゲーム進行データ
   gameStats: GameStats;
   levelUpMessage: string | null;
-  usedWorkforce: number;
   
   // 施設データ
   facilities: Facility[];

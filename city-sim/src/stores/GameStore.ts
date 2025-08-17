@@ -26,8 +26,6 @@ interface GameStore {
   monthlyTasks: MonthlyTask[];
   levelUpMessage: string | null;
   setLevelUpMessage: (msg: string | null) => void;
-  usedWorkforce: number;
-  recalculateUsedWorkforce: () => void;
   
   saveState: () => any;
   loadState: (savedState: any) => void;
@@ -269,18 +267,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
-  usedWorkforce: 0,
-  recalculateUsedWorkforce: () => {
-    const facilities = useFacilityStore.getState().facilities;
-    const workforce = facilities.reduce((total, facility) => {
-      const workforceData = FACILITY_DATA[facility.type].workforceRequired;
-      if (workforceData) {
-        return total + workforceData.max; // 最大労働力で計算
-      }
-      return total;
-    }, 0);
-    set({ usedWorkforce: workforce });
-  },
 
   addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: state.stats.money + amount }})),
   
@@ -332,10 +318,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 週の進行のみの場合
       set({ stats: newStats });
     }
-    
-    // 労働力の再計算
-    const { recalculateUsedWorkforce } = get();
-    recalculateUsedWorkforce();
     
     // 満足度の再計算
     const facilities = useFacilityStore.getState().facilities;
@@ -406,8 +388,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     return {
       stats: state.stats,
-      levelUpMessage: state.levelUpMessage,
-      usedWorkforce: state.usedWorkforce
+      levelUpMessage: state.levelUpMessage
     };
   },
 
@@ -415,8 +396,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (savedState && savedState.stats) {
       set({
         stats: savedState.stats,
-        levelUpMessage: savedState.levelUpMessage || null,
-        usedWorkforce: savedState.usedWorkforce || 0
+        levelUpMessage: savedState.levelUpMessage || null
       });
     }
   },
@@ -424,8 +404,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetToInitial: () => {
     set({
       stats: INITIAL_STATS,
-      levelUpMessage: null,
-      usedWorkforce: 0
+      levelUpMessage: null
     });
   }
 }));
