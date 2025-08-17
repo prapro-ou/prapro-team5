@@ -3,6 +3,12 @@ import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
 
+// 税率の定数
+const TAX_RATES = {
+  CITIZEN_TAX: 0.03,      // 市民税率: 3%
+  CORPORATE_TAX: 0.08,    // 法人税率: 8%
+} as const;
+
 // 労働力配分を更新
 export function updateWorkforceAllocations(
   facilities: Facility[], 
@@ -184,4 +190,47 @@ export function calculateAverageProfit(facilities: Facility[], stats: GameStats)
   );
   
   return businessFacilities.length > 0 ? Math.floor(totalProfit / businessFacilities.length) : 0;
+}
+
+// 市民税を計算
+export function calculateCitizenTax(population: number, averageAssets: number): number {
+  return Math.floor(population * averageAssets * TAX_RATES.CITIZEN_TAX);
+}
+
+// 法人税を計算
+export function calculateCorporateTax(businessCount: number, averageProfit: number): number {
+  return Math.floor(businessCount * averageProfit * TAX_RATES.CORPORATE_TAX);
+}
+
+// 総税収を計算
+export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[]): number {
+  // 平均資産を計算
+  const averageAssets = calculateAverageAssets(facilities, stats.satisfaction);
+  
+  // 平均利益を計算
+  const averageProfit = calculateAverageProfit(facilities, stats);
+  
+  // 企業数を計算（商業・工業施設）
+  const businessCount = facilities.filter(f => 
+    f.type === 'commercial' || f.type === 'industrial'
+  ).length;
+  
+  // 市民税
+  const citizenTax = calculateCitizenTax(stats.population, averageAssets);
+  
+  // 法人税
+  const corporateTax = calculateCorporateTax(businessCount, averageProfit);
+  
+  // 総税収
+  const totalTaxRevenue = citizenTax + corporateTax;
+  
+  console.log(`=== 税収計算 ===`);
+  console.log(`人口: ${stats.population}, 平均資産: ${averageAssets}`);
+  console.log(`企業数: ${businessCount}, 平均利益: ${averageProfit}`);
+  console.log(`市民税: ${citizenTax} (税率: ${TAX_RATES.CITIZEN_TAX * 100}%)`);
+  console.log(`法人税: ${corporateTax} (税率: ${TAX_RATES.CORPORATE_TAX * 100}%)`);
+  console.log(`総税収: ${totalTaxRevenue}`);
+  console.log(`================`);
+  
+  return totalTaxRevenue;
 }
