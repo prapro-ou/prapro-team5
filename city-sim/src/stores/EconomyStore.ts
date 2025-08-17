@@ -22,16 +22,18 @@ export function getFacilityWorkforceAllocation(facilityId: string): WorkforceAll
   return currentAllocations.find(allocation => allocation.facility.id === facilityId);
 }
 
+// 月次タスク用の労働力配分を実行
+export function executeMonthlyWorkforceAllocation(facilities: Facility[], availableWorkforce: number): void {
+  updateWorkforceAllocations(facilities, availableWorkforce);
+}
+
 /**
  * 工業施設による製品生産量を計算する
  * @param stats - 現在のゲーム統計
  * @param facilities - 現在の施設リスト
  * @returns 生産された製品の量
  */
-export function calculateProduction(stats: GameStats, facilities: Facility[]): number {
-  // 労働力配分を更新
-  updateWorkforceAllocations(facilities, stats.workforce);
-  
+export function calculateProduction(_stats: GameStats, facilities: Facility[]): number {
   const industrials = facilities.filter(f => f.type === 'industrial');
   let totalProduced = 0;
 

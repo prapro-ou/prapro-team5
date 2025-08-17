@@ -9,6 +9,7 @@ import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -111,6 +112,21 @@ const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
 const processEconomicCycle: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   let currentStats = get().stats;
+
+  // 労働力配分を最初に一度だけ実行
+  executeMonthlyWorkforceAllocation(facilities, currentStats.workforce);
+
+  // 労働力配分の状況をログ出力
+  const allocations = getCurrentWorkforceAllocations();
+  
+  if (allocations.length > 0) {
+    console.log('=== 労働力配分状況 ===');
+    allocations.forEach(allocation => {
+      const efficiencyPercent = (allocation.efficiency * 100).toFixed(0);
+      console.log(`${allocation.facility.type}: ${allocation.assignedWorkforce}人配分, ${efficiencyPercent}%稼働`);
+    });
+    console.log('=====================');
+  }
 
   // 1. 製品を生産する
   const producedGoods = calculateProduction(currentStats, facilities);
