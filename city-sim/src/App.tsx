@@ -230,7 +230,7 @@ function App() {
   return (
     <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-2 right-5 flex gap-2 z-[1200]">
+      <div className="fixed top-1.5 right-5 flex gap-2 z-[1200]">
         <div className="relative">
           <button
             onClick={() => {
@@ -250,7 +250,7 @@ function App() {
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+            <div className="absolute top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
           )}
         </div>
         <button 
