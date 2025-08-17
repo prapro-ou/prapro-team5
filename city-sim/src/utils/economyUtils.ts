@@ -22,6 +22,47 @@ export const sortFacilitiesByAttractiveness = (facilities: Facility[]): Facility
 		});
 };
 
+// 労働力配分の結果を表すインターフェース
+export interface WorkforceAllocation {
+	facility: Facility;
+	assignedWorkforce: number;
+	efficiency: number;
+}
+
+// 魅力度順に労働力を配分
+export const allocateWorkforce = (
+	facilities: Facility[],
+	availableWorkforce: number
+): WorkforceAllocation[] => {
+	const sortedFacilities = sortFacilitiesByAttractiveness(facilities);
+	const allocations: WorkforceAllocation[] = [];
+	let remainingWorkforce = availableWorkforce;
+
+	sortedFacilities.forEach(facility => {
+		const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+		if (!workforceData) return;
+
+		const { min, max } = workforceData;
+		let assigned = 0;
+
+		if (remainingWorkforce >= min) {
+			// 必要労働力を確保
+			assigned = Math.min(remainingWorkforce, max);
+			remainingWorkforce -= assigned;
+		}
+
+		const efficiency = calculateWorkforceEfficiency(assigned, facility);
+		
+		allocations.push({
+			facility,
+			assignedWorkforce: assigned,
+			efficiency
+		});
+	});
+
+	return allocations;
+};
+
 // 施設の労働力効率を計算
 export const calculateWorkforceEfficiency = (
   assignedWorkforce: number,
