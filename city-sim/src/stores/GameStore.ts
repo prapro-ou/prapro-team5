@@ -11,6 +11,7 @@ import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
 import { calculateTotalTaxRevenue } from './EconomyStore';
+import { useProductStore } from './ProductStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -130,6 +131,15 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
     };
     console.log(`Consumed goods: -${consumed}, Revenue from commerce: +${revenue}`);
   }
+  
+  // 3. 製品需給状況をログ出力
+  const { getProductSupplyDemandStatus } = useProductStore.getState();
+  const { demand, production, efficiency } = getProductSupplyDemandStatus(facilities);
+  console.log(`=== 製品需給状況 ===`);
+  console.log(`需要: [原材料:${demand[0]}, 中間製品:${demand[1]}, 最終製品:${demand[2]}, サービス:${demand[3]}]`);
+  console.log(`供給: [原材料:${production[0]}, 中間製品:${production[1]}, 最終製品:${production[2]}, サービス:${production[3]}]`);
+  console.log(`製品効率: ${(efficiency * 100).toFixed(1)}%`);
+  console.log(`====================`);
   
   // 最終的な状態を更新
   set({ stats: currentStats });

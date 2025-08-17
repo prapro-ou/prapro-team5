@@ -2,6 +2,7 @@ import { FACILITY_DATA } from '../types/facility';
 import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
+import { useProductStore } from './ProductStore';
 
 // 税率の定数
 const TAX_RATES = {
@@ -58,6 +59,26 @@ export function getFacilityWorkforceAllocation(
   };
 }
 
+// 施設の最終効率を計算（労働力効率 × 製品効率）
+export function calculateFinalFacilityEfficiency(
+  facility: Facility, 
+  stats: GameStats,
+  facilities: Facility[]
+): number {
+  // 労働力効率を取得
+  const workforceAllocation = getFacilityWorkforceAllocation(facility.id, stats);
+  const workforceEfficiency = workforceAllocation ? workforceAllocation.efficiency : 0;
+  
+  // 製品効率を計算
+  const { getProductSupplyDemandStatus } = useProductStore.getState();
+  const { efficiency: productEfficiency } = getProductSupplyDemandStatus(facilities);
+  
+  // 最終効率 = 労働力効率 × 製品効率
+  const finalEfficiency = workforceEfficiency * productEfficiency;
+  
+  return finalEfficiency;
+}
+
 // 月次タスク用の労働力配分を実行
 export function executeMonthlyWorkforceAllocation(
   facilities: Facility[], 
@@ -72,18 +93,18 @@ export function executeMonthlyWorkforceAllocation(
  * @param facilities - 現在の施設リスト
  * @returns 生産された製品の量
  */
-export function calculateProduction(_stats: GameStats, facilities: Facility[]): number {
+export function calculateProduction(stats: GameStats, facilities: Facility[]): number {
   const industrials = facilities.filter(f => f.type === 'industrial');
   let totalProduced = 0;
 
   industrials.forEach(facility => {
-    const allocation = getFacilityWorkforceAllocation(facility.id, _stats);
-    if (!allocation) return; // 労働力配分がない場合はスキップ
+    // 最終効率を使用（労働力効率 × 製品効率）
+    const finalEfficiency = calculateFinalFacilityEfficiency(facility, stats, facilities);
     
     const workforceData = FACILITY_DATA[facility.type].workforceRequired;
     if (!workforceData) return; // 労働力不要な施設はスキップ
     
-    const production = (workforceData.baseProduction || 0) * allocation.efficiency;
+    const production = (workforceData.baseProduction || 0) * finalEfficiency;
     totalProduced += production;
   });
   
@@ -103,8 +124,8 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
   let totalRevenue = 0;
 
   commercials.forEach(facility => {
-    const allocation = getFacilityWorkforceAllocation(facility.id, stats);
-    if (!allocation) return; // 労働力配分がない場合はスキップ
+    // 最終効率を使用（労働力効率 × 製品効率）
+    const finalEfficiency = calculateFinalFacilityEfficiency(facility, stats, facilities);
     
     const workforceData = FACILITY_DATA[facility.type].workforceRequired;
     if (!workforceData) return; // 労働力不要な施設はスキップ
@@ -112,11 +133,11 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
     const baseConsumption = workforceData.baseConsumption || 0;
     const baseRevenue = workforceData.baseRevenue || 0;
     
-    const consumption = baseConsumption * allocation.efficiency;
+    const consumption = baseConsumption * finalEfficiency;
     if (availableGoods >= consumption) {
       availableGoods -= consumption;
       totalConsumed += consumption;
-      totalRevenue += baseRevenue * allocation.efficiency;
+      totalRevenue += baseRevenue * finalEfficiency;
     }
   });
   
@@ -174,11 +195,10 @@ export function calculateFacilityProfit(facility: Facility, efficiency: number):
 // 総利益を計算
 export function calculateTotalProfit(facilities: Facility[], stats: GameStats): number {
   return facilities.reduce((total, facility) => {
-    // 労働力配分から効率を取得
-    const allocation = getFacilityWorkforceAllocation(facility.id, stats);
-    const efficiency = allocation ? allocation.efficiency : 0;
+    // 最終効率を使用（労働力効率 × 製品効率）
+    const finalEfficiency = calculateFinalFacilityEfficiency(facility, stats, facilities);
     
-    return total + calculateFacilityProfit(facility, efficiency);
+    return total + calculateFacilityProfit(facility, finalEfficiency);
   }, 0);
 }
 

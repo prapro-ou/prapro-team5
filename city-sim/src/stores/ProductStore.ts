@@ -20,7 +20,7 @@ interface ProductStore {
   };
 }
 
-export const useProductStore = create<ProductStore>((set, get) => ({
+export const useProductStore = create<ProductStore>((_set, get) => ({
   // 製品需要の合計を計算
   calculateProductDemand: (facilities: Facility[]): ProductDemand => {
     const totalDemand: ProductDemand = [0, 0, 0, 0];
