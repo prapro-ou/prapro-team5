@@ -117,7 +117,6 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   // 1. 製品を生産する
   const producedGoods = calculateProduction(currentStats, facilities);
   if (producedGoods > 0) {
-    currentStats = { ...currentStats, goods: currentStats.goods + producedGoods };
     console.log(`Produced goods: +${producedGoods}`);
   }
 
@@ -126,7 +125,6 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   if (consumed > 0) {
     currentStats = {
       ...currentStats,
-      goods: currentStats.goods - consumed,
       money: currentStats.money + revenue
     };
     console.log(`Consumed goods: -${consumed}, Revenue from commerce: +${revenue}`);
@@ -225,8 +223,6 @@ const INITIAL_STATS: GameStats = {
     money: 10000,
     population: 0,
     satisfaction: 50,
-    workforce: 0, // 労働力（初期値0、人口から計算する場合は後で上書き）
-    goods: 0,     // 製品（初期値0）
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
@@ -240,8 +236,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const facilities = useFacilityStore.getState().facilities;
       const { stats } = get();
       
-      // 労働力配分を実行
-      const newAllocations = executeMonthlyWorkforceAllocation(facilities, stats.workforce);
+      // 労働力配分を実行（人口の60%を労働力として使用）
+      const availableWorkforce = Math.floor(stats.population * 0.6);
+      const newAllocations = executeMonthlyWorkforceAllocation(facilities, availableWorkforce);
       
       // 配分結果をGameStoreの状態に反映
       set({
@@ -352,13 +349,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addPopulation: (count) => {
     const { stats } = get();
     const newPopulation = Math.max(0, stats.population + count);
-    const newWorkforce = Math.floor(newPopulation * 0.6); // 人口の60%が労働力
     
     set({
       stats: {
         ...stats,
-        population: newPopulation,
-        workforce: newWorkforce
+        population: newPopulation
       }
     });
   },
