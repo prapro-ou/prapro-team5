@@ -260,7 +260,7 @@ function App() {
         </div>
       )}
       {/* 情報パネル */}
-      <InfoPanel stats={stats} />
+      <InfoPanel />
       
       {/* インフラパネルボタン */}
       <button

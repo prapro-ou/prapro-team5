@@ -1,14 +1,15 @@
 import React from 'react';
 import { TbCash, TbUsers, TbMoodHappy, TbCalendar ,TbStar, TbBriefcase, TbBox} from 'react-icons/tb';
-import type { GameStats } from '../types/game';
-import { useGameStore } from '../stores/GameStore'; // 追加
+import { useGameStore } from '../stores/GameStore';
 
 interface InfoPanelProps {
-  stats: GameStats;
+  stats?: any; // 使用しないのでオプショナルに
 }
 
-export const InfoPanel: React.FC<InfoPanelProps> = ({ stats }) => {
-  const usedWorkforce = useGameStore(state => state.usedWorkforce); // 追加
+export const InfoPanel: React.FC<InfoPanelProps> = () => {
+  // すべての情報をストアから直接取得
+  const stats = useGameStore(state => state.stats);
+  const usedWorkforce = useGameStore(state => state.usedWorkforce);
 
 	return (
     <div className="fixed top-0 left-0 right-0 z-[1000] bg-gray-800 p-4 shadow-lg border-b border-gray-700">

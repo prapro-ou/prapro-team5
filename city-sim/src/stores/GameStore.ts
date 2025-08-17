@@ -312,6 +312,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       // 月次タスクの実行
       monthlyTasks.forEach(task => task(get, set));
+      
+      // 月次タスク実行後の最新状態を取得して日付のみ更新
+      const currentStats = get().stats;
+      set({
+        stats: {
+          ...currentStats,
+          date: newStats.date
+        }
+      });
+    } else {
+      // 週の進行のみの場合
+      set({ stats: newStats });
     }
     
     // 労働力の再計算
@@ -323,10 +335,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { recalculateSatisfaction } = get();
     recalculateSatisfaction(facilities);
     
-    set({ stats: newStats });
-    
     // レベルアップチェック
-    checkLevelUp(newStats, set);
+    checkLevelUp(get().stats, set);
   },
 
   addPopulation: (count) => {
