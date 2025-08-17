@@ -83,28 +83,32 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
   }
 };
 /**
- * 満足度に応じて人口を増減させるタスク
+ * レベルに応じて人口を増減させるタスク
  */
-const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
+const adjustPopulationByGrowth: MonthlyTask = (get) => {
   const { stats } = get();
-  let populationChange = 0;
-  if (stats.satisfaction >= 80) {
-    // 満足度が高い場合、人口増加
-    populationChange = Math.max(1, Math.floor(stats.population * 0.05)); // 5%増加、最低1人
-  } else if (stats.satisfaction < 20) {
-    // 満足度が低い場合、人口減少
-    populationChange = -Math.max(1, Math.floor(stats.population * 0.05)); // 5%減少、最低1人
+  const facilities = useFacilityStore.getState().facilities;
+  const residentials = facilities.filter(f => f.type === 'residential');
+  let totalIncrease = 0;
+  let growthrate = 0;
+  let random = Math.random()*0.2 + 0.9;
+
+  if (stats.level == 1) {
+    growthrate = 0.2;
+  } else if (stats.level == 2) {
+    growthrate = 0.1;
+  } else {
+    growthrate = 0.03;
+  } 
+
+  for (const res of residentials) {
+    const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
+    totalIncrease += Math.floor(basePop * growthrate * random); // 条件係数を後で追加
   }
-  if (populationChange !== 0) {
-    set({
-      stats: {
-        ...stats,
-        population: Math.max(0, stats.population + populationChange)
-      }
-    });
-    console.log(`Population ${populationChange > 0 ? 'increased' : 'decreased'} by ${Math.abs(populationChange)} due to satisfaction (${stats.satisfaction})`);
-  }
+  console.log(`Population Growth: +${totalIncrease}`);
+  get().addPopulation(totalIncrease);
 };
+
 /**
  * 新しい経済サイクルを処理するタスク
  */
@@ -265,11 +269,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     },
     calculateTaxRevenue,
     payMaintenanceCost,
-    adjustPopulationBySatisfaction,
     processEconomicCycle,
     applyParkSatisfactionPenalty,
     processInfrastructure,
+    adjustPopulationByGrowth,
     citizenFeedTask,
+    // 他の月次タスクをここに追加
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
