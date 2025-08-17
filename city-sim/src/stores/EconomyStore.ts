@@ -65,16 +65,21 @@ export function calculateFinalFacilityEfficiency(
   stats: GameStats,
   facilities: Facility[]
 ): number {
-  // 労働力効率を取得
+  // 1. 労働力効率を取得
   const workforceAllocation = getFacilityWorkforceAllocation(facility.id, stats);
   const workforceEfficiency = workforceAllocation ? workforceAllocation.efficiency : 0;
   
-  // 製品効率を計算
+  // 2. 製品効率を計算
   const { getProductSupplyDemandStatus } = useProductStore.getState();
   const { efficiency: productEfficiency } = getProductSupplyDemandStatus(facilities);
   
-  // 最終効率 = 労働力効率 × 製品効率
+  // 3. 最終効率 = 労働力効率 × 製品効率
   const finalEfficiency = workforceEfficiency * productEfficiency;
+  
+  // デバッグ用ログ（効率が0より大きい場合のみ）
+  if (finalEfficiency > 0) {
+    console.log(`効率計算: ${facility.type} - 労働力:${(workforceEfficiency*100).toFixed(1)}%, 製品:${(productEfficiency*100).toFixed(1)}%, 最終:${(finalEfficiency*100).toFixed(1)}%`);
+  }
   
   return finalEfficiency;
 }
@@ -90,14 +95,19 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
   let totalProduced = 0;
 
   industrials.forEach(facility => {
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData || !workforceData.baseProduction) {
+      console.log(`${facility.type}: 労働力データまたは生産データが不足`);
+      return;
+    }
+    
     // 最終効率を使用（労働力効率 × 製品効率）
     const finalEfficiency = calculateFinalFacilityEfficiency(facility, stats, facilities);
     
-    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
-    if (!workforceData) return; // 労働力不要な施設はスキップ
-    
-    const production = (workforceData.baseProduction || 0) * finalEfficiency;
+    const production = workforceData.baseProduction * finalEfficiency;
     totalProduced += production;
+    
+    console.log(`${facility.type}: 生産量 ${production.toFixed(1)} (効率: ${(finalEfficiency*100).toFixed(1)}%)`);
   });
   
   return totalProduced;
@@ -115,18 +125,23 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
   let totalRevenue = 0;
 
   commercials.forEach(facility => {
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData || !workforceData.baseRevenue) {
+      console.log(`${facility.type}: 労働力データまたは収益データが不足`);
+      return;
+    }
+    
     // 最終効率を使用（労働力効率 × 製品効率）
     const finalEfficiency = calculateFinalFacilityEfficiency(facility, stats, facilities);
     
-    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
-    if (!workforceData) return; // 労働力不要な施設はスキップ
-    
     const baseConsumption = workforceData.baseConsumption || 0;
-    const baseRevenue = workforceData.baseRevenue || 0;
+    const baseRevenue = workforceData.baseRevenue;
     
     const consumption = baseConsumption * finalEfficiency;
     totalConsumed += consumption;
     totalRevenue += baseRevenue * finalEfficiency;
+    
+    console.log(`${facility.type}: 消費量 ${consumption.toFixed(1)}, 収益 ${totalRevenue.toFixed(1)} (効率: ${(finalEfficiency*100).toFixed(1)}%)`);
   });
   
   return { consumed: totalConsumed, revenue: totalRevenue };

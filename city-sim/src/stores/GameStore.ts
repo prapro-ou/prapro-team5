@@ -234,6 +234,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const facilities = useFacilityStore.getState().facilities;
       const { stats } = get();
       
+      // 人口0の場合は配分をスキップ
+      if (stats.population === 0) {
+        console.log('人口0のため労働力配分をスキップ');
+        return;
+      }
+      
       // 労働力配分を実行（人口の60%を労働力として使用）
       const availableWorkforce = Math.floor(stats.population * 0.6);
       const newAllocations = executeMonthlyWorkforceAllocation(facilities, availableWorkforce);
