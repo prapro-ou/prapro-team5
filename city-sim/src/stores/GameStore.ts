@@ -237,8 +237,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   recalculateUsedWorkforce: () => {
     const facilities = useFacilityStore.getState().facilities;
     const workforce = facilities.reduce((total, facility) => {
-      const data = FACILITY_DATA[facility.type];
-      return total + (data?.requiredWorkforce || 0);
+      const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+      if (workforceData) {
+        return total + workforceData.max; // 最大労働力で計算
+      }
+      return total;
     }, 0);
     set({ usedWorkforce: workforce });
   },

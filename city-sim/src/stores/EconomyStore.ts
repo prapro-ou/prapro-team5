@@ -1,6 +1,7 @@
 import { FACILITY_DATA } from '../types/facility';
 import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
+import { calculateWorkforceEfficiency } from '../utils/economyUtils';
 
 /**
  * 工業施設による製品生産量を計算する
@@ -14,12 +15,17 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
   let totalProduced = 0;
 
   industrials.forEach(facility => {
-    const info = FACILITY_DATA[facility.type];
-    const req = info.requiredWorkforce || 0;
-    const prod = info.produceGoods || 0;
-    if (availableWorkforce >= req) {
-      availableWorkforce -= req;
-      totalProduced += prod;
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData) return; // 労働力不要な施設はスキップ
+    
+    const efficiency = calculateWorkforceEfficiency(availableWorkforce, facility);
+    const production = (workforceData.baseProduction || 0) * efficiency;
+    
+    if (efficiency > 0) {
+      totalProduced += production;
+      // 労働力を消費（効率に応じて）
+      const consumed = Math.min(availableWorkforce, workforceData.max);
+      availableWorkforce -= consumed;
     }
   });
   return totalProduced;
@@ -34,17 +40,29 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
 export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Facility[]): { consumed: number, revenue: number } {
   const commercials = facilities.filter(f => f.type === 'commercial');
   let availableGoods = stats.goods;
+  let availableWorkforce = stats.workforce;
   let totalConsumed = 0;
   let totalRevenue = 0;
 
   commercials.forEach(facility => {
-    const info = FACILITY_DATA[facility.type];
-    const cons = info.consumeGoods || 0;
-    if (availableGoods >= cons) {
-      availableGoods -= cons;
-      totalConsumed += cons;
-      // 税収は消費量に応じて変動（ここでは仮に消費量 x 50）
-      totalRevenue += cons * 50;
+    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    if (!workforceData) return; // 労働力不要な施設はスキップ
+    
+    const efficiency = calculateWorkforceEfficiency(availableWorkforce, facility);
+    const baseConsumption = workforceData.baseConsumption || 0;
+    const baseRevenue = workforceData.baseRevenue || 0;
+    
+    if (efficiency > 0) {
+      const consumption = baseConsumption * efficiency;
+      if (availableGoods >= consumption) {
+        availableGoods -= consumption;
+        totalConsumed += consumption;
+        totalRevenue += baseRevenue * efficiency;
+        
+        // 労働力を消費（効率に応じて）
+        const consumed = Math.min(availableWorkforce, workforceData.max);
+        availableWorkforce -= consumed;
+      }
     }
   });
   return { consumed: totalConsumed, revenue: totalRevenue };

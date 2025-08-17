@@ -50,8 +50,6 @@ export interface FacilityInfo {
     baseProduction?: number;  // 基本生産量（労働力100%時）
     baseConsumption?: number; // 基本消費量（労働力100%時）
   };
-  produceGoods?: number;      // 生産量（工業用）
-  consumeGoods?: number;      // 消費量（商業用）
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
 }
@@ -98,9 +96,9 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     workforceRequired: {
       min: 3,
       max: 10,
-      baseRevenue: 100
+      baseRevenue: 100,
+      baseConsumption: 5
     },
-    consumeGoods: 5,      // 1週で消費する製品数（仮値）
     infrastructureDemand: { water: 100, electricity: 100 },
   },
   industrial: {
@@ -117,9 +115,9 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     workforceRequired: {
       min: 5,
       max: 50,
-      baseProduction: 20
+      baseProduction: 20,
+      baseConsumption: 0
     },
-    produceGoods: 10,      // 1週で生産する製品数（仮値）
     infrastructureDemand: { water: 200, electricity: 200 },
   },
   road: {
