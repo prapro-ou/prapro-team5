@@ -7,12 +7,13 @@ import { CreditsPanel } from './components/CreditsPanel'
 import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
+import { StatisticsPanel } from './components/StatisticsScreen';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy, TbChartBar } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -61,7 +62,10 @@ function App() {
     closeCredits,
     switchToCredits,
     setSelectedTile,
-    toggleInfrastructureInfo
+    toggleInfrastructureInfo,
+    isStatisticsOpen,
+    openStatistics,
+    closeStatistics
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -217,6 +221,13 @@ function App() {
     );
   }
 
+  // 統計画面
+  if (isStatisticsOpen) {
+    return (
+      <StatisticsPanel onClose={closeStatistics} />
+    );
+  }
+
   return (
     <div className="h-screen bg-gray-900">
       {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
@@ -268,6 +279,14 @@ function App() {
         className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         <TbAlignLeft2 />
+      </button>
+
+      {/* 統計画面ボタン */}
+      <button
+        onClick={openStatistics}
+        className="fixed top-40 left-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbChartBar />
       </button>
 
       {/* インフラ情報パネル */}
@@ -339,6 +358,11 @@ function App() {
       
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
+      
+      {/* 統計画面 */}
+      {/* isStatisticsOpen && (
+        <StatisticsPanel onClose={closeStatistics} />
+      ) */}
     </div>
     
   );
