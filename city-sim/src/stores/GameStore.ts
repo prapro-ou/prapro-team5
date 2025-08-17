@@ -10,6 +10,7 @@ import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
+import { calculateTotalTaxRevenue } from './EconomyStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -43,8 +44,7 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
   const hasCityHall = facilities.some(f => f.type === 'city_hall');
 
   if (hasCityHall && stats.population > 0) {
-    const taxMultiplier = stats.satisfaction / 50;
-    const taxRevenue = Math.floor((stats.population * 5) * taxMultiplier);
+    const taxRevenue = calculateTotalTaxRevenue(stats, facilities);
     
     if (taxRevenue > 0) {
       const currentMoney = get().stats.money;
@@ -54,7 +54,7 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
           money: currentMoney + taxRevenue
         }
       });
-      console.log(`Tax Revenue: +$${taxRevenue} (Satisfaction Bonus: ${taxMultiplier.toFixed(2)}x)`);
+      console.log(`Total Tax Revenue: +$${taxRevenue}`);
     }
   }
 };
@@ -112,27 +112,6 @@ const adjustPopulationBySatisfaction: MonthlyTask = (get, set) => {
 const processEconomicCycle: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   let currentStats = get().stats;
-
-  // 労働力配分を最初に一度だけ実行
-  const newAllocations = executeMonthlyWorkforceAllocation(facilities, currentStats.workforce);
-  
-  // 配分結果をGameStoreの状態に反映
-  currentStats = {
-    ...currentStats,
-    workforceAllocations: newAllocations
-  };
-
-  // 労働力配分の状況をログ出力
-  const allocations = getCurrentWorkforceAllocations(currentStats);
-  
-  if (allocations.length > 0) {
-    console.log('=== 労働力配分状況 ===');
-    allocations.forEach(allocation => {
-      const efficiencyPercent = (allocation.efficiency * 100).toFixed(0);
-      console.log(`${allocation.facility.type}: ${allocation.assignedWorkforce}人配分, ${efficiencyPercent}%稼働`);
-    });
-    console.log('=====================');
-  }
 
   // 1. 製品を生産する
   const producedGoods = calculateProduction(currentStats, facilities);
@@ -246,6 +225,33 @@ const INITIAL_STATS: GameStats = {
 export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
   monthlyTasks: [
+    // 労働力配分を最初に実行
+    (get, set) => {
+      const facilities = useFacilityStore.getState().facilities;
+      const { stats } = get();
+      
+      // 労働力配分を実行
+      const newAllocations = executeMonthlyWorkforceAllocation(facilities, stats.workforce);
+      
+      // 配分結果をGameStoreの状態に反映
+      set({
+        stats: {
+          ...stats,
+          workforceAllocations: newAllocations
+        }
+      });
+      
+      // 労働力配分の状況をログ出力
+      const allocations = getCurrentWorkforceAllocations(get().stats);
+      if (allocations.length > 0) {
+        console.log('=== 労働力配分状況 ===');
+        allocations.forEach(allocation => {
+          const efficiencyPercent = (allocation.efficiency * 100).toFixed(0);
+          console.log(`${allocation.facility.type}: ${allocation.assignedWorkforce}人配分, ${efficiencyPercent}%稼働`);
+        });
+        console.log('=====================');
+      }
+    },
     calculateTaxRevenue,
     payMaintenanceCost,
     adjustPopulationBySatisfaction,
