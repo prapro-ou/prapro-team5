@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { playPanelSound, playCoinSound } from './SoundSettings';
 
 export type Reward = {
   id: string;
@@ -49,7 +50,10 @@ export default function RewardPanel({ rewards, onClaim, onClose }: RewardPanelPr
                 ) : (
                   <button
                     className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded font-bold shadow"
-                    onClick={() => onClaim(r.id)}
+                    onClick={() => {
+                      playCoinSound(); // 報酬受け取り時にコイン音を再生
+                      onClaim(r.id);
+                    }}
                   >
                     受け取る
                   </button>
@@ -64,7 +68,10 @@ export default function RewardPanel({ rewards, onClaim, onClose }: RewardPanelPr
       <div className="flex justify-center">
         <button
           className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold shadow"
-          onClick={onClose}
+          onClick={() => {
+            playPanelSound();
+            onClose();
+          }}
         >
           閉じる
         </button>

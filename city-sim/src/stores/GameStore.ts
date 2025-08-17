@@ -3,9 +3,13 @@ import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
+import { citizenFeedTask } from './CitizenFeedTask';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
+import { playLevelUpSound } from '../components/SoundSettings';
+import { saveLoadRegistry } from './SaveLoadRegistry';
+
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
 
@@ -19,8 +23,12 @@ interface GameStore {
   monthlyTasks: MonthlyTask[];
   levelUpMessage: string | null;
   setLevelUpMessage: (msg: string | null) => void;
-  usedWorkforce: number; // 追加
-  recalculateUsedWorkforce: () => void; // 追加
+  usedWorkforce: number;
+  recalculateUsedWorkforce: () => void;
+  
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: () => void;
 }
 
 // --- 月次処理の具体的なロジックを独立した関数として定義 ---
@@ -189,6 +197,9 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
     levelUpMsg = `レベル${newLevel}にアップしました！`;
   }
   if (newLevel !== stats.level) {
+    // レベルアップ効果音を再生
+    playLevelUpSound();
+    
     set({
       stats: {
         ...stats,
@@ -212,6 +223,7 @@ const INITIAL_STATS: GameStats = {
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
 }
 
+
 export const useGameStore = create<GameStore>((set, get) => ({
   stats: INITIAL_STATS,
   monthlyTasks: [
@@ -221,11 +233,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     adjustPopulationByGrowth,
-    // 他の月次タスクをここに追加可能
+    citizenFeedTask,
+    // 他の月次タスクをここに追加
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
-  usedWorkforce: 0, // 初期値0
+  usedWorkforce: 0,
   recalculateUsedWorkforce: () => {
     const facilities = useFacilityStore.getState().facilities;
     const workforce = facilities.reduce((total, facility) => {
@@ -235,7 +248,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ usedWorkforce: workforce });
   },
 
-  
   addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: state.stats.money + amount }})),
   
   spendMoney: (amount) => {
@@ -251,69 +263,130 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     return false;
   },
-  
-  // 人口を増やす処理（レベルアップ判定呼び出し＆労働力自動計算）
-  addPopulation: (amount) => {
-    set((state) => {
-      const newPopulation = state.stats.population + amount;
-      // 労働力は人口の50%とする（今後調整可）
-      const newWorkforce = Math.floor(newPopulation * 0.5);
-      const newStats = {
-        ...state.stats,
+
+  advanceTime: () => {
+    const { stats, monthlyTasks } = get();
+    const newStats = { ...stats };
+    
+    // 週の進行
+    newStats.date.week++;
+    newStats.date.totalWeeks++;
+    
+    // 月の進行
+    if (newStats.date.week > 4) {
+      newStats.date.week = 1;
+      newStats.date.month++;
+      
+      // 年の進行
+      if (newStats.date.month > 12) {
+        newStats.date.month = 1;
+        newStats.date.year++;
+      }
+      
+      // 月次タスクの実行
+      monthlyTasks.forEach(task => task(get, set));
+    }
+    
+    // 労働力の再計算
+    const { recalculateUsedWorkforce } = get();
+    recalculateUsedWorkforce();
+    
+    // 満足度の再計算
+    const facilities = useFacilityStore.getState().facilities;
+    const { recalculateSatisfaction } = get();
+    recalculateSatisfaction(facilities);
+    
+    set({ stats: newStats });
+    
+    // レベルアップチェック
+    checkLevelUp(newStats, set);
+  },
+
+  addPopulation: (count) => {
+    const { stats } = get();
+    const newPopulation = Math.max(0, stats.population + count);
+    const newWorkforce = Math.floor(newPopulation * 0.6); // 人口の60%が労働力
+    
+    set({
+      stats: {
+        ...stats,
         population: newPopulation,
         workforce: newWorkforce
-      };
-      return { stats: newStats };
+      }
     });
-    // setの直後にgetで最新statsを取得し、レベルアップ判定
-    const updatedStats = { ...get().stats, population: get().stats.population, workforce: get().stats.workforce };
-    checkLevelUp(updatedStats, set);
   },
 
-
-  // 満足度を再計算する処理
   recalculateSatisfaction: (facilities) => {
-    let totalSatisfaction = 50;
+    const { stats } = get();
+    let totalSatisfaction = 50; // 基本満足度
+    
+    // 公園の効果を計算
     facilities.forEach(facility => {
-      const facilityData = FACILITY_DATA[facility.type];
-      if (facilityData && facilityData.satisfaction) {
-        totalSatisfaction += facilityData.satisfaction;
+      if (facility.type === 'park') {
+        const parkData = FACILITY_DATA[facility.type];
+        const effectRadius = parkData.effectRadius || 3;
+        
+        // 公園の効果範囲内の住宅をカウント
+        let affectedHouses = 0;
+        facilities.forEach(otherFacility => {
+          if (otherFacility.type === 'residential') {
+            const distance = Math.sqrt(
+              Math.pow(facility.position.x - otherFacility.position.x, 2) +
+              Math.pow(facility.position.y - otherFacility.position.y, 2)
+            );
+            if (distance <= effectRadius) {
+              affectedHouses++;
+            }
+          }
+        });
+        
+        totalSatisfaction += affectedHouses * 5; // 公園1つにつき5ポイント
       }
     });
-    const newSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
-    set(state => ({
-      stats: {
-        ...state.stats,
-        satisfaction: newSatisfaction
-      }
-    }));
-  },
-
-  // 時間を進める処理
-  advanceTime: () => {
-    const currentDate = get().stats.date;
-    const newDate = { ...currentDate };
     
-    newDate.week += 1;
-    newDate.totalWeeks += 1; // 絶対週数を増加
-
-    if (newDate.week > 4) {
-      newDate.week = 1;
-      newDate.month += 1;
-      
-      if (newDate.month > 12) {
-        newDate.month = 1;
-        newDate.year += 1;
-      }
-      
-      get().monthlyTasks.forEach(task => task(get, set));
-    }
-
-    set(state => ({
+    // 工業区画の環境悪化効果
+    const industrialCount = facilities.filter(f => f.type === 'industrial').length;
+    totalSatisfaction -= industrialCount * 3;
+    
+    // 満足度を0-100の範囲に制限
+    totalSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
+    
+    set({
       stats: {
-        ...state.stats,
-        date: newDate
+        ...stats,
+        satisfaction: totalSatisfaction
       }
-    }));
+    });
   },
+
+  // セーブ・ロード機能
+  saveState: () => {
+    const state = get();
+    return {
+      stats: state.stats,
+      levelUpMessage: state.levelUpMessage,
+      usedWorkforce: state.usedWorkforce
+    };
+  },
+
+  loadState: (savedState: any) => {
+    if (savedState && savedState.stats) {
+      set({
+        stats: savedState.stats,
+        levelUpMessage: savedState.levelUpMessage || null,
+        usedWorkforce: savedState.usedWorkforce || 0
+      });
+    }
+  },
+
+  resetToInitial: () => {
+    set({
+      stats: INITIAL_STATS,
+      levelUpMessage: null,
+      usedWorkforce: 0
+    });
+  }
 }));
+
+// 自動登録
+saveLoadRegistry.register('game', useGameStore.getState());
