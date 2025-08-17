@@ -10,8 +10,8 @@ const TAX_RATES = {
   CORPORATE_TAX: 0.08,    // 法人税率: 8%
 } as const;
 
-// 労働力配分を更新
-export function updateWorkforceAllocations(
+// 労働力配分を更新・実行
+export function executeMonthlyWorkforceAllocation(
   facilities: Facility[], 
   availableWorkforce: number
 ): { facilityId: string; facilityType: string; position: { x: number; y: number }; assignedWorkforce: number; efficiency: number }[] {
@@ -79,14 +79,6 @@ export function calculateFinalFacilityEfficiency(
   return finalEfficiency;
 }
 
-// 月次タスク用の労働力配分を実行
-export function executeMonthlyWorkforceAllocation(
-  facilities: Facility[], 
-  availableWorkforce: number
-): { facilityId: string; facilityType: string; position: { x: number; y: number }; assignedWorkforce: number; efficiency: number }[] {
-  return updateWorkforceAllocations(facilities, availableWorkforce);
-}
-
 /**
  * 工業施設による製品生産量を計算する
  * @param stats - 現在のゲーム統計
@@ -112,14 +104,13 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
 }
 
 /**
- * 商業施設による製品消費量と，それによって生まれる収益を計算する
+ * 商業施設による収益を計算する（製品需給制）
  * @param stats - 現在のゲーム統計
  * @param facilities - 現在の施設リスト
  * @returns 消費された製品の量と発生した収益
  */
 export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Facility[]): { consumed: number, revenue: number } {
   const commercials = facilities.filter(f => f.type === 'commercial');
-  let availableGoods = stats.goods;
   let totalConsumed = 0;
   let totalRevenue = 0;
 
@@ -134,11 +125,8 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
     const baseRevenue = workforceData.baseRevenue || 0;
     
     const consumption = baseConsumption * finalEfficiency;
-    if (availableGoods >= consumption) {
-      availableGoods -= consumption;
-      totalConsumed += consumption;
-      totalRevenue += baseRevenue * finalEfficiency;
-    }
+    totalConsumed += consumption;
+    totalRevenue += baseRevenue * finalEfficiency;
   });
   
   return { consumed: totalConsumed, revenue: totalRevenue };
