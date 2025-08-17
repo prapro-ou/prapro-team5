@@ -6,6 +6,10 @@ export type FacilityType = "residential" | "commercial" | "industrial" | "road" 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
 
+// 製品需要・生産
+export type ProductDemand = [number, number, number, number];
+export type ProductProduction = [number, number, number, number];
+
 // インフラ需要・供給
 export interface InfrastructureDemand {
   water: number;
