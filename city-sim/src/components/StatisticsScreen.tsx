@@ -14,7 +14,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
-    { id: 'economy', name: '経済', icon: TbCash },
+    { id: 'economy', name: '経済', icon: TbCash  },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'achievement', name: '実績', icon: TbChartBar },
@@ -84,18 +84,90 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     </div>
   );
 
+  // 経済タブのコンテンツ
+  const renderEconomyTab = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* 収支詳細カード */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+          <TbCash className="text-green-400" />
+          収支詳細
+        </h3>
+        <div className="space-y-3">
+          {/* 月次収入 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">月次収入</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-green-400">+{stats.monthlyBalance.income.toLocaleString()}</span>
+              <span className="text-xs text-gray-400">円</span>
+            </div>
+          </div>
+          
+          {/* 月次支出 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">月次支出</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-red-400">-{stats.monthlyBalance.expense.toLocaleString()}</span>
+              <span className="text-xs text-gray-400">円</span>
+            </div>
+          </div>
+          
+          {/* 月次収支 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">月次収支</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-lg font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+              </span>
+              <span className="text-xs text-gray-400">円</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 税率・資金管理カード */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+          <TbChartBar className="text-blue-400" />
+          税率・資金管理
+        </h3>
+        <div className="space-y-3">
+          {/* 市民税率 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">市民税率</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-blue-400">3.0%</span>
+            </div>
+          </div>
+          
+          {/* 法人税率 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">法人税率</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-blue-400">8.0%</span>
+            </div>
+          </div>
+          
+          {/* 現在の資金 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">現在の資金</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-yellow-400">{stats.money.toLocaleString()}</span>
+              <span className="text-xs text-gray-400">円</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
       case 'basic':
         return renderBasicTab();
       case 'economy':
-        return (
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">経済タブ</h2>
-            <p>ここに経済情報が表示されます</p>
-          </div>
-        );
+        return renderEconomyTab();
       case 'industry':
         return (
           <div className="text-center text-gray-400">
