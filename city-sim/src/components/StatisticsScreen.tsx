@@ -1,6 +1,7 @@
 import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
+import { useEconomyStore } from '../stores/EconomyStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'achievemen
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const stats = useGameStore(state => state.stats);
+  const { taxRates, setTaxRates } = useEconomyStore();
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -132,19 +134,45 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           税率・資金管理
         </h3>
         <div className="space-y-3">
-          {/* 市民税率 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">市民税率</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-blue-400">3.0%</span>
+          {/* 市民税率調整 */}
+          <div className="bg-gray-700 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">市民税率</span>
+              <span className="text-lg font-bold text-blue-400">{(taxRates.citizenTax * 100).toFixed(1)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.01"
+              max="0.10"
+              step="0.01"
+              value={taxRates.citizenTax}
+              onChange={(e) => setTaxRates({ citizenTax: parseFloat(e.target.value) })}
+              className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>1%</span>
+              <span>10%</span>
             </div>
           </div>
           
-          {/* 法人税率 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">法人税率</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-blue-400">8.0%</span>
+          {/* 法人税率調整 */}
+          <div className="bg-gray-700 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">法人税率</span>
+              <span className="text-lg font-bold text-blue-400">{(taxRates.corporateTax * 100).toFixed(1)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.05"
+              max="0.20"
+              step="0.01"
+              value={taxRates.corporateTax}
+              onChange={(e) => setTaxRates({ corporateTax: parseFloat(e.target.value) })}
+              className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>5%</span>
+              <span>20%</span>
             </div>
           </div>
           
