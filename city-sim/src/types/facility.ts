@@ -3,6 +3,13 @@ export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-o
 
 export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
 
+// 製品
+export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
+
+// 製品需要・生産
+export type ProductDemand = [number, number, number, number];
+export type ProductProduction = [number, number, number, number];
+
 // インフラ需要・供給
 export interface InfrastructureDemand {
   water: number;
@@ -39,16 +46,25 @@ export interface FacilityInfo {
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
   satisfaction: number;
+  attractiveness?: number;   // 魅力度（労働力配分の優先度、労働力が必要な施設のみ）
   // --- インフラ用プロパティ ---
   infrastructureDemand?: InfrastructureDemand; // インフラ需要
   infrastructureSupply?: InfrastructureSupply; // インフラ供給
 
   // --- 経済サイクル用プロパティ ---
-  requiredWorkforce?: number; // 必要労働力（工業・商業用）
-  produceGoods?: number;      // 生産量（工業用）
-  consumeGoods?: number;      // 消費量（商業用）
+  workforceRequired?: {
+    min: number;              // 必要労働者数
+    max: number;              // 最大労働者数
+    baseRevenue?: number;     // 基本収益（労働力100%時）
+    baseProduction?: number;  // 基本生産量（労働力100%時）
+    baseConsumption?: number; // 基本消費量（労働力100%時）
+  };
+  productDemand?: ProductDemand;         // 製品需要
+  productProduction?: ProductProduction; // 製品生産
+
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
+  baseAssetValue?: number;    // 基本資産価値
 }
 
 
@@ -77,7 +93,10 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/residential.png'],
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 0,
+    baseAssetValue: 100,
     infrastructureDemand: { water: 50, electricity: 50 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 0],
     basePopulation: 100,
   },
   commercial: {
@@ -91,10 +110,18 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/commercial.png'],
     imgSizes: [{ width: 96, height: 68 }],
     satisfaction: 7,
-    requiredWorkforce: 5, // 仮値
-    consumeGoods: 5,      // 1週で消費する製品数（仮値）
+    attractiveness: 80,
+    workforceRequired: {
+      min: 3,
+      max: 10,
+      baseRevenue: 100,
+      baseConsumption: 5
+    },
+    baseAssetValue: 150,
     infrastructureDemand: { water: 100, electricity: 100 },
     effectRadius: 9,
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 10],
   },
   industrial: {
     type: 'industrial',
@@ -107,10 +134,18 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/industrial.png'],
     imgSizes: [{ width: 96, height: 91 }],
     satisfaction: -5,
-    requiredWorkforce: 200, // 仮値
-    produceGoods: 10,      // 1週で生産する製品数（仮値）
+    attractiveness: 80,
+    workforceRequired: {
+      min: 5,
+      max: 50,
+      baseProduction: 20,
+      baseConsumption: 0
+    },
+    baseAssetValue: 200,
     infrastructureDemand: { water: 200, electricity: 200 },
     effectRadius: 11,
+    productDemand: [10, 0, 0, 0],
+    productProduction: [0, 20, 0, 0],
   },
   road: {
     type: 'road',
@@ -172,6 +207,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '電力を生産する施設',
     category: 'infrastructure',
     satisfaction: 0,
+    attractiveness: 100,
     infrastructureSupply: { water: 0, electricity: 5000 },
     effectRadius: 11,
   },
@@ -185,6 +221,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '水を生産する施設',
     category: 'infrastructure',
     satisfaction: 0,
+    attractiveness: 100,
     infrastructureSupply: { water: 5000, electricity: 0 },
     effectRadius: 11,
   }
