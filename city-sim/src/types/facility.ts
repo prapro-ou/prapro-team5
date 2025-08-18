@@ -146,7 +146,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
     satisfaction: 10, // 設置すると満足度が少し上がる
-    effectRadius: 15, // 15マス範囲に効果
+    effectRadius: 21, // 21マス範囲に効果
   },
   // 公園のデータを追加
   park: {

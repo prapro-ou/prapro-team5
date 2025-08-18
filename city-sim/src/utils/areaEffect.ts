@@ -39,10 +39,8 @@ export function countNearbyByType(residential: Facility, facilityType: FacilityT
 
 // 利用側がインデックスとタイプの対応を把握できるよう、固定順の配列を提供
 export const FACILITY_TYPES_IN_ORDER: FacilityType[] = [
-	'residential',
 	'commercial',
 	'industrial',
-	'road',
 	'city_hall',
 	'park',
 	'electric_plant',
