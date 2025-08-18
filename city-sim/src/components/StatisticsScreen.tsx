@@ -14,9 +14,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
-    { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
+    { id: 'economy', name: '経済', icon: TbBolt },
     { id: 'industry', name: '産業', icon: TbBuilding },
-    { id: 'economy', name: '経済', icon: TbCash },
+    { id: 'infrastructure', name: 'インフラ', icon: TbCash },
     { id: 'achievement', name: '実績', icon: TbChartBar },
   ];
 
@@ -89,11 +89,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     switch (activeTab) {
       case 'basic':
         return renderBasicTab();
-      case 'infrastructure':
+      case 'economy':
         return (
           <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">インフラタブ</h2>
-            <p>ここにインフラ情報が表示されます</p>
+            <h2 className="text-2xl mb-4">経済タブ</h2>
+            <p>ここに経済情報が表示されます</p>
           </div>
         );
       case 'industry':
@@ -103,11 +103,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
             <p>ここに産業情報が表示されます</p>
           </div>
         );
-      case 'economy':
+      case 'infrastructure':
         return (
           <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">経済タブ</h2>
-            <p>ここに経済情報が表示されます</p>
+            <h2 className="text-2xl mb-4">インフラタブ</h2>
+            <p>ここにインフラ情報が表示されます</p>
           </div>
         );
       case 'achievement':
