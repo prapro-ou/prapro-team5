@@ -3,12 +3,46 @@ import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
 import { useProductStore } from './ProductStore';
+import { create } from 'zustand';
 
-// 税率の定数
-const TAX_RATES = {
-  CITIZEN_TAX: 0.03,      // 市民税率: 3%
-  CORPORATE_TAX: 0.08,    // 法人税率: 8%
-} as const;
+// 税率の型定義
+interface TaxRates {
+  citizenTax: number;      // 市民税率
+  corporateTax: number;    // 法人税率
+}
+
+// EconomyStoreの型定義
+interface EconomyStore {
+  taxRates: TaxRates;
+  setTaxRates: (rates: Partial<TaxRates>) => void;
+  resetTaxRates: () => void;
+}
+
+// 初期税率
+const INITIAL_TAX_RATES: TaxRates = {
+  citizenTax: 0.03,      // 市民税率: 3%
+  corporateTax: 0.08,    // 法人税率: 8%
+};
+
+// EconomyStoreの作成
+export const useEconomyStore = create<EconomyStore>((set, get) => ({
+  taxRates: INITIAL_TAX_RATES,
+  
+  setTaxRates: (rates: Partial<TaxRates>) => {
+    set((state) => ({
+      taxRates: { ...state.taxRates, ...rates }
+    }));
+  },
+  
+  resetTaxRates: () => {
+    set({ taxRates: INITIAL_TAX_RATES });
+  },
+}));
+
+// 税率を取得する関数
+function getTaxRates(): TaxRates {
+  return useEconomyStore.getState().taxRates;
+}
 
 // 労働力配分を更新・実行
 export function executeMonthlyWorkforceAllocation(
@@ -217,12 +251,14 @@ export function calculateAverageProfit(facilities: Facility[], stats: GameStats)
 
 // 市民税を計算
 export function calculateCitizenTax(population: number, averageAssets: number): number {
-  return Math.floor(population * averageAssets * TAX_RATES.CITIZEN_TAX);
+  const taxRates = getTaxRates();
+  return Math.floor(population * averageAssets * taxRates.citizenTax);
 }
 
 // 法人税を計算
 export function calculateCorporateTax(businessCount: number, averageProfit: number): number {
-  return Math.floor(businessCount * averageProfit * TAX_RATES.CORPORATE_TAX);
+  const taxRates = getTaxRates();
+  return Math.floor(businessCount * averageProfit * taxRates.corporateTax);
 }
 
 // 総税収を計算
@@ -250,8 +286,8 @@ export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[
   console.log(`=== 税収計算 ===`);
   console.log(`人口: ${stats.population}, 平均資産: ${averageAssets}`);
   console.log(`企業数: ${businessCount}, 平均利益: ${averageProfit}`);
-  console.log(`市民税: ${citizenTax} (税率: ${TAX_RATES.CITIZEN_TAX * 100}%)`);
-  console.log(`法人税: ${corporateTax} (税率: ${TAX_RATES.CORPORATE_TAX * 100}%)`);
+  console.log(`市民税: ${citizenTax} (税率: ${getTaxRates().citizenTax * 100}%)`);
+  console.log(`法人税: ${corporateTax} (税率: ${getTaxRates().corporateTax * 100}%)`);
   console.log(`総税収: ${totalTaxRevenue}`);
   console.log(`================`);
   
