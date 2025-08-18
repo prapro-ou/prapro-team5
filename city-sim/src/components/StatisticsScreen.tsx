@@ -1,9 +1,10 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
 import { useFacilityStore } from '../stores/FacilityStore';
+import { useInfrastructureStore } from '../stores/InfrastructureStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const { taxRates, setTaxRates } = useEconomyStore();
   const { getProductSupplyDemandStatus } = useProductStore();
   const facilities = useFacilityStore(state => state.facilities);
+  const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -309,12 +311,97 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   };
 
   // インフラタブのコンテンツ
-  const renderInfrastructureTab = () => (
-    <div className="text-center text-gray-400">
-      <h2 className="text-2xl mb-4">インフラタブ</h2>
-      <p>ここにインフラ情報が表示されます</p>
-    </div>
-  );
+  const renderInfrastructureTab = () => {
+    const infrastructureStatus = getInfrastructureStatus();
+    const shortage = getInfrastructureShortage();
+    const surplus = getInfrastructureSurplus();
+    
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 上水道カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+            <TbDroplet className="text-blue-400" />
+            上水道
+          </h3>
+          <div className="space-y-3">
+            {/* 上水道需要 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">上水道需要</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-red-400">{infrastructureStatus.water.demand.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">m³/月</span>
+              </div>
+            </div>
+            
+            {/* 上水道供給 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">上水道供給</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-green-400">{infrastructureStatus.water.supply.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">m³/月</span>
+              </div>
+            </div>
+            
+            {/* 上水道バランス */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">上水道バランス</span>
+              <div className="flex items-center gap-2">
+                {shortage.water > 0 ? (
+                  <span className="text-sm font-bold text-red-400">不足: {shortage.water.toLocaleString()}m³/月</span>
+                ) : surplus.water > 0 ? (
+                  <span className="text-sm font-bold text-green-400">余剰: {surplus.water.toLocaleString()}m³/月</span>
+                ) : (
+                  <span className="text-sm font-bold text-blue-400">均衡</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 電気カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-yellow-300 flex items-center gap-2">
+            <TbBolt className="text-yellow-400" />
+            電気
+          </h3>
+          <div className="space-y-3">
+            {/* 電気需要 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">電気需要</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-red-400">{infrastructureStatus.electricity.demand.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">kWh/月</span>
+              </div>
+            </div>
+            
+            {/* 電気供給 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">電気供給</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-green-400">{infrastructureStatus.electricity.supply.toLocaleString()}</span>
+                <span className="text-xs text-gray-400">kWh/月</span>
+              </div>
+            </div>
+            
+            {/* 電気バランス */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">電気バランス</span>
+              <div className="flex items-center gap-2">
+                {shortage.electricity > 0 ? (
+                  <span className="text-sm font-bold text-red-400">不足: {shortage.electricity.toLocaleString()}kWh/月</span>
+                ) : surplus.electricity > 0 ? (
+                  <span className="text-sm font-bold text-green-400">余剰: {surplus.electricity.toLocaleString()}kWh/月</span>
+                ) : (
+                  <span className="text-sm font-bold text-blue-400">均衡</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // 実績タブのコンテンツ
   const renderAchievementTab = () => (
