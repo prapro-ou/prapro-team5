@@ -39,7 +39,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
             <div className="text-xs text-gray-400">人口</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}</div>
+            <div className={`text-2xl font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+            </div>
             <div className="text-xs text-gray-400">月次収支</div>
           </div>
           <div className="text-center">
