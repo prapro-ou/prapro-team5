@@ -189,6 +189,93 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     </div>
   );
 
+  // 産業タブのコンテンツ
+  const renderIndustryTab = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* 労働力配分カード */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+          <TbUsers className="text-blue-400" />
+          労働力配分
+        </h3>
+        <div className="space-y-3">
+          {/* 総労働者数 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">総労働者数</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-green-400">{Math.floor(stats.population * 0.6)}</span>
+              <span className="text-xs text-gray-400">人</span>
+            </div>
+          </div>
+          
+          {/* 就職者数 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">就職者数</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-blue-400">
+                {stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
+              </span>
+              <span className="text-xs text-gray-400">人</span>
+            </div>
+          </div>
+          
+          {/* 求職者数 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">求職者数</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-orange-400">
+                {Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
+              </span>
+              <span className="text-xs text-gray-400">人</span>
+            </div>
+          </div>
+          
+          {/* 失業率 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">失業率</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-red-400">
+                {Math.floor(stats.population * 0.6) > 0 
+                  ? (((Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)) / Math.floor(stats.population * 0.6)) * 100).toFixed(1)
+                  : '0.0'
+                }%
+              </span>
+            </div>
+          </div>
+          
+          {/* 平均効率 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">平均効率</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-yellow-400">
+                {stats.workforceAllocations.length > 0 
+                  ? ((stats.workforceAllocations.reduce((total, allocation) => total + allocation.efficiency, 0) / stats.workforceAllocations.length) * 100).toFixed(1)
+                  : '0.0'
+                }%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // インフラタブのコンテンツ
+  const renderInfrastructureTab = () => (
+    <div className="text-center text-gray-400">
+      <h2 className="text-2xl mb-4">インフラタブ</h2>
+      <p>ここにインフラ情報が表示されます</p>
+    </div>
+  );
+
+  // 実績タブのコンテンツ
+  const renderAchievementTab = () => (
+    <div className="text-center text-gray-400">
+      <h2 className="text-2xl mb-4">実績タブ</h2>
+      <p>ここに実績情報が表示されます</p>
+    </div>
+  );
+
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
@@ -197,26 +284,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       case 'economy':
         return renderEconomyTab();
       case 'industry':
-        return (
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">産業タブ</h2>
-            <p>ここに産業情報が表示されます</p>
-          </div>
-        );
+        return renderIndustryTab();
       case 'infrastructure':
-        return (
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">インフラタブ</h2>
-            <p>ここにインフラ情報が表示されます</p>
-          </div>
-        );
+        return renderInfrastructureTab();
       case 'achievement':
-        return (
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">実績タブ</h2>
-            <p>ここに実績情報が表示されます</p>
-          </div>
-        );
+        return renderAchievementTab();
       default:
         return renderBasicTab();
     }
