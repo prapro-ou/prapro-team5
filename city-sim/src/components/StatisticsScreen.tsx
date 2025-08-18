@@ -14,9 +14,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
-    { id: 'economy', name: '経済', icon: TbBolt },
+    { id: 'economy', name: '経済', icon: TbCash },
     { id: 'industry', name: '産業', icon: TbBuilding },
-    { id: 'infrastructure', name: 'インフラ', icon: TbCash },
+    { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'achievement', name: '実績', icon: TbChartBar },
   ];
 
