@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbTrophy, TbCash } from 'react-icons/tb';
 import { useState } from 'react';
 
 interface StatisticsPanelProps {
@@ -15,7 +15,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'economy', name: '経済', icon: TbCash },
-    { id: 'achievement', name: '実績', icon: TbChartBar },
+    { id: 'achievement', name: '実績', icon: TbTrophy },
   ];
 
   return (
