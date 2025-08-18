@@ -17,6 +17,12 @@ export interface GameStats {
     week: number;
     totalWeeks: number; // ゲーム開始からの通算週数
   };
+  // 月次収支情報
+  monthlyBalance: {
+    income: number;
+    expense: number;
+    balance: number;
+  };
 }
 
 export interface GameState {
