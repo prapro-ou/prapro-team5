@@ -2,6 +2,8 @@ import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalenda
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
+import { useProductStore } from '../stores/ProductStore';
+import { useFacilityStore } from '../stores/FacilityStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -13,6 +15,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
   const stats = useGameStore(state => state.stats);
   const { taxRates, setTaxRates } = useEconomyStore();
+  const { getProductSupplyDemandStatus } = useProductStore();
+  const facilities = useFacilityStore(state => state.facilities);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -190,75 +194,119 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   );
 
   // 産業タブのコンテンツ
-  const renderIndustryTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* 労働力配分カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
-          <TbUsers className="text-blue-400" />
-          労働力配分
-        </h3>
-        <div className="space-y-3">
-          {/* 総労働者数 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">総労働者数</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-green-400">{Math.floor(stats.population * 0.6)}</span>
-              <span className="text-xs text-gray-400">人</span>
+  const renderIndustryTab = () => {
+    // 製品の需給状況を取得
+    const { demand, production, efficiency } = getProductSupplyDemandStatus(facilities);
+    
+    // 製品カテゴリ名
+    const productCategories = ['原材料', '中間製品', '最終製品', 'サービス'];
+    
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 労働状況カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+            <TbUsers className="text-blue-400" />
+            労働状況
+          </h3>
+          <div className="space-y-3">
+            {/* 総労働者数 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">総労働者数</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-green-400">{Math.floor(stats.population * 0.6)}</span>
+                <span className="text-xs text-gray-400">人</span>
+              </div>
             </div>
-          </div>
-          
-          {/* 就職者数 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">就職者数</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-blue-400">
-                {stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
-              </span>
-              <span className="text-xs text-gray-400">人</span>
+            
+            {/* 就職者数 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">就職者数</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-blue-400">
+                  {stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
+                </span>
+                <span className="text-xs text-gray-400">人</span>
+              </div>
             </div>
-          </div>
-          
-          {/* 求職者数 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">求職者数</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-orange-400">
-                {Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
-              </span>
-              <span className="text-xs text-gray-400">人</span>
+            
+            {/* 求職者数 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">求職者数</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-orange-400">
+                  {Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)}
+                </span>
+                <span className="text-xs text-gray-400">人</span>
+              </div>
             </div>
-          </div>
-          
-          {/* 失業率 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">失業率</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-red-400">
-                {Math.floor(stats.population * 0.6) > 0 
-                  ? (((Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)) / Math.floor(stats.population * 0.6)) * 100).toFixed(1)
-                  : '0.0'
-                }%
-              </span>
+            
+            {/* 失業率 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">失業率</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-red-400">
+                  {Math.floor(stats.population * 0.6) > 0 
+                    ? (((Math.floor(stats.population * 0.6) - stats.workforceAllocations.reduce((total, allocation) => total + allocation.assignedWorkforce, 0)) / Math.floor(stats.population * 0.6)) * 100).toFixed(1)
+                    : '0.0'
+                  }%
+                </span>
+              </div>
             </div>
-          </div>
-          
-          {/* 平均効率 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">平均効率</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-yellow-400">
-                {stats.workforceAllocations.length > 0 
-                  ? ((stats.workforceAllocations.reduce((total, allocation) => total + allocation.efficiency, 0) / stats.workforceAllocations.length) * 100).toFixed(1)
-                  : '0.0'
-                }%
-              </span>
+            
+            {/* 平均稼働率 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">平均稼働率</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-yellow-400">
+                  {stats.workforceAllocations.length > 0 
+                    ? ((stats.workforceAllocations.reduce((total, allocation) => total + allocation.efficiency, 0) / stats.workforceAllocations.length) * 100).toFixed(1)
+                    : '0.0'
+                  }%
+                </span>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* 製品需給カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-purple-300 flex items-center gap-2">
+            <TbChartBar className="text-purple-400" />
+            製品需給状況
+          </h3>
+          <div className="space-y-3">
+            {/* 製造効率 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">製造効率</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-purple-400">{(efficiency * 100).toFixed(1)}%</span>
+              </div>
+            </div>
+            
+            {/* 製品カテゴリ別の需給 */}
+            {productCategories.map((category, index) => (
+              <div key={index} className="bg-gray-700 rounded-lg p-3">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-gray-300">{category}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-blue-400">需要:</span>
+                    <span className="text-blue-400">{demand[index]}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400">供給:</span>
+                    <span className="text-green-400">{production[index]}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // インフラタブのコンテンツ
   const renderInfrastructureTab = () => (
