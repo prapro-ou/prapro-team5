@@ -1,5 +1,6 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbTrophy, TbCash } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbMoodHappy } from 'react-icons/tb';
 import { useState } from 'react';
+import { useGameStore } from '../stores/GameStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -9,14 +10,138 @@ type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'achievemen
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
+  const stats = useGameStore(state => state.stats);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'economy', name: '経済', icon: TbCash },
-    { id: 'achievement', name: '実績', icon: TbTrophy },
+    { id: 'achievement', name: '実績', icon: TbChartBar },
   ];
+
+  // 基本タブのコンテンツ
+  const renderBasicTab = () => (
+    <div className="space-y-6">
+      {/* 都市概要 */}
+      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+        <h3 className="text-xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+          <TbStar className="text-yellow-400" />
+          都市概要
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">都市レベル</span>
+              <span className="text-3xl font-bold text-yellow-400">Lv.{stats.level}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">人口</span>
+              <span className="text-3xl font-bold text-blue-400">{stats.population.toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">満足度</span>
+              <span className="text-3xl font-bold text-green-400">{stats.satisfaction}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">資金</span>
+              <span className="text-3xl font-bold text-purple-400">{stats.money.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 時間・進行 */}
+      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+        <h3 className="text-xl font-bold mb-4 text-green-300 flex items-center gap-2">
+          <TbCalendar className="text-blue-400" />
+          時間・進行
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">{stats.date.year}</div>
+            <div className="text-sm text-gray-400">年</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-400">{stats.date.month}</div>
+            <div className="text-sm text-gray-400">月</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-400">{stats.date.week}</div>
+            <div className="text-sm text-gray-400">週目</div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-300">ゲーム開始からの週数</span>
+            <span className="text-xl font-bold text-yellow-400">{stats.date.totalWeeks}週</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 労働力配分 */}
+      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+        <h3 className="text-xl font-bold mb-4 text-orange-300 flex items-center gap-2">
+          <TbUsers className="text-orange-400" />
+          労働力配分
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-300">総人口</span>
+            <span className="text-xl font-bold">{stats.population.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-300">労働力（人口の60%）</span>
+            <span className="text-xl font-bold text-green-400">{Math.floor(stats.population * 0.6).toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-300">配分済み施設数</span>
+            <span className="text-xl font-bold text-blue-400">{stats.workforceAllocations.length}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // タブコンテンツのレンダリング
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'basic':
+        return renderBasicTab();
+      case 'infrastructure':
+        return (
+          <div className="text-center text-gray-400">
+            <h2 className="text-2xl mb-4">インフラタブ</h2>
+            <p>ここにインフラ情報が表示されます</p>
+          </div>
+        );
+      case 'industry':
+        return (
+          <div className="text-center text-gray-400">
+            <h2 className="text-2xl mb-4">産業タブ</h2>
+            <p>ここに産業情報が表示されます</p>
+          </div>
+        );
+      case 'economy':
+        return (
+          <div className="text-center text-gray-400">
+            <h2 className="text-2xl mb-4">経済タブ</h2>
+            <p>ここに経済情報が表示されます</p>
+          </div>
+        );
+      case 'achievement':
+        return (
+          <div className="text-center text-gray-400">
+            <h2 className="text-2xl mb-4">実績タブ</h2>
+            <p>ここに実績情報が表示されます</p>
+          </div>
+        );
+      default:
+        return renderBasicTab();
+    }
+  };
 
   return (
     <div className="h-screen bg-gray-900 text-white overflow-hidden flex">
@@ -63,11 +188,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         </div>
 
         {/* タブコンテンツ */}
-        <div className="flex-1 p-8">
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl mb-4">{tabs.find(tab => tab.id === activeTab)?.name}タブ</h2>
-            <p>ここに{activeTab === 'basic' ? '基本' : activeTab === 'infrastructure' ? 'インフラ' : activeTab === 'industry' ? '産業' : activeTab === 'economy' ? '経済' : '実績'}情報が表示されます</p>
-          </div>
+        <div className="flex-1 p-8 overflow-y-auto">
+          {renderTabContent()}
         </div>
       </div>
     </div>
