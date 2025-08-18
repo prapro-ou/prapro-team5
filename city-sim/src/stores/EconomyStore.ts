@@ -257,3 +257,28 @@ export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[
   
   return totalTaxRevenue;
 }
+
+// 月次収支を計算
+export function calculateMonthlyBalance(stats: GameStats, facilities: Facility[]): { income: number; expense: number; balance: number } {
+  // 税収（市庁舎がある場合のみ）
+  const hasCityHall = facilities.some(f => f.type === 'city_hall');
+  const taxRevenue = hasCityHall && stats.population > 0 ? calculateTotalTaxRevenue(stats, facilities) : 0;
+  
+  // 維持費（全施設の維持費合計）
+  const maintenanceCost = facilities.reduce((total, facility) => {
+    const facilityData = FACILITY_DATA[facility.type];
+    return total + (facilityData.maintenanceCost || 0);
+  }, 0);
+  
+  const income = taxRevenue;
+  const expense = maintenanceCost;
+  const balance = income - expense;
+  
+  console.log(`=== 月次収支計算 ===`);
+  console.log(`税収: +${income}`);
+  console.log(`維持費: -${expense}`);
+  console.log(`純利益: ${balance >= 0 ? '+' : ''}${balance}`);
+  console.log(`====================`);
+  
+  return { income, expense, balance };
+}
