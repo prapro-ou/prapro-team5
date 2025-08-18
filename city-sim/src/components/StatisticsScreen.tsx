@@ -22,83 +22,60 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   // 基本タブのコンテンツ
   const renderBasicTab = () => (
-    <div className="space-y-6">
-      {/* 都市概要 */}
-      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
-        <h3 className="text-xl font-bold mb-4 text-blue-300 flex items-center gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* 都市状況カード */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
           <TbStar className="text-yellow-400" />
-          都市概要
+          都市状況
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">都市レベル</span>
-              <span className="text-3xl font-bold text-yellow-400">Lv.{stats.level}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">人口</span>
-              <span className="text-3xl font-bold text-blue-400">{stats.population.toLocaleString()}</span>
-            </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-400">Lv.{stats.level}</div>
+            <div className="text-xs text-gray-400">レベル</div>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">満足度</span>
-              <span className="text-3xl font-bold text-green-400">{stats.satisfaction}%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">資金</span>
-              <span className="text-3xl font-bold text-purple-400">{stats.money.toLocaleString()}</span>
-            </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">{stats.population.toLocaleString()}</div>
+            <div className="text-xs text-gray-400">人口</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-400">{stats.satisfaction}%</div>
+            <div className="text-xs text-gray-400">満足度</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
+            <div className="text-xs text-gray-400">資金</div>
           </div>
         </div>
       </div>
 
-      {/* 時間・進行 */}
-      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
-        <h3 className="text-xl font-bold mb-4 text-green-300 flex items-center gap-2">
+      {/* 時間・進行カード */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
           <TbCalendar className="text-blue-400" />
           時間・進行
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{stats.date.year}</div>
-            <div className="text-sm text-gray-400">年</div>
+        <div className="space-y-3">
+          {/* 現在の日付 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+            <span className="text-gray-300">現在の日付</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-blue-400">{stats.date.year}</span>
+              <span className="text-gray-400">年</span>
+              <span className="text-lg font-bold text-green-400">{stats.date.month}</span>
+              <span className="text-gray-400">月</span>
+              <span className="text-lg font-bold text-purple-400">{stats.date.week}</span>
+              <span className="text-gray-400">週目</span>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-400">{stats.date.month}</div>
-            <div className="text-sm text-gray-400">月</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.date.week}</div>
-            <div className="text-sm text-gray-400">週目</div>
-          </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-700">
-          <div className="flex items-center justify-between">
+          
+          {/* 累計週数 */}
+          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
             <span className="text-gray-300">ゲーム開始からの週数</span>
-            <span className="text-xl font-bold text-yellow-400">{stats.date.totalWeeks}週</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 労働力配分 */}
-      <div className="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
-        <h3 className="text-xl font-bold mb-4 text-orange-300 flex items-center gap-2">
-          <TbUsers className="text-orange-400" />
-          労働力配分
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300">総人口</span>
-            <span className="text-xl font-bold">{stats.population.toLocaleString()}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300">労働力（人口の60%）</span>
-            <span className="text-xl font-bold text-green-400">{Math.floor(stats.population * 0.6).toLocaleString()}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-300">配分済み施設数</span>
-            <span className="text-xl font-bold text-blue-400">{stats.workforceAllocations.length}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-2xl font-bold text-yellow-400">{stats.date.totalWeeks}</span>
+              <span className="text-gray-400">週</span>
+            </div>
           </div>
         </div>
       </div>
