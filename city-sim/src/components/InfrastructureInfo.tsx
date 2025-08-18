@@ -1,4 +1,3 @@
-import React from 'react';
 import { TbDroplet, TbBolt, TbX } from 'react-icons/tb';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 
