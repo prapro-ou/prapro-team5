@@ -10,7 +10,7 @@ import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
-import { calculateTotalTaxRevenue } from './EconomyStore';
+import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
 
 // --- 月次処理の型定義 ---
@@ -185,6 +185,23 @@ const processInfrastructure: MonthlyTask = (get, set) => {
   }
 };
 
+/**
+ * 月次収支を計算し、統計に反映するタスク
+ */
+const processMonthlyBalance: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  const { income, expense, balance } = calculateMonthlyBalance(stats, facilities);
+
+  set({
+    stats: {
+      ...stats,
+      monthlyBalance: { income, expense, balance }
+    }
+  });
+  console.log(`Monthly Balance: Income +$${income}, Expense -$${expense}, Balance +$${balance}`);
+};
+
 /*
  * 人口が一定数を超えたらレベルアップするタスク
  */
@@ -226,7 +243,8 @@ const INITIAL_STATS: GameStats = {
     population: 0,
     satisfaction: 50,
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
-    date: { year: 2024, month: 1, week: 1, totalWeeks: 1 }
+    date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
+    monthlyBalance: { income: 0, expense: 0, balance: 0 } // 月次収支の初期値
 }
 
 
@@ -272,6 +290,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processEconomicCycle,
     applyParkSatisfactionPenalty,
     processInfrastructure,
+    processMonthlyBalance, // 月次収支計算タスクを追加
     adjustPopulationByGrowth,
     citizenFeedTask,
     // 他の月次タスクをここに追加

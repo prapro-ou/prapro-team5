@@ -10,6 +10,7 @@ export interface UIStore {
   isCreditsOpen: boolean;
   isInfrastructureInfoOpen: boolean;
   isSaveLoadOpen: boolean;
+  isStatisticsOpen: boolean;
 
   selectedTile: Position | null;
 
@@ -25,6 +26,8 @@ export interface UIStore {
   toggleInfrastructureInfo: () => void;
   openSaveLoad: () => void;
   closeSaveLoad: () => void;
+  openStatistics: () => void;
+  closeStatistics: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -35,6 +38,7 @@ export const useUIStore = create<UIStore>((set) => ({
   selectedTile: null,
   isInfrastructureInfoOpen: false,
   isSaveLoadOpen: false,
+  isStatisticsOpen: false,
 
   togglePanel: () => {
     set((state) => {
@@ -88,5 +92,13 @@ export const useUIStore = create<UIStore>((set) => ({
   },
   closeSaveLoad: () => {
     set({ isSaveLoadOpen: false });
+  },
+  openStatistics: () => {
+    playPanelSound();
+    set({ isStatisticsOpen: true });
+  },
+  closeStatistics: () => {
+    playPanelSound();
+    set({ isStatisticsOpen: false });
   },
 }));
