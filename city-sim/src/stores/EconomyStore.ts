@@ -125,7 +125,7 @@ export function calculateFinalFacilityEfficiency(
  * @returns 生産された製品の量
  */
 export function calculateProduction(stats: GameStats, facilities: Facility[]): number {
-  const industrials = facilities.filter(f => f.type === 'industrial');
+  const industrials = facilities.filter(f => f.type === 'industrial' && f.isActive);
   let totalProduced = 0;
 
   industrials.forEach(facility => {
@@ -154,7 +154,7 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
  * @returns 消費された製品の量と発生した収益
  */
 export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Facility[]): { consumed: number, revenue: number } {
-  const commercials = facilities.filter(f => f.type === 'commercial');
+  const commercials = facilities.filter(f => f.type === 'commercial' && f.isActive);
   let totalConsumed = 0;
   let totalRevenue = 0;
 

@@ -65,12 +65,20 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
   let totalCost = 0;
+  
+  // 活動中の施設のみ維持費を支払う
   facilities.forEach(facility => {
+    if (!facility.isActive) {
+      console.log(`施設 ${facility.type} (${facility.id}) は道路未接続のため維持費を免除`);
+      return;
+    }
+    
     const data = FACILITY_DATA[facility.type];
     if (data && data.maintenanceCost) {
       totalCost += data.maintenanceCost;
     }
   });
+  
   if (totalCost > 0) {
     const currentMoney = get().stats.money;
     set({
@@ -102,6 +110,12 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   } 
 
   for (const res of residentials) {
+    // 道路接続されていない住宅施設からの人口増加は停止
+    if (!res.isActive) {
+      console.log(`住宅施設 ${res.id} は道路未接続のため人口増加を停止`);
+      continue;
+    }
+    
     const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
     totalIncrease += Math.floor(basePop * growthrate * random); // 条件係数を後で追加
   }

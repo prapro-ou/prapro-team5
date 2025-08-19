@@ -42,7 +42,7 @@ const TERRAIN_CONSTANTS = {
     HEIGHT_THRESHOLD: 0.65,            // 山岳生成の高さ閾値
     BASE_CHANCE: 0.9,                  // 山岳生成の基本確率
     HEIGHT_MULTIPLIER: 3,              // 高さによる確率倍率
-    CONTINUITY_THRESHOLD: 0.325,       // 山岳の連続性閾値
+    CONTINUITY_THRESHOLD: 0.3,       // 山岳の連続性閾値
     SECONDARY_HEIGHT: 0.53,            // 二次的な山岳生成の高さ閾値
   },
   
@@ -51,7 +51,7 @@ const TERRAIN_CONSTANTS = {
     WATER_DISTANCE_MIN: 22,            // 森林生成の最小水辺距離
     WATER_DISTANCE_MID_MIN: 10,        // 中距離森林生成の最小距離
     WATER_DISTANCE_MID_MAX: 15,        // 中距離森林生成の最大距離
-    HEIGHT_THRESHOLD_HIGH: 0.4,      // 高地森林生成の高さ閾値
+    HEIGHT_THRESHOLD_HIGH: 0.4,        // 高地森林生成の高さ閾値
     HEIGHT_THRESHOLD_MID: 0.25,        // 中地森林生成の高さ閾値
     HEIGHT_THRESHOLD_MID_DISTANCE: 0.4, // 中距離森林生成の高さ閾値
     MOISTURE_THRESHOLD_HIGH: 0.525,    // 高地森林生成の湿度閾値
@@ -70,6 +70,19 @@ const TERRAIN_CONSTANTS = {
     OCTAVES: 5,                        // ノイズのオクターブ数
     PERSISTENCE: 0.55,                 // ノイズの持続性
     MOISTURE_OFFSET: 1000,             // 湿度ノイズのオフセット
+  },
+  
+  // 道路生成の設定
+  ROAD: {
+    CENTER_OFFSET: 0.3,                // マップ中央からのオフセット比率
+    NORTH_START_X_RATIO: 0.3,          // 北側道路の開始X座標比率
+    NORTH_END_Y_RATIO: 0.4,            // 北側道路の終端Y座標比率
+    EAST_START_Y_RATIO: 0.3,           // 東側道路の開始Y座標比率
+    EAST_END_X_RATIO: 0.6,             // 東側道路の終端X座標比率
+    SOUTH_START_X_RATIO: 0.7,          // 南側道路の開始X座標比率
+    SOUTH_END_Y_RATIO: 0.6,            // 南側道路の終端Y座標比率
+    WEST_START_Y_RATIO: 0.7,           // 西側道路の開始Y座標比率
+    WEST_END_X_RATIO: 0.4,             // 西側道路の終端X座標比率
   }
 } as const;
 
@@ -272,7 +285,10 @@ function isBeachArea(x: number, y: number, waterPoints: Array<{x: number, y: num
   return minDistance >= TERRAIN_CONSTANTS.BEACH.DISTANCE_MIN && minDistance < TERRAIN_CONSTANTS.BEACH.DISTANCE_MAX;
 }
 
-export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, TerrainType> {
+export function generateNaturalTerrainMap(gridSize: GridSize): {
+  terrainMap: Map<string, TerrainType>;
+  generatedRoads: Array<{x: number, y: number, variantIndex: number}>;
+} {
   const terrainMap = new Map<string, TerrainType>();
   
   const seed = Math.floor(Math.random() * 1000000);
@@ -322,7 +338,13 @@ export function generateNaturalTerrainMap(gridSize: GridSize): Map<string, Terra
     }
   }
 
-  return improvedTerrainMap;
+  // 道路生成
+  const generatedRoads = generateMapEdgeRoads(gridSize, selectedDirections, improvedTerrainMap);
+
+  return {
+    terrainMap: improvedTerrainMap,
+    generatedRoads
+  };
 }
 
 function determineTerrainType(
@@ -515,10 +537,165 @@ function getNeighborTiles(x: number, y: number, gridSize: GridSize): string[] {
   return neighbors;
 }
 
+// 道路生成パターンを判定する関数
+function determineRoadPattern(selectedDirections: string[]): 'through' | 'cutoff' {
+  // 対向方向の組み合わせ
+  const oppositePairs = [
+    ['north', 'south'],
+    ['east', 'west']
+  ];
+  
+  // 貫通道路かチェック
+  for (const [dir1, dir2] of oppositePairs) {
+    if (selectedDirections.includes(dir1) && selectedDirections.includes(dir2)) {
+      return 'through';
+    }
+  }
+  
+  // それ以外は途切れ道路
+  return 'cutoff';
+}
+
+// 指定された位置に道路を配置できるかチェックする関数
+function canPlaceRoadAt(x: number, y: number, terrainMap: Map<string, TerrainType>): boolean {
+  const terrain = terrainMap.get(`${x},${y}`);
+  if (!terrain) return false;
+  
+  // 生成された道路は山タイルも貫く
+  // 水辺以外の地形には道路を配置可能
+  return terrain !== 'water';
+}
+
+// 貫通道路を生成する関数
+function generateThroughRoads(
+  gridSize: GridSize,
+  selectedDirections: string[],
+  terrainMap: Map<string, TerrainType>
+): Array<{x: number, y: number, variantIndex: number}> {
+  const roads: Array<{x: number, y: number, variantIndex: number}> = [];
+  
+  // 全方向のリスト
+  const allDirections = ['north', 'east', 'south', 'west'];
+  
+  // 水辺がない方向（陸地がある方向）を特定
+  const landDirections = allDirections.filter(direction => !selectedDirections.includes(direction));
+  
+  // 北-南の貫通道路（北と南に水辺がない場合）
+  if (landDirections.includes('north') && landDirections.includes('south')) {
+    const centerX = Math.floor(gridSize.width / 2);
+    for (let y = 0; y < gridSize.height; y++) {
+      if (canPlaceRoadAt(centerX, y, terrainMap)) {
+        roads.push({ x: centerX, y, variantIndex: 0 }); // 直線道路
+      }
+    }
+  }
+  
+  // 東-西の貫通道路（東と西に水辺がない場合）
+  if (landDirections.includes('east') && landDirections.includes('west')) {
+    const centerY = Math.floor(gridSize.height / 2);
+    for (let x = 0; x < gridSize.width; x++) {
+      if (canPlaceRoadAt(x, centerY, terrainMap)) {
+        roads.push({ x, y: centerY, variantIndex: 0 }); // 直線道路
+      }
+    }
+  }
+  
+  return roads;
+}
+
+// 途切れ道路を生成する関数
+function generateCutoffRoads(
+  gridSize: GridSize,
+  selectedDirections: string[],
+  terrainMap: Map<string, TerrainType>
+): Array<{x: number, y: number, variantIndex: number}> {
+  const roads: Array<{x: number, y: number, variantIndex: number}> = [];
+  
+  // 全方向のリスト
+  const allDirections = ['north', 'east', 'south', 'west'];
+  
+  // 水辺がない方向（陸地がある方向）を特定
+  const landDirections = allDirections.filter(direction => !selectedDirections.includes(direction));
+  
+  // 複数の陸地方向がある場合は、ランダムに一つを選択
+  if (landDirections.length > 1) {
+    const randomIndex = Math.floor(Math.random() * landDirections.length);
+    const selectedLandDirection = landDirections[randomIndex];
+    landDirections.splice(0, landDirections.length); // 配列をクリア
+    landDirections.push(selectedLandDirection); // 選択された方向のみを追加
+  }
+  
+  // 北側からの道路（北に水辺がない場合）
+  if (landDirections.includes('north')) {
+    const startX = Math.floor(gridSize.width * TERRAIN_CONSTANTS.ROAD.NORTH_START_X_RATIO);
+    const endY = Math.floor(gridSize.height * TERRAIN_CONSTANTS.ROAD.NORTH_END_Y_RATIO);
+    
+    for (let y = 0; y <= endY; y++) {
+      if (canPlaceRoadAt(startX, y, terrainMap)) {
+        roads.push({ x: startX, y, variantIndex: 0 });
+      }
+    }
+  }
+  
+  // 東側からの道路（東に水辺がない場合）
+  if (landDirections.includes('east')) {
+    const startY = Math.floor(gridSize.height * TERRAIN_CONSTANTS.ROAD.EAST_START_Y_RATIO);
+    const endX = Math.floor(gridSize.width * TERRAIN_CONSTANTS.ROAD.EAST_END_X_RATIO);
+    
+    for (let x = gridSize.width - 1; x >= endX; x--) {
+      if (canPlaceRoadAt(x, startY, terrainMap)) {
+        roads.push({ x, y: startY, variantIndex: 0 });
+      }
+    }
+  }
+  
+  // 南側からの道路（南に水辺がない場合）
+  if (landDirections.includes('south')) {
+    const startX = Math.floor(gridSize.width * TERRAIN_CONSTANTS.ROAD.SOUTH_START_X_RATIO);
+    const endY = Math.floor(gridSize.height * TERRAIN_CONSTANTS.ROAD.SOUTH_END_Y_RATIO);
+    
+    for (let y = gridSize.height - 1; y >= endY; y--) {
+      if (canPlaceRoadAt(startX, y, terrainMap)) {
+        roads.push({ x: startX, y, variantIndex: 0 });
+      }
+    }
+  }
+  
+  // 西側からの道路（西に水辺がない場合）
+  if (landDirections.includes('west')) {
+    const startY = Math.floor(gridSize.height * TERRAIN_CONSTANTS.ROAD.WEST_START_Y_RATIO);
+    const endX = Math.floor(gridSize.width * TERRAIN_CONSTANTS.ROAD.WEST_END_X_RATIO);
+    
+    for (let x = 0; x <= endX; x++) {
+      if (canPlaceRoadAt(x, startY, terrainMap)) {
+        roads.push({ x, y: startY, variantIndex: 0 });
+      }
+    }
+  }
+  
+  return roads;
+}
+
 export function getBuildability(terrain: TerrainType): boolean {
   return TERRAIN_DATA[terrain]?.buildable || false;
 }
 
 export function getTerrainSatisfactionModifier(terrain: TerrainType): number {
   return TERRAIN_DATA[terrain]?.satisfactionModifier || 0;
+}
+
+// 道路生成のメイン関数
+export function generateMapEdgeRoads(
+  gridSize: GridSize,
+  selectedDirections: string[],
+  terrainMap: Map<string, TerrainType>
+): Array<{x: number, y: number, variantIndex: number}> {
+  const pattern = determineRoadPattern(selectedDirections);
+  
+  if (pattern === 'through') {
+    return generateThroughRoads(gridSize, selectedDirections, terrainMap);
+  } 
+  else {
+    return generateCutoffRoads(gridSize, selectedDirections, terrainMap);
+  }
 }
