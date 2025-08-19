@@ -93,28 +93,28 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         </div>
       </div>
 
-      {/* 年末評価セクション */}
-      {stats.yearlyEvaluation && (
-        <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-white shadow-lg">
+      {/* 前年度評価結果セクション */}
+      {stats.previousYearEvaluation && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white shadow-lg">
           <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <TbTrophy className="text-yellow-300" />
-            年度{stats.yearlyEvaluation.year} 評価結果
+            <TbTrophy className="text-blue-300" />
+            前年度({stats.previousYearEvaluation.year}) 評価結果
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-yellow-300">{stats.yearlyEvaluation.grade}</div>
+              <div className="text-4xl font-bold text-blue-300">{stats.previousYearEvaluation.grade}</div>
               <div className="text-sm">総合評価</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-300">{stats.yearlyEvaluation.totalScore}</div>
+              <div className="text-4xl font-bold text-purple-300">{stats.previousYearEvaluation.totalScore}</div>
               <div className="text-sm">総合スコア</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-300">¥{stats.yearlyEvaluation.subsidy.toLocaleString()}</div>
+              <div className="text-4xl font-bold text-green-300">¥{stats.previousYearEvaluation.subsidy.toLocaleString()}</div>
               <div className="text-sm">補助金</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-purple-300">{stats.yearlyEvaluation.year}</div>
+              <div className="text-4xl font-bold text-yellow-300">{stats.previousYearEvaluation.year}</div>
               <div className="text-sm">評価年度</div>
             </div>
           </div>
@@ -122,47 +122,47 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           {/* 詳細評価項目 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <h4 className="text-lg font-bold mb-3 text-yellow-200">評価詳細</h4>
+              <h4 className="text-lg font-bold mb-3 text-blue-200">評価詳細</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>発展度合い</span>
-                  <span className="font-bold">{stats.yearlyEvaluation.developmentScore}/40点</span>
+                  <span className="font-bold">{stats.previousYearEvaluation.developmentScore}/40点</span>
                 </div>
                 <div className="flex justify-between">
                   <span>支持率</span>
-                  <span className="font-bold">{stats.yearlyEvaluation.approvalRating}/30点</span>
+                  <span className="font-bold">{stats.previousYearEvaluation.approvalRating}/30点</span>
                 </div>
                 <div className="flex justify-between">
                   <span>満足度スコア</span>
-                  <span className="font-bold">{stats.yearlyEvaluation.satisfactionScore}/20点</span>
+                  <span className="font-bold">{stats.previousYearEvaluation.satisfactionScore}/20点</span>
                 </div>
                 <div className="flex justify-between">
                   <span>ミッション達成</span>
-                  <span className="font-bold">{stats.yearlyEvaluation.missionCompletion}/10点</span>
+                  <span className="font-bold">{stats.previousYearEvaluation.missionCompletion}/10点</span>
                 </div>
               </div>
             </div>
             
             <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <h4 className="text-lg font-bold mb-3 text-yellow-200">評価コメント</h4>
+              <h4 className="text-lg font-bold mb-3 text-blue-200">評価コメント</h4>
               <div className="text-sm space-y-2">
-                {stats.yearlyEvaluation.grade === 'S' && (
-                  <p className="text-yellow-200">素晴らしい都市運営です！最高の評価と補助金を獲得しました。</p>
+                {stats.previousYearEvaluation.grade === 'S' && (
+                  <p className="text-blue-200">素晴らしい都市運営でした！最高の評価と補助金を獲得しました。</p>
                 )}
-                {stats.yearlyEvaluation.grade === 'A' && (
-                  <p className="text-green-200">優秀な都市運営です。高い評価と補助金を獲得しました。</p>
+                {stats.previousYearEvaluation.grade === 'A' && (
+                  <p className="text-green-200">優秀な都市運営でした。高い評価と補助金を獲得しました。</p>
                 )}
-                {stats.yearlyEvaluation.grade === 'B' && (
-                  <p className="text-blue-200">良好な都市運営です。適切な評価と補助金を獲得しました。</p>
+                {stats.previousYearEvaluation.grade === 'B' && (
+                  <p className="text-blue-200">良好な都市運営でした。適切な評価と補助金を獲得しました。</p>
                 )}
-                {stats.yearlyEvaluation.grade === 'C' && (
-                  <p className="text-orange-200">まずまずの都市運営です。基本的な補助金を獲得しました。</p>
+                {stats.previousYearEvaluation.grade === 'C' && (
+                  <p className="text-orange-200">まずまずの都市運営でした。基本的な補助金を獲得しました。</p>
                 )}
-                {stats.yearlyEvaluation.grade === 'D' && (
-                  <p className="text-red-200">改善の余地があります。最低限の補助金を獲得しました。</p>
+                {stats.previousYearEvaluation.grade === 'D' && (
+                  <p className="text-red-200">改善の余地がありました。最低限の補助金を獲得しました。</p>
                 )}
-                {stats.yearlyEvaluation.grade === 'E' && (
-                  <p className="text-red-300">都市運営に課題があります。補助金は最小限です。</p>
+                {stats.previousYearEvaluation.grade === 'E' && (
+                  <p className="text-red-300">都市運営に課題がありました。補助金は最小限でした。</p>
                 )}
               </div>
             </div>
@@ -171,7 +171,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       )}
 
       {/* 年末評価未実施の場合の表示 */}
-      {!stats.yearlyEvaluation && (
+      {!stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <h3 className="text-lg font-bold mb-3 text-gray-300 flex items-center gap-2">
             <TbTrophy className="text-gray-400" />
