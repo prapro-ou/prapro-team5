@@ -142,7 +142,20 @@ function App() {
   // ゲーム開始時の地形生成（新規ゲーム時のみ）
   useEffect(() => {
     if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
-      generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      
+      // 生成された道路をFacilityStoreに登録
+      if (generatedRoads.length > 0) {
+        const { addFacility, createFacility } = useFacilityStore.getState();
+        generatedRoads.forEach(road => {
+          const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+          roadFacility.variantIndex = road.variantIndex;
+          roadFacility.isConnected = true; // 生成された道路は接続されている
+          addFacility(roadFacility);
+        });
+        
+        console.log(`${generatedRoads.length}個の道路が生成されました`);
+      }
     }
   }, [showStartScreen, generateTerrain]);
 
