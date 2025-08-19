@@ -5,6 +5,7 @@ import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { isFacilityConnectedToValidRoadNetwork } from '../utils/roadConnectivity';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -20,6 +21,9 @@ interface FacilityStore {
   getFacilityAt: (position: Position) => Facility | null;
   checkCanPlace: (position: Position, facilityType: FacilityType, gridSize: { width: number; height: number }) => boolean;
   createFacility: (position: Position, type: FacilityType) => Facility;
+  
+  // 道路接続状態管理
+  updateRoadConnectivity: (gridSize: { width: number; height: number }) => void;
   
   // セーブ・ロード機能
   saveState: () => any;
@@ -139,8 +143,20 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       position,
       occupiedTiles,
       variantIndex: 0,
-      effectRadius: facilityData.effectRadius
+      effectRadius: facilityData.effectRadius,
+      isConnected: false // 初期状態では接続されていない
     };
+  },
+
+  // 道路接続状態管理
+  updateRoadConnectivity: (gridSize) => {
+    const { facilities } = get();
+    const updatedFacilities = facilities.map(facility => ({
+      ...facility,
+      isConnected: isFacilityConnectedToValidRoadNetwork(facility, facilities, gridSize)
+    }));
+    
+    set({ facilities: updatedFacilities });
   },
 
   // セーブ・ロード機能
