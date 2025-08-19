@@ -13,7 +13,6 @@ import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } fro
 import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
 import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
-import { useRewardStore } from './RewardStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -289,14 +288,13 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
     console.log(`=== 年度${stats.date.year} 年末評価開始 ===`);
     
     const facilities = useFacilityStore.getState().facilities;
-    const rewards = useRewardStore.getState().rewards;
     const { executeYearlyEvaluation, calculateYearlyStats } = useYearlyEvaluationStore.getState();
     
     // 現在の年度の統計データを計算
     const yearlyStats = calculateYearlyStats(stats, facilities);
     
     // 年末評価を実行
-    const yearlyEvaluation = executeYearlyEvaluation(stats, facilities, rewards);
+    const yearlyEvaluation = executeYearlyEvaluation(stats, facilities);
     
     // 評価結果と年次統計をGameStoreの状態に反映
     set({
@@ -577,10 +575,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   loadState: (savedState: any) => {
     if (savedState && savedState.stats) {
+      const savedStats = savedState.stats;
+      
+      // 新しく追加したフィールドの初期化（後方互換性のため）
+      const validatedStats: GameStats = {
+        ...INITIAL_STATS, // デフォルト値を設定
+        ...savedStats,    // 保存されたデータで上書き
+        // 新しく追加したフィールドの初期化
+        yearlyEvaluation: savedStats.yearlyEvaluation || null,
+        yearlyStats: savedStats.yearlyStats || null,
+        previousYearStats: savedStats.previousYearStats || null,
+        monthlyAccumulation: savedStats.monthlyAccumulation || {
+          year: savedStats.date?.year || 2024,
+          monthlyTaxRevenue: new Array(12).fill(0),
+          monthlyMaintenanceCost: new Array(12).fill(0),
+          monthlyPopulation: new Array(12).fill(0),
+          monthlySatisfaction: new Array(12).fill(50)
+        }
+      };
+      
       set({
-        stats: savedState.stats,
+        stats: validatedStats,
         levelUpMessage: savedState.levelUpMessage || null
       });
+      
+      console.log('ゲーム状態をロードしました');
     }
   },
 

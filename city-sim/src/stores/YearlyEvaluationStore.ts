@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
-import type { Reward } from '../components/RewardPanel';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // 年次統計データの型定義
@@ -52,7 +51,7 @@ interface YearlyEvaluationStore {
   calculateSubsidy: (totalScore: number, level: number, population: number) => number;
   
   // 年末評価の実行
-  executeYearlyEvaluation: (stats: GameStats, facilities: Facility[], rewards: Reward[]) => YearlyEvaluation;
+  executeYearlyEvaluation: (stats: GameStats, facilities: Facility[]) => YearlyEvaluation;
   
   // セーブ・ロード機能
   saveState: () => any;
