@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { BGMPlayer } from './SoundSettings';
 import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
 
 type Props = {
@@ -338,6 +339,7 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
           設定
         </button>
       </div>
+
     </div>
   );
 };
