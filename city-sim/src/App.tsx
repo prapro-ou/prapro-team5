@@ -190,8 +190,6 @@ function App() {
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-    
-    // 注意: 道路接続状態の更新はuseEffectで自動的に行われるため、ここでは不要
   };
 
   const handleTileClick = (position: Position) => {
