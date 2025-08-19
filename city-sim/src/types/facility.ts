@@ -77,6 +77,8 @@ export interface Facility {
   variantIndex: number;      // バリエーション用のインデックス
   // 公園など範囲効果用
   effectRadius?: number;
+  // 道路接続状態
+  isConnected: boolean;      // 道路に接続されているかどうか
 }
 
 // 施設のマスターデータ
