@@ -35,7 +35,10 @@ export const useInfrastructureStore = create<InfrastructureStore>((set, get) => 
     let totalWaterSupply = 0;
     let totalElectricitySupply = 0;
 
-    facilities.forEach(facility => {
+    // 活動中の施設のみを対象とする
+    const activeFacilities = facilities.filter(facility => facility.isActive);
+
+    activeFacilities.forEach(facility => {
       const info = FACILITY_DATA[facility.type];
       
       // 需要の計算

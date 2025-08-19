@@ -8,8 +8,9 @@ import { getResidentialsWithoutPark } from '../utils/parkEffect';
 export const applyParkSatisfactionPenalty: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   const residentials = facilities.filter(f => f.type === 'residential');
-  const parks = facilities.filter(f => f.type === 'park');
-  const outOfRangeResidentials = getResidentialsWithoutPark(residentials, parks);
+  // 活動中の公園のみを対象とする
+  const activeParks = facilities.filter(f => f.type === 'park' && f.isActive);
+  const outOfRangeResidentials = getResidentialsWithoutPark(residentials, activeParks);
 
   if (outOfRangeResidentials.length === 0) return;
 

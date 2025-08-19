@@ -149,17 +149,27 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       occupiedTiles,
       variantIndex: 0,
       effectRadius: facilityData.effectRadius,
-      isConnected: false // 初期状態では接続されていない
+      isConnected: false, // 初期状態では接続されていない
+      isActive: false     // 初期状態では停止中
     };
   },
 
   // 道路接続状態管理
   updateRoadConnectivity: (gridSize) => {
     const { facilities } = get();
-    const updatedFacilities = facilities.map(facility => ({
-      ...facility,
-      isConnected: isFacilityConnectedToValidRoadNetwork(facility, facilities, gridSize)
-    }));
+    const updatedFacilities = facilities.map(facility => {
+      const isConnected = isFacilityConnectedToValidRoadNetwork(facility, facilities, gridSize);
+      
+      // 道路接続状態に基づいて施設の活動状態を決定
+      // 道路施設は常に活動中、その他の施設は接続状態に依存
+      const isActive = facility.type === 'road' || isConnected;
+      
+      return {
+        ...facility,
+        isConnected,
+        isActive
+      };
+    });
     
     set({ facilities: updatedFacilities });
   },
@@ -179,8 +189,14 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
 
   loadState: (savedState: any) => {
     if (savedState && savedState.facilities) {
+      // 古いセーブデータにはisActiveプロパティがない可能性があるため、デフォルト値を設定
+      const facilitiesWithDefaults = savedState.facilities.map((facility: any) => ({
+        ...facility,
+        isActive: facility.isActive !== undefined ? facility.isActive : facility.isConnected
+      }));
+      
       set({
-        facilities: savedState.facilities,
+        facilities: facilitiesWithDefaults,
         selectedFacilityType: savedState.selectedFacilityType || null
       });
     }
