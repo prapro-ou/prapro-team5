@@ -33,14 +33,14 @@ interface YearlyEvaluationStore {
   // 発展度合いの計算（人口増加率、施設数増加、経済成長率）
   calculateDevelopmentScore: (yearlyStats: YearlyStats, previousYearStats?: YearlyStats) => number;
   
-  // 支持率の計算（満足度、インフラ整備状況、公園効果）
-  calculateApprovalRating: (stats: GameStats, facilities: Facility[]) => number;
+  // 支持率の計算
+  calculateApprovalRating: () => number;
   
   // 満足度スコアの計算（年間平均満足度、公園効果、工業区画の影響）
   calculateSatisfactionScore: (stats: GameStats, facilities: Facility[]) => number;
   
-  // ミッション達成数の計算（RewardStoreと連携）
-  calculateMissionCompletion: (rewards: Reward[]) => number;
+  // ミッション達成数の計算
+  calculateMissionCompletion: () => number;
   
   // 総合評価スコアの計算
   calculateTotalScore: (development: number, approval: number, satisfaction: number, mission: number) => number;
@@ -60,18 +60,33 @@ interface YearlyEvaluationStore {
   resetToInitial: () => void;
 }
 
-export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((set, get) => ({
+export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((_set, get) => ({
   // 年次統計データの計算
   calculateYearlyStats: (stats: GameStats, facilities: Facility[]): YearlyStats => {
-    // 現在の年度の統計データを計算
-    // 注: 実際の年間データは月次データの累積が必要
+    // 累積された月次データから年次統計を計算
+    const { monthlyAccumulation } = stats;
+    
+    // 年間税収の合計
+    const totalTaxRevenue = monthlyAccumulation.monthlyTaxRevenue.reduce((sum, revenue) => sum + revenue, 0);
+    
+    // 年間維持費の合計
+    const totalMaintenanceCost = monthlyAccumulation.monthlyMaintenanceCost.reduce((sum, cost) => sum + cost, 0);
+    
+    // 年間人口増加（1月と12月の差）
+    const populationGrowth = monthlyAccumulation.monthlyPopulation[11] - monthlyAccumulation.monthlyPopulation[0];
+    
+    // インフラ効率の計算（活動中の施設の割合）
+    const activeFacilities = facilities.filter(f => f.isActive).length;
+    const totalFacilities = facilities.length;
+    const infrastructureEfficiency = totalFacilities > 0 ? activeFacilities / totalFacilities : 0;
+    
     return {
       year: stats.date.year,
-      totalTaxRevenue: 0, // 月次データの累積が必要
-      totalMaintenanceCost: 0, // 月次データの累積が必要
-      populationGrowth: 0, // 前年比の計算が必要
-      facilityCount: facilities.length,
-      infrastructureEfficiency: 0 // インフラ効率の計算が必要
+      totalTaxRevenue,
+      totalMaintenanceCost,
+      populationGrowth,
+      facilityCount: totalFacilities,
+      infrastructureEfficiency
     };
   },
   
@@ -97,7 +112,8 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((set, get)
         const revenueGrowth = yearlyStats.totalTaxRevenue / previousYearStats.totalTaxRevenue;
         score += Math.min(10, Math.floor(revenueGrowth * 5));
       }
-    } else {
+    }
+    else {
       // 初年度の場合は基本点
       score = 20;
     }
@@ -106,7 +122,7 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((set, get)
   },
   
   // 支持率の計算（30点満点）（未実装）
-  calculateApprovalRating: (_stats: GameStats, _facilities: Facility[]): number => {
+  calculateApprovalRating: (): number => {
     return 0;
   },
   
@@ -130,7 +146,7 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((set, get)
   },
   
   // ミッション達成数の計算（10点満点）（未実装）
-  calculateMissionCompletion: (_rewards: Reward[]): number => {
+  calculateMissionCompletion: (): number => {
     return 0;
   },
   
@@ -170,12 +186,12 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((set, get)
   },
   
   // 年末評価の実行
-  executeYearlyEvaluation: (stats: GameStats, facilities: Facility[], rewards: Reward[]): YearlyEvaluation => {
+  executeYearlyEvaluation: (stats: GameStats, facilities: Facility[]): YearlyEvaluation => {
     const yearlyStats = get().calculateYearlyStats(stats, facilities);
-    const developmentScore = get().calculateDevelopmentScore(yearlyStats);
-    const approvalRating = get().calculateApprovalRating(stats, facilities);
+    const developmentScore = get().calculateDevelopmentScore(yearlyStats, stats.previousYearStats || undefined);
+    const approvalRating = get().calculateApprovalRating();
     const satisfactionScore = get().calculateSatisfactionScore(stats, facilities);
-    const missionCompletion = get().calculateMissionCompletion(rewards);
+    const missionCompletion = get().calculateMissionCompletion();
     
     const totalScore = get().calculateTotalScore(developmentScore, approvalRating, satisfactionScore, missionCompletion);
     const grade = get().determineGrade(totalScore);

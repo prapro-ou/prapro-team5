@@ -219,6 +219,66 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
 };
 
 /**
+ * 月次データを累積するタスク
+ */
+const accumulateMonthlyData: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const currentMonth = stats.date.month - 1; // 配列のインデックスは0ベース
+  
+  // 年度が変わった場合は累積データをリセット
+  if (stats.monthlyAccumulation.year !== stats.date.year) {
+    set({
+      stats: {
+        ...stats,
+        monthlyAccumulation: {
+          year: stats.date.year,
+          monthlyTaxRevenue: new Array(12).fill(0),
+          monthlyMaintenanceCost: new Array(12).fill(0),
+          monthlyPopulation: new Array(12).fill(0),
+          monthlySatisfaction: new Array(12).fill(50)
+        }
+      }
+    });
+  }
+  
+  // 現在の月次データを累積
+  const newAccumulation = { ...stats.monthlyAccumulation };
+  
+  // 税収を累積（市庁舎がある場合のみ）
+  const facilities = useFacilityStore.getState().facilities;
+  const hasCityHall = facilities.some(f => f.type === 'city_hall');
+  if (hasCityHall && stats.population > 0) {
+    const taxRevenue = calculateTotalTaxRevenue(stats, facilities);
+    newAccumulation.monthlyTaxRevenue[currentMonth] = taxRevenue;
+  }
+  
+  // 維持費を累積
+  let totalMaintenanceCost = 0;
+  facilities.forEach(facility => {
+    if (facility.isActive) {
+      const data = FACILITY_DATA[facility.type];
+      if (data && data.maintenanceCost) {
+        totalMaintenanceCost += data.maintenanceCost;
+      }
+    }
+  });
+  newAccumulation.monthlyMaintenanceCost[currentMonth] = totalMaintenanceCost;
+  
+  // 人口と満足度を累積
+  newAccumulation.monthlyPopulation[currentMonth] = stats.population;
+  newAccumulation.monthlySatisfaction[currentMonth] = stats.satisfaction;
+  
+  set({
+    stats: {
+      ...stats,
+      monthlyAccumulation: newAccumulation
+    }
+  });
+  
+  console.log(`Monthly Data Accumulated: Month ${stats.date.month}, Tax: ${newAccumulation.monthlyTaxRevenue[currentMonth]}, Maintenance: ${newAccumulation.monthlyMaintenanceCost[currentMonth]}`);
+};
+
+/**
  * 年末評価処理タスク
  */
 const processYearlyEvaluation: MonthlyTask = (get, set) => {
@@ -230,16 +290,20 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
     
     const facilities = useFacilityStore.getState().facilities;
     const rewards = useRewardStore.getState().rewards;
-    const { executeYearlyEvaluation } = useYearlyEvaluationStore.getState();
+    const { executeYearlyEvaluation, calculateYearlyStats } = useYearlyEvaluationStore.getState();
+    
+    // 現在の年度の統計データを計算
+    const yearlyStats = calculateYearlyStats(stats, facilities);
     
     // 年末評価を実行
     const yearlyEvaluation = executeYearlyEvaluation(stats, facilities, rewards);
     
-    // 評価結果をGameStoreの状態に反映
+    // 評価結果と年次統計をGameStoreの状態に反映
     set({
       stats: {
         ...stats,
-        yearlyEvaluation
+        yearlyEvaluation,
+        yearlyStats
       }
     });
     
@@ -304,7 +368,15 @@ const INITIAL_STATS: GameStats = {
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
     monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
     yearlyEvaluation: null, // 年次評価データ（初期値はnull）
-    yearlyStats: null // 年次統計データ（初期値はnull）
+    yearlyStats: null, // 年次統計データ（初期値はnull）
+    previousYearStats: null, // 前年度統計データ（初期値はnull）
+    monthlyAccumulation: { // 月次データの累積（初期値は12ヶ月分の0配列）
+      year: 2024,
+      monthlyTaxRevenue: new Array(12).fill(0),
+      monthlyMaintenanceCost: new Array(12).fill(0),
+      monthlyPopulation: new Array(12).fill(0),
+      monthlySatisfaction: new Array(12).fill(50)
+    }
 }
 
 
@@ -351,6 +423,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     processMonthlyBalance,
+    accumulateMonthlyData, // 月次データ累積タスクを追加
     processYearlyEvaluation,
     adjustPopulationByGrowth,
     citizenFeedTask,
@@ -399,6 +472,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       // 月次タスク実行後の最新状態を取得して日付のみ更新
       const currentStats = get().stats;
+      
+      // 年度が変わった時に前年度の統計データを保存
+      if (newStats.date.month === 1 && newStats.date.year > stats.date.year && currentStats.yearlyStats) {
+        set({
+          stats: {
+            ...currentStats,
+            previousYearStats: {
+              year: currentStats.yearlyStats.year,
+              totalTaxRevenue: currentStats.yearlyStats.totalTaxRevenue,
+              totalMaintenanceCost: currentStats.yearlyStats.totalMaintenanceCost,
+              populationGrowth: currentStats.yearlyStats.populationGrowth,
+              facilityCount: currentStats.yearlyStats.facilityCount,
+              infrastructureEfficiency: currentStats.yearlyStats.infrastructureEfficiency
+            }
+          }
+        });
+        console.log(`前年度(${currentStats.yearlyStats.year})の統計データを保存しました`);
+      }
+      
       set({
         stats: {
           ...currentStats,
