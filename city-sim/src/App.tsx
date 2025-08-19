@@ -128,6 +128,14 @@ function App() {
     calculateInfrastructure(facilities);
   }, [facilities]);
 
+  // 道路接続状態の更新
+  useEffect(() => {
+    if (!showStartScreen) {
+      const { updateRoadConnectivity } = useFacilityStore.getState();
+      updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+    }
+  }, [facilities, showStartScreen]);
+
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   
@@ -156,9 +164,23 @@ function App() {
     addFacility(newFacility);
     // 設置音を鳴らす
     playBuildSound();
-    // もし設置した施設が住宅なら、人口を100人増やす
+    // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
     if (type === 'residential') {
-      addPopulation(100);
+      // 道路接続状態を更新してからチェック
+      const { updateRoadConnectivity } = useFacilityStore.getState();
+      updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      
+      // 更新された施設リストを取得
+      const updatedFacilities = useFacilityStore.getState().facilities;
+      const placedFacility = updatedFacilities.find(f => f.id === newFacility.id);
+      
+      // 道路に接続されている場合のみ人口を増やす
+      if (placedFacility && placedFacility.isConnected) {
+        addPopulation(100);
+        console.log('住宅が道路に接続されました。人口が100人増加しました。');
+      } else {
+        console.log('住宅が道路に接続されていません。人口は増加しません。');
+      }
     }
     // 施設を設置した後に満足度を再計算する
     // この時、更新後の施設リストを取得して渡す
@@ -168,6 +190,10 @@ function App() {
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
+    
+    // 道路接続状態を更新
+    const { updateRoadConnectivity } = useFacilityStore.getState();
+    updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   };
 
   const handleTileClick = (position: Position) => {
