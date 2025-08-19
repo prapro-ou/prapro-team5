@@ -128,13 +128,13 @@ function App() {
     calculateInfrastructure(facilities);
   }, [facilities]);
 
-  // 道路接続状態の更新
+  // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
-    if (!showStartScreen) {
+    if (!showStartScreen && facilities.length > 0) {
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
     }
-  }, [facilities, showStartScreen]);
+  }, [facilities.length, showStartScreen]); // facilities.lengthのみを監視
 
   // 地形生成
   const { generateTerrain } = useTerrainStore();
@@ -166,7 +166,7 @@ function App() {
     playBuildSound();
     // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
     if (type === 'residential') {
-      // 道路接続状態を更新してからチェック
+      // 道路接続状態を更新
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
       
@@ -191,9 +191,7 @@ function App() {
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
     
-    // 道路接続状態を更新
-    const { updateRoadConnectivity } = useFacilityStore.getState();
-    updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+    // 注意: 道路接続状態の更新はuseEffectで自動的に行われるため、ここでは不要
   };
 
   const handleTileClick = (position: Position) => {

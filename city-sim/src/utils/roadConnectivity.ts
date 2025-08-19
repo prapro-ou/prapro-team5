@@ -1,6 +1,16 @@
 import type { Facility } from '../types/facility';
 import type { Position } from '../types/grid';
 
+// 道路接続状態のキャッシュ
+const connectionCache = new Map<string, boolean>();
+const roadNetworkCache = new Map<string, Set<string>>();
+
+// キャッシュをクリアする関数
+export function clearConnectionCache(): void {
+  connectionCache.clear();
+  roadNetworkCache.clear();
+}
+
 // 指定された位置の隣接タイルの座標を取得
 export function getNeighborPositions(position: Position): Position[] {
   return [
@@ -21,12 +31,17 @@ export function hasRoadAtPosition(position: Position, facilities: Facility[]): b
   );
 }
 
-// 道路の接続性を判定し、接続された道路のIDセットを取得
+// 道路の接続性を判定し、接続された道路のIDセットを取得（キャッシュ付き）
 export function findConnectedRoads(
   startPosition: Position, 
   facilities: Facility[], 
   gridSize: { width: number; height: number }
 ): Set<string> {
+  const cacheKey = `${startPosition.x},${startPosition.y}`;
+  if (roadNetworkCache.has(cacheKey)) {
+    return roadNetworkCache.get(cacheKey)!;
+  }
+
   const visited = new Set<string>();
   const queue: Position[] = [startPosition];
   const connectedRoads = new Set<string>();
@@ -64,10 +79,12 @@ export function findConnectedRoads(
     }
   }
   
+  // キャッシュに保存
+  roadNetworkCache.set(cacheKey, connectedRoads);
   return connectedRoads;
 }
 
-// 施設が道路に接続されているか判定
+// 施設が道路に接続されているか判定（キャッシュ付き）
 export function isFacilityConnectedToRoad(
   facility: Facility, 
   facilities: Facility[], 
@@ -76,6 +93,12 @@ export function isFacilityConnectedToRoad(
   // 道路施設は常に接続されているとみなす
   if (facility.type === 'road') {
     return true;
+  }
+  
+  // キャッシュキーを生成
+  const cacheKey = `${facility.id}_road_connection`;
+  if (connectionCache.has(cacheKey)) {
+    return connectionCache.get(cacheKey)!;
   }
   
   // 施設の各タイルについて道路接続をチェック
@@ -89,21 +112,30 @@ export function isFacilityConnectedToRoad(
         
         // 隣接タイルに道路があるかチェック
         if (hasRoadAtPosition(neighbor, facilities)) {
+          // 結果をキャッシュ
+          connectionCache.set(cacheKey, true);
           return true;
         }
       }
     }
   }
   
+  // 結果をキャッシュ
+  connectionCache.set(cacheKey, false);
   return false;
 }
 
-// 道路がマップ端まで続いているか判定
+// 道路がマップ端まで続いているか判定（キャッシュ付き）
 export function isRoadConnectedToMapEdge(
   roadPosition: Position, 
   facilities: Facility[], 
   gridSize: { width: number; height: number }
 ): boolean {
+  const cacheKey = `${roadPosition.x},${roadPosition.y}_map_edge`;
+  if (connectionCache.has(cacheKey)) {
+    return connectionCache.get(cacheKey)!;
+  }
+
   const visited = new Set<string>();
   const queue: Position[] = [roadPosition];
   
@@ -117,6 +149,7 @@ export function isRoadConnectedToMapEdge(
     // マップエッジに到達したかチェック
     if (current.x === 0 || current.x === gridSize.width - 1 || 
         current.y === 0 || current.y === gridSize.height - 1) {
+      connectionCache.set(cacheKey, true);
       return true;
     }
     
@@ -134,10 +167,12 @@ export function isRoadConnectedToMapEdge(
     }
   }
   
+  // 結果をキャッシュ
+  connectionCache.set(cacheKey, false);
   return false;
 }
 
-// 施設が有効な道路ネットワークに接続されているか判定
+// 施設が有効な道路ネットワークに接続されているか判定（キャッシュ付き）
 export function isFacilityConnectedToValidRoadNetwork(
   facility: Facility, 
   facilities: Facility[], 
@@ -148,8 +183,15 @@ export function isFacilityConnectedToValidRoadNetwork(
     return true;
   }
   
+  // キャッシュキーを生成
+  const cacheKey = `${facility.id}_valid_network`;
+  if (connectionCache.has(cacheKey)) {
+    return connectionCache.get(cacheKey)!;
+  }
+  
   // 施設が道路に接続されているかチェック
   if (!isFacilityConnectedToRoad(facility, facilities, gridSize)) {
+    connectionCache.set(cacheKey, false);
     return false;
   }
   
@@ -166,6 +208,7 @@ export function isFacilityConnectedToValidRoadNetwork(
         if (hasRoadAtPosition(neighbor, facilities)) {
           // この道路がマップエッジまで続いているかチェック
           if (isRoadConnectedToMapEdge(neighbor, facilities, gridSize)) {
+            connectionCache.set(cacheKey, true);
             return true;
           }
         }
@@ -173,5 +216,7 @@ export function isFacilityConnectedToValidRoadNetwork(
     }
   }
   
+  // 結果をキャッシュ
+  connectionCache.set(cacheKey, false);
   return false;
 }
