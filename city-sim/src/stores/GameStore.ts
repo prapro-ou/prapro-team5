@@ -368,6 +368,7 @@ const INITIAL_STATS: GameStats = {
     yearlyEvaluation: null, // 年次評価データ（初期値はnull）
     yearlyStats: null, // 年次統計データ（初期値はnull）
     previousYearStats: null, // 前年度統計データ（初期値はnull）
+    previousYearEvaluation: null, // 前年度評価データ（初期値はnull）
     monthlyAccumulation: { // 月次データの累積（初期値は12ヶ月分の0配列）
       year: 2024,
       monthlyTaxRevenue: new Array(12).fill(0),
@@ -473,7 +474,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 月次タスク実行後の最新状態を取得して日付のみ更新
       const currentStats = get().stats;
       
-      // 年度が変わった時に前年度の統計データを保存
+      // 年度が変わった時に前年度の統計データと評価データを保存
       if (newStats.date.month === 1 && newStats.date.year > stats.date.year && currentStats.yearlyStats) {
         set({
           stats: {
@@ -485,10 +486,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
               populationGrowth: currentStats.yearlyStats.populationGrowth,
               facilityCount: currentStats.yearlyStats.facilityCount,
               infrastructureEfficiency: currentStats.yearlyStats.infrastructureEfficiency
-            }
+            },
+            // 前年度の評価データも保存
+            previousYearEvaluation: currentStats.yearlyEvaluation
           }
         });
-        console.log(`前年度(${currentStats.yearlyStats.year})の統計データを保存しました`);
+        console.log(`前年度(${currentStats.yearlyStats.year})の統計データと評価データを保存しました`);
       }
       
       set({
@@ -579,14 +582,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (savedState && savedState.stats) {
       const savedStats = savedState.stats;
       
-      // 新しく追加したフィールドの初期化（後方互換性のため）
+      // 新しく追加したフィールドの初期化
       const validatedStats: GameStats = {
         ...INITIAL_STATS, // デフォルト値を設定
-        ...savedStats,    // 保存されたデータで上書き
-        // 新しく追加したフィールドの初期化
-        yearlyEvaluation: savedStats.yearlyEvaluation || null,
-        yearlyStats: savedStats.yearlyStats || null,
-        previousYearStats: savedStats.previousYearStats || null,
+        ...savedStats,
+      yearlyEvaluation: savedStats.yearlyEvaluation || null,
+      yearlyStats: savedStats.yearlyStats || null,
+      previousYearStats: savedStats.previousYearStats || null,
+      previousYearEvaluation: savedStats.previousYearEvaluation || null,
         monthlyAccumulation: savedStats.monthlyAccumulation || {
           year: savedStats.date?.year || 2024,
           monthlyTaxRevenue: new Array(12).fill(0),

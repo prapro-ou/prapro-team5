@@ -52,6 +52,17 @@ export interface GameStats {
     facilityCount: number;         // 前年度施設数
     infrastructureEfficiency: number; // 前年度インフラ効率
   } | null;
+  // 前年度の評価データ（前年比計算用）
+  previousYearEvaluation: {
+    year: number;
+    developmentScore: number;      // 前年度発展度合い
+    approvalRating: number;        // 前年度支持率
+    satisfactionScore: number;     // 前年度満足度スコア
+    missionCompletion: number;     // 前年度ミッション達成数
+    totalScore: number;            // 前年度総合評価スコア
+    grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'E'; // 前年度評価等級
+    subsidy: number;               // 前年度補助金額
+  } | null;
   // 月次データの累積（年次統計計算用）
   monthlyAccumulation: {
     year: number;
