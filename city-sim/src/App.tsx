@@ -76,7 +76,7 @@ function App() {
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
   
   // 時間制御
-  const { isPaused, getCurrentInterval } = useTimeControlStore();
+  const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -114,6 +114,13 @@ function App() {
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
   }, [advanceTime, showStartScreen, isPaused, getCurrentInterval]);
+
+  // 統計画面の状態を監視して時間制御をチェック
+  useEffect(() => {
+    if (!showStartScreen) {
+      checkModalState();
+    }
+  }, [isStatisticsOpen, showStartScreen, checkModalState]);
 
   // インフラ計算
   useEffect(() => {

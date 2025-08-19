@@ -102,9 +102,11 @@ export const useTimeControlStore = create<TimeControlState>((set, get) => {
           isPaused: true, 
           wasPausedBeforeModal: false 
         });
+        console.log('Modal opened, auto-pausing game time');
       } else if (!isModalOpen && isPaused && !wasPausedBeforeModal) {
         // モーダルが閉じたとき、モーダル表示前は一時停止していなかった場合は再開
         set({ isPaused: false });
+        console.log('Modal closed, auto-resuming game time');
       }
     }
   };

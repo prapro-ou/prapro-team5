@@ -56,7 +56,6 @@ export function TimeControl() {
     uiState.isSettingsOpen,
     uiState.isCreditsOpen,
     uiState.isSaveLoadOpen,
-    uiState.isStatisticsOpen,
     checkModalState
   ]);
 
