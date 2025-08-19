@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbTrophy } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
@@ -30,65 +30,162 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   // 基本タブのコンテンツ
   const renderBasicTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* 都市状況カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
-          <TbStar className="text-yellow-400" />
-          都市状況
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-400">Lv.{stats.level}</div>
-            <div className="text-xs text-gray-400">レベル</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{stats.population.toLocaleString()}</div>
-            <div className="text-xs text-gray-400">人口</div>
-          </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+    <div className="space-y-6">
+      {/* 基本情報セクション */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 都市状況カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+            <TbStar className="text-yellow-400" />
+            都市状況
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">Lv.{stats.level}</div>
+              <div className="text-xs text-gray-400">レベル</div>
             </div>
-            <div className="text-xs text-gray-400">月次収支</div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-400">{stats.population.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">人口</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+              </div>
+              <div className="text-xs text-gray-400">月次収支</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">資金</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
-            <div className="text-xs text-gray-400">資金</div>
+        </div>
+
+        {/* 時間・進行カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+            <TbCalendar className="text-blue-400" />
+            時間・進行
+          </h3>
+          <div className="space-y-3">
+            {/* 現在の日付 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">現在の日付</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-blue-400">{stats.date.year}</span>
+                <span className="text-gray-400">年</span>
+                <span className="text-lg font-bold text-green-400">{stats.date.month}</span>
+                <span className="text-gray-400">月</span>
+                <span className="text-lg font-bold text-purple-400">{stats.date.week}</span>
+                <span className="text-gray-400">週目</span>
+              </div>
+            </div>
+            
+            {/* 累計週数 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">ゲーム開始からの週数</span>
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-bold text-yellow-400">{stats.date.totalWeeks}</span>
+                <span className="text-gray-400">週</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 時間・進行カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
-          <TbCalendar className="text-blue-400" />
-          時間・進行
-        </h3>
-        <div className="space-y-3">
-          {/* 現在の日付 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">現在の日付</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-blue-400">{stats.date.year}</span>
-              <span className="text-gray-400">年</span>
-              <span className="text-lg font-bold text-green-400">{stats.date.month}</span>
-              <span className="text-gray-400">月</span>
-              <span className="text-lg font-bold text-purple-400">{stats.date.week}</span>
-              <span className="text-gray-400">週目</span>
+      {/* 年末評価セクション */}
+      {stats.yearlyEvaluation && (
+        <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-white shadow-lg">
+          <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <TbTrophy className="text-yellow-300" />
+            年度{stats.yearlyEvaluation.year} 評価結果
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-300">{stats.yearlyEvaluation.grade}</div>
+              <div className="text-sm">総合評価</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-300">{stats.yearlyEvaluation.totalScore}</div>
+              <div className="text-sm">総合スコア</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-300">¥{stats.yearlyEvaluation.subsidy.toLocaleString()}</div>
+              <div className="text-sm">補助金</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-purple-300">{stats.yearlyEvaluation.year}</div>
+              <div className="text-sm">評価年度</div>
             </div>
           </div>
           
-          {/* 累計週数 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">ゲーム開始からの週数</span>
-            <div className="flex items-center gap-1">
-              <span className="text-2xl font-bold text-yellow-400">{stats.date.totalWeeks}</span>
-              <span className="text-gray-400">週</span>
+          {/* 詳細評価項目 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <h4 className="text-lg font-bold mb-3 text-yellow-200">評価詳細</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>発展度合い</span>
+                  <span className="font-bold">{stats.yearlyEvaluation.developmentScore}/40点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>支持率</span>
+                  <span className="font-bold">{stats.yearlyEvaluation.approvalRating}/30点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>満足度スコア</span>
+                  <span className="font-bold">{stats.yearlyEvaluation.satisfactionScore}/20点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>ミッション達成</span>
+                  <span className="font-bold">{stats.yearlyEvaluation.missionCompletion}/10点</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <h4 className="text-lg font-bold mb-3 text-yellow-200">評価コメント</h4>
+              <div className="text-sm space-y-2">
+                {stats.yearlyEvaluation.grade === 'S' && (
+                  <p className="text-yellow-200">素晴らしい都市運営です！最高の評価と補助金を獲得しました。</p>
+                )}
+                {stats.yearlyEvaluation.grade === 'A' && (
+                  <p className="text-green-200">優秀な都市運営です。高い評価と補助金を獲得しました。</p>
+                )}
+                {stats.yearlyEvaluation.grade === 'B' && (
+                  <p className="text-blue-200">良好な都市運営です。適切な評価と補助金を獲得しました。</p>
+                )}
+                {stats.yearlyEvaluation.grade === 'C' && (
+                  <p className="text-orange-200">まずまずの都市運営です。基本的な補助金を獲得しました。</p>
+                )}
+                {stats.yearlyEvaluation.grade === 'D' && (
+                  <p className="text-red-200">改善の余地があります。最低限の補助金を獲得しました。</p>
+                )}
+                {stats.yearlyEvaluation.grade === 'E' && (
+                  <p className="text-red-300">都市運営に課題があります。補助金は最小限です。</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 年末評価未実施の場合の表示 */}
+      {!stats.yearlyEvaluation && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-gray-300 flex items-center gap-2">
+            <TbTrophy className="text-gray-400" />
+            年末評価
+          </h3>
+          <div className="text-center text-gray-400">
+            <p className="mb-2">年末評価は12月第4週に実行されます</p>
+            <p className="text-sm">現在の進行状況: {stats.date.year}年{stats.date.month}月{stats.date.week}週目</p>
+            {stats.date.month === 12 && stats.date.week === 4 && (
+              <p className="text-yellow-400 font-bold mt-2">今週が年末評価の週です！</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
