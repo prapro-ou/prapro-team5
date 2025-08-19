@@ -454,6 +454,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newStats.date.week++;
     newStats.date.totalWeeks++;
     
+    // 月次タスクの実行（第4週の時点で実行）
+    if (newStats.date.week === 4) {
+      monthlyTasks.forEach(task => task(get, set));
+    }
+    
     // 月の進行
     if (newStats.date.week > 4) {
       newStats.date.week = 1;
@@ -464,9 +469,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
         newStats.date.month = 1;
         newStats.date.year++;
       }
-      
-      // 月次タスクの実行
-      monthlyTasks.forEach(task => task(get, set));
       
       // 月次タスク実行後の最新状態を取得して日付のみ更新
       const currentStats = get().stats;
