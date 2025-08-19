@@ -545,9 +545,9 @@ function determineRoadPattern(selectedDirections: string[]): 'through' | 'cutoff
     ['east', 'west']
   ];
   
-  // 貫通道路かチェック
+  // 貫通道路: 対向方向の両方に水辺がない場合
   for (const [dir1, dir2] of oppositePairs) {
-    if (selectedDirections.includes(dir1) && selectedDirections.includes(dir2)) {
+    if (!selectedDirections.includes(dir1) && !selectedDirections.includes(dir2)) {
       return 'through';
     }
   }
@@ -574,14 +574,8 @@ function generateThroughRoads(
 ): Array<{x: number, y: number, variantIndex: number}> {
   const roads: Array<{x: number, y: number, variantIndex: number}> = [];
   
-  // 全方向のリスト
-  const allDirections = ['north', 'east', 'south', 'west'];
-  
-  // 水辺がない方向（陸地がある方向）を特定
-  const landDirections = allDirections.filter(direction => !selectedDirections.includes(direction));
-  
   // 北-南の貫通道路（北と南に水辺がない場合）
-  if (landDirections.includes('north') && landDirections.includes('south')) {
+  if (!selectedDirections.includes('north') && !selectedDirections.includes('south')) {
     const centerX = Math.floor(gridSize.width / 2);
     for (let y = 0; y < gridSize.height; y++) {
       if (canPlaceRoadAt(centerX, y, terrainMap)) {
@@ -591,7 +585,7 @@ function generateThroughRoads(
   }
   
   // 東-西の貫通道路（東と西に水辺がない場合）
-  if (landDirections.includes('east') && landDirections.includes('west')) {
+  if (!selectedDirections.includes('east') && !selectedDirections.includes('west')) {
     const centerY = Math.floor(gridSize.height / 2);
     for (let x = 0; x < gridSize.width; x++) {
       if (canPlaceRoadAt(x, centerY, terrainMap)) {
