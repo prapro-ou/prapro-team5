@@ -307,12 +307,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processMonthlyBalance, // 月次収支計算タスクを追加
     adjustPopulationByGrowth,
     citizenFeedTask,
-    // 道路接続状態の更新タスク
-    (get, set) => {
-      const { updateRoadConnectivity } = useFacilityStore.getState();
-      // グリッドサイズは動的に取得する必要があるため、App.tsxで明示的に呼び出す
-      console.log('月次道路接続状態更新: グリッドサイズが不明なためスキップ');
-    },
     // 他の月次タスクをここに追加
   ],
   levelUpMessage: null,
