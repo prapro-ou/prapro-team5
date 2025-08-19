@@ -1,4 +1,4 @@
-import { TbPlayerPause, TbPlayerPlay, TbPlayerStop, TbGauge, TbClock } from 'react-icons/tb';
+import { TbPlayerPause, TbPlayerPlay, TbPlayerStop, TbClock } from 'react-icons/tb';
 import { useTimeControlStore } from '../stores/TimeControlStore';
 import { useEffect } from 'react';
 
@@ -28,9 +28,11 @@ export function TimeControl() {
       // 数字キーで速度変更
       if (event.code === 'Digit1') {
         setSpeed(1);
-      } else if (event.code === 'Digit2') {
+      } 
+      else if (event.code === 'Digit2') {
         setSpeed(2);
-      } else if (event.code === 'Digit4') {
+      } 
+      else if (event.code === 'Digit4') {
         setSpeed(4);
       }
     };
