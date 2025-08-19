@@ -1,6 +1,7 @@
 import React from 'react';
 import { TbCash, TbUsers, TbMoodHappy, TbCalendar ,TbStar} from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
+import { TimeControl } from './TimeControl';
 
 interface InfoPanelProps {
   stats?: any; // 使用しないのでオプショナルに
@@ -48,6 +49,9 @@ export const InfoPanel: React.FC<InfoPanelProps> = () => {
             {stats.date.year}年{stats.date.month}月{stats.date.week}週目
           </div>
         </div>
+        
+        {/* 時間制御 */}
+        <TimeControl />
       </div>
     </div>
 	)
