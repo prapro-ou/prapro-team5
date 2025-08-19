@@ -1,5 +1,6 @@
 import { TbPlayerPause, TbPlayerPlay, TbPlayerStop, TbClock } from 'react-icons/tb';
 import { useTimeControlStore } from '../stores/TimeControlStore';
+import { useUIStore } from '../stores/UIStore';
 import { useEffect } from 'react';
 
 export function TimeControl() {
@@ -7,8 +8,12 @@ export function TimeControl() {
     isPaused, 
     speedMultiplier, 
     togglePause, 
-    setSpeed 
+    setSpeed,
+    checkModalState
   } = useTimeControlStore();
+  
+  // UI状態を監視
+  const uiState = useUIStore();
 
   const speedOptions = [
     { value: 1, label: '1x' },
@@ -43,6 +48,17 @@ export function TimeControl() {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [togglePause, setSpeed]);
+
+  // モーダル状態の変更を監視して自動停止/再開
+  useEffect(() => {
+    checkModalState();
+  }, [
+    uiState.isSettingsOpen,
+    uiState.isCreditsOpen,
+    uiState.isSaveLoadOpen,
+    uiState.isStatisticsOpen,
+    checkModalState
+  ]);
 
   return (
     <div className="flex items-center gap-3 bg-gray-700 rounded-lg p-1 border border-gray-600 shadow-md">

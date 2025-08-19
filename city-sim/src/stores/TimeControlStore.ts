@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { useUIStore } from './UIStore';
 
 interface TimeControlState {
   // 時間制御の状態
   isPaused: boolean;           // 一時停止状態
   speedMultiplier: number;     // 速度倍率
   baseInterval: number;        // 基本間隔（ミリ秒）
+  wasPausedBeforeModal: boolean; // モーダル表示前の一時停止状態
   
   // アクション
   togglePause: () => void;     // 一時停止/再開の切り替え
@@ -20,6 +22,9 @@ interface TimeControlState {
   saveState: () => any;
   loadState: (data: any) => void;
   resetToInitial: () => void;
+  
+  // 自動停止機能
+  checkModalState: () => void; // モーダル状態をチェックして自動停止/再開
 }
 
 export const useTimeControlStore = create<TimeControlState>((set, get) => {
@@ -27,6 +32,7 @@ export const useTimeControlStore = create<TimeControlState>((set, get) => {
     isPaused: false,
     speedMultiplier: 1,
     baseInterval: 5000, // 5秒（デフォ）
+    wasPausedBeforeModal: false,
   };
 
   const store = {
@@ -77,6 +83,29 @@ export const useTimeControlStore = create<TimeControlState>((set, get) => {
     
     resetToInitial: () => {
       set(initialState);
+    },
+    
+    // 自動停止機能
+    checkModalState: () => {
+      const uiState = useUIStore.getState();
+      const { isPaused, wasPausedBeforeModal } = get();
+      
+      // モーダルが開いているかチェック
+      const isModalOpen = uiState.isSettingsOpen || 
+                         uiState.isCreditsOpen || 
+                         uiState.isSaveLoadOpen || 
+                         uiState.isStatisticsOpen;
+      
+      if (isModalOpen && !isPaused) {
+        // モーダルが開いたとき、現在一時停止していない場合は停止
+        set({ 
+          isPaused: true, 
+          wasPausedBeforeModal: false 
+        });
+      } else if (!isModalOpen && isPaused && !wasPausedBeforeModal) {
+        // モーダルが閉じたとき、モーダル表示前は一時停止していなかった場合は再開
+        set({ isPaused: false });
+      }
     }
   };
 
