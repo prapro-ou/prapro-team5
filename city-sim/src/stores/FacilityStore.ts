@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import { FACILITY_DATA } from '../types/facility';
-import { useGameStore } from './GameStore';
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';

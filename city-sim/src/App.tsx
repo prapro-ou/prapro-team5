@@ -25,6 +25,7 @@ import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
+import { useTimeControlStore } from './stores/TimeControlStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -73,6 +74,9 @@ function App() {
 
   // ゲーム統計情報・レベルアップ通知
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
+  
+  // 時間制御
+  const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -98,14 +102,25 @@ function App() {
   // 時間経過を処理するuseEffect
   useEffect(() => {
     if (showStartScreen) return; // スタート画面中はタイマーを動かさない
+    if (isPaused) return; // 一時停止中はタイマーを動かさない
+
+    const interval = getCurrentInterval();
+    if (interval === Infinity) return; // 一時停止中
 
     const timerId = setInterval(() => {
       advanceTime();
-    }, 5000); // 5秒ごとに時間を進める
+    }, interval);
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
-  }, [advanceTime, showStartScreen]);
+  }, [advanceTime, showStartScreen, isPaused, getCurrentInterval]);
+
+  // 統計画面の状態を監視して時間制御をチェック
+  useEffect(() => {
+    if (!showStartScreen) {
+      checkModalState();
+    }
+  }, [isStatisticsOpen, showStartScreen, checkModalState]);
 
   // インフラ計算
   useEffect(() => {
