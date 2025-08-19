@@ -350,8 +350,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processEconomicCycle,
     applyParkSatisfactionPenalty,
     processInfrastructure,
-    processMonthlyBalance, // 月次収支計算タスクを追加
-    processYearlyEvaluation, // 年末評価処理タスクを追加
+    processMonthlyBalance,
+    processYearlyEvaluation,
     adjustPopulationByGrowth,
     citizenFeedTask,
     // 他の月次タスクをここに追加
