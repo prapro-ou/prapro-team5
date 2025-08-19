@@ -12,6 +12,8 @@ import { saveLoadRegistry } from './SaveLoadRegistry';
 import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
 import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
+import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
+import { useRewardStore } from './RewardStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -216,6 +218,48 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
   console.log(`Monthly Balance: Income +$${income}, Expense -$${expense}, Balance +$${balance}`);
 };
 
+/**
+ * 年末評価処理タスク
+ */
+const processYearlyEvaluation: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  
+  // 12月の最終週の場合のみ実行
+  if (stats.date.month === 12 && stats.date.week === 4) {
+    console.log(`=== 年度${stats.date.year} 年末評価開始 ===`);
+    
+    const facilities = useFacilityStore.getState().facilities;
+    const rewards = useRewardStore.getState().rewards;
+    const { executeYearlyEvaluation } = useYearlyEvaluationStore.getState();
+    
+    // 年末評価を実行
+    const yearlyEvaluation = executeYearlyEvaluation(stats, facilities, rewards);
+    
+    // 評価結果をGameStoreの状態に反映
+    set({
+      stats: {
+        ...stats,
+        yearlyEvaluation
+      }
+    });
+    
+    // 補助金を資金に追加
+    if (yearlyEvaluation.subsidy > 0) {
+      const currentMoney = get().stats.money;
+      set({
+        stats: {
+          ...stats,
+          money: currentMoney + yearlyEvaluation.subsidy
+        }
+      });
+      
+      console.log(`年末評価完了: ${yearlyEvaluation.grade}評価 (${yearlyEvaluation.totalScore}点)`);
+      console.log(`補助金: +¥${yearlyEvaluation.subsidy.toLocaleString()}`);
+      console.log(`=== 年度${stats.date.year} 年末評価完了 ===`);
+    }
+  }
+};
+
 /*
  * 人口が一定数を超えたらレベルアップするタスク
  */
@@ -258,7 +302,9 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
-    monthlyBalance: { income: 0, expense: 0, balance: 0 } // 月次収支の初期値
+    monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
+    yearlyEvaluation: null, // 年次評価データ（初期値はnull）
+    yearlyStats: null // 年次統計データ（初期値はnull）
 }
 
 
@@ -305,6 +351,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     processMonthlyBalance, // 月次収支計算タスクを追加
+    processYearlyEvaluation, // 年末評価処理タスクを追加
     adjustPopulationByGrowth,
     citizenFeedTask,
     // 他の月次タスクをここに追加
