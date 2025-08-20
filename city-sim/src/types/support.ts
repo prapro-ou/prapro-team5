@@ -87,3 +87,18 @@ export interface FactionSupport {
   previousRating: number;       // 前月の支持率（0-100）
   change: number;               // 変化量（-100 ～ +100）
 }
+
+// 支持率の履歴データ（月次）
+export interface MonthlySupportHistory {
+  year: number;
+  month: number;
+  factionSupports: FactionSupport[];
+}
+
+// 支持率の履歴データ（年次）
+export interface YearlySupportHistory {
+  year: number;
+  averageRatings: Record<FactionType, number>;  // 年間平均支持率
+  yearEndRatings: Record<FactionType, number>;  // 年末時点の支持率
+  totalChanges: Record<FactionType, number>;    // 年間の総変化量
+}
