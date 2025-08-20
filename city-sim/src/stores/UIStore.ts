@@ -4,30 +4,44 @@ import { useFacilityStore } from "./FacilityStore";
 import { playPanelSound } from "../components/SoundSettings"; 
 
 export interface UIStore {
-  // パネルの表示状態
+  // パネル表示状態
   showPanel: boolean;
-  isSettingsOpen: boolean;
-  isCreditsOpen: boolean;
-  isInfrastructureInfoOpen: boolean;
-  isSaveLoadOpen: boolean;
-  isStatisticsOpen: boolean;
-
-  selectedTile: Position | null;
-
-  // アクション
   togglePanel: () => void;
   setShowPanel: (show: boolean) => void;
+  
+  // 設定画面
+  isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
+  
+  // クレジット画面
+  isCreditsOpen: boolean;
   openCredits: () => void;
   closeCredits: () => void;
-  setSelectedTile: (tile: Position | null) => void;
-  switchToCredits: () => void; 
+  
+  // インフラ情報画面
+  isInfrastructureInfoOpen: boolean;
   toggleInfrastructureInfo: () => void;
+  
+  // セーブ・ロード画面
+  isSaveLoadOpen: boolean;
   openSaveLoad: () => void;
   closeSaveLoad: () => void;
+  
+  // 統計画面
+  isStatisticsOpen: boolean;
   openStatistics: () => void;
   closeStatistics: () => void;
+  
+  // 年末評価結果表示画面
+  isYearlyEvaluationResultOpen: boolean;
+  openYearlyEvaluationResult: () => void;
+  closeYearlyEvaluationResult: () => void;
+  
+  // 選択されたタイル
+  selectedTile: Position | null;
+  setSelectedTile: (tile: Position | null) => void;
+  switchToCredits: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -39,6 +53,7 @@ export const useUIStore = create<UIStore>((set) => ({
   isInfrastructureInfoOpen: false,
   isSaveLoadOpen: false,
   isStatisticsOpen: false,
+  isYearlyEvaluationResultOpen: false,
 
   togglePanel: () => {
     set((state) => {
@@ -100,5 +115,13 @@ export const useUIStore = create<UIStore>((set) => ({
   closeStatistics: () => {
     playPanelSound();
     set({ isStatisticsOpen: false });
+  },
+  openYearlyEvaluationResult: () => {
+    playPanelSound();
+    set({ isYearlyEvaluationResultOpen: true });
+  },
+  closeYearlyEvaluationResult: () => {
+    playPanelSound();
+    set({ isYearlyEvaluationResultOpen: false });
   },
 }));
