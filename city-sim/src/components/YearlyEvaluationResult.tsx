@@ -25,7 +25,6 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
           color: 'text-yellow-400',
           bgColor: 'bg-gradient-to-r from-yellow-600 to-orange-600',
           message: '素晴らしい都市運営でした！中央政府はあなたを高く評価しています。',
-          icon: TbTrophy
         };
       case 'A':
         return {
@@ -49,7 +48,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
         return {
           color: 'text-red-400',
           bgColor: 'bg-gradient-to-r from-red-600 to-pink-600',
-          message: '改善の余地がありました。中央政府はより一層の努力を求めています。',
+          message: '改善の余地がありました。中央政府は計画の見直しを要求しています。',
         };
       case 'E':
         return {

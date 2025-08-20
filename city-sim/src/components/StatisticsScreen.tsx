@@ -146,22 +146,22 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
               <h4 className="text-lg font-bold mb-3 text-gray-200">評価コメント</h4>
               <div className="text-sm space-y-2">
                 {stats.previousYearEvaluation.grade === 'S' && (
-                  <p className="text-blue-300">素晴らしい都市運営でした！最高の評価と補助金を獲得しました。</p>
+                  <p className="text-blue-300">素晴らしい都市運営でした！中央政府はあなたを高く評価しています。</p>
                 )}
                 {stats.previousYearEvaluation.grade === 'A' && (
-                  <p className="text-green-300">優秀な都市運営でした。高い評価と補助金を獲得しました。</p>
+                  <p className="text-green-300">優秀な都市運営でした。中央政府はあなたの活躍に期待しています。</p>
                 )}
                 {stats.previousYearEvaluation.grade === 'B' && (
-                  <p className="text-blue-300">良好な都市運営でした。適切な評価と補助金を獲得しました。</p>
+                  <p className="text-blue-300">良好な都市運営でした。中央政府はあなたの活躍に注目しています。</p>
                 )}
                 {stats.previousYearEvaluation.grade === 'C' && (
-                  <p className="text-orange-300">まずまずの都市運営でした。基本的な補助金を獲得しました。</p>
+                  <p className="text-orange-300">まずまずの都市運営でした。中央政府はより一層の努力を求めています。</p>
                 )}
                 {stats.previousYearEvaluation.grade === 'D' && (
-                  <p className="text-red-300">改善の余地がありました。最低限の補助金を獲得しました。</p>
+                  <p className="text-red-300">改善の余地がありました。中央政府は計画の見直しを要求しています。</p>
                 )}
                 {stats.previousYearEvaluation.grade === 'E' && (
-                  <p className="text-red-400">都市運営に課題がありました。補助金は最小限でした。</p>
+                  <p className="text-red-400">都市運営に課題がありました。中央政府はあなたを問題視しています。</p>
                 )}
               </div>
             </div>
