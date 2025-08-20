@@ -1,6 +1,7 @@
 import { TbStar, TbCash, TbChartBar} from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
 import { useTimeControlStore } from '../stores/TimeControlStore';
+import { useState, useEffect } from 'react';
 
 interface YearlyEvaluationResultProps {
   onClose: () => void;
@@ -9,6 +10,8 @@ interface YearlyEvaluationResultProps {
 export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps) {
   const stats = useGameStore(state => state.stats);
   const { resume } = useTimeControlStore();
+  const [showIntro, setShowIntro] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   // 年末評価が完了した場合のみ表示
   if (!stats.yearlyEvaluation) {
@@ -16,6 +19,18 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
   }
 
   const evaluation = stats.yearlyEvaluation;
+
+  // 導入メッセージ表示後の処理
+  useEffect(() => {
+    if (showIntro) {
+      const timer = setTimeout(() => {
+        setShowIntro(false);
+        setShowContent(true);
+      }, 3000); // 3秒後にメインコンテンツを表示
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showIntro]);
 
   // 評価グレードに応じた色とメッセージ
   const getGradeInfo = (grade: string) => {
@@ -72,8 +87,32 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
     onClose(); // 画面を閉じる
   };
 
+  // 導入メッセージ画面
+  if (showIntro) {
+    return (
+      <div className="fixed inset-0 bg-black z-[4000] flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="mb-8">
+            <div className="text-6xl font-bold text-white mb-4">中央政府から伝達</div>
+          </div>
+          <div className="text-2xl text-gray-400 mb-8">
+            {evaluation.year}年度の都市運営評価結果をお知らせします
+          </div>
+          <div className="text-lg text-gray-500">
+            しばらくお待ちください...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // メインコンテンツ画面
+  if (!showContent) {
+    return null;
+  }
+
   return (
-    <div className="fixed inset-0 bg-black z-[4000] flex items-center justify-center">
+    <div className="fixed inset-0 bg-black z-[4000] flex items-center justify-center animate-fadeIn">
       <div className="w-full h-full bg-gray-900 overflow-y-auto">
         {/* ヘッダー */}
         <div className="bg-gray-800 p-8 text-center border-b border-gray-700">
@@ -155,11 +194,11 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
                 <div className="flex justify-between items-center">
                   <span className="text-xl text-gray-300">ミッション達成</span>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-yellow-400">{evaluation.missionCompletion}/10点</div>
+                    <div className="text-2xl font-bold text-blue-400">{evaluation.missionCompletion}/10点</div>
                     <div className="text-base text-gray-400">
-                      {evaluation.missionCompletion >= 8 ? '完璧' : 
-                       evaluation.missionCompletion >= 6 ? '優秀' : 
-                       evaluation.missionCompletion >= 4 ? '良好' : '要努力'}
+                      {evaluation.approvalRating >= 8 ? '完璧' : 
+                       evaluation.approvalRating >= 6 ? '優秀' : 
+                       evaluation.approvalRating >= 4 ? '良好' : '要努力'}
                     </div>
                   </div>
                 </div>
