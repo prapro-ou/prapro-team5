@@ -295,28 +295,48 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
     
     // 年末評価を実行
     const yearlyEvaluation = executeYearlyEvaluation(stats, facilities);
+
+    console.log(yearlyEvaluation);
     
-    // 評価結果と年次統計をGameStoreの状態に反映
+    // 前年度データの保存処理
+    console.log(`前年度(${stats.date.year})のデータを保存します`);
+    
+    // 前年度の統計データを構築（月次累積データから計算）
+    const previousYearStats = {
+      year: stats.date.year,
+      totalTaxRevenue: stats.monthlyAccumulation.monthlyTaxRevenue.reduce((sum, revenue) => sum + revenue, 0),
+      totalMaintenanceCost: stats.monthlyAccumulation.monthlyMaintenanceCost.reduce((sum, cost) => sum + cost, 0),
+      populationGrowth: stats.monthlyAccumulation.monthlyPopulation[11] - stats.monthlyAccumulation.monthlyPopulation[0],
+      facilityCount: facilities.length,
+      infrastructureEfficiency: facilities.filter(f => f.isActive).length / Math.max(facilities.length, 1)
+    };
+    
+    // 評価結果、年次統計、前年度データを同時にGameStoreの状態に反映
     set({
       stats: {
         ...stats,
         yearlyEvaluation,
-        yearlyStats
+        yearlyStats,
+        previousYearStats,
+        previousYearEvaluation: yearlyEvaluation
       }
     });
+
+    console.log(get().stats.previousYearEvaluation);
     
     // 補助金を資金に追加
     if (yearlyEvaluation.subsidy > 0) {
       const currentMoney = get().stats.money;
       set({
         stats: {
-          ...stats,
+          ...get().stats,
           money: currentMoney + yearlyEvaluation.subsidy
         }
       });
       
       console.log(`年末評価完了: ${yearlyEvaluation.grade}評価 (${yearlyEvaluation.totalScore}点)`);
       console.log(`補助金: +¥${yearlyEvaluation.subsidy.toLocaleString()}`);
+      console.log(`前年度データ保存完了: 税収${previousYearStats.totalTaxRevenue}, 維持費${previousYearStats.totalMaintenanceCost}, 人口増加${previousYearStats.populationGrowth}`);
       console.log(`=== 年度${stats.date.year} 年末評価完了 ===`);
     }
   }
@@ -422,8 +442,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     processMonthlyBalance,
-    accumulateMonthlyData, // 月次データ累積タスクを追加
-    processYearlyEvaluation,
+    processYearlyEvaluation, // 年末評価を先に実行（月次データ累積より前）
+    accumulateMonthlyData, // 月次データ累積タスク（年末評価の後）
     adjustPopulationByGrowth,
     citizenFeedTask,
     // 他の月次タスクをここに追加
@@ -455,62 +475,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newStats.date.week++;
     newStats.date.totalWeeks++;
     
-    // 月次タスクの実行（第4週の時点で実行）
+        // 月次タスクの実行（第4週の時点で実行）
     if (newStats.date.week === 4) {
       monthlyTasks.forEach(task => task(get, set));
     }
     
-          // 月の進行
-      if (newStats.date.week > 4) {
-        newStats.date.week = 1;
-        newStats.date.month++;
-        
-        // 年の進行
-        if (newStats.date.month > 12) {
-          newStats.date.month = 1;
-          newStats.date.year++;
-          
-          // 年度が変わった直後に前年度の統計データと評価データを保存
-          console.log(`年度変更を検出: ${stats.date.year} → ${newStats.date.year}`);
-          
-          // 月次タスク実行後の最新状態を取得
-          const currentStats = get().stats;
-          
-          // yearlyStatsが存在する場合のみ保存
-          if (currentStats.yearlyStats) {
-            console.log(`前年度(${currentStats.yearlyStats.year})の統計データと評価データを保存します`);
-            set({
-              stats: {
-                ...currentStats,
-                previousYearStats: {
-                  year: currentStats.yearlyStats.year,
-                  totalTaxRevenue: currentStats.yearlyStats.totalTaxRevenue,
-                  totalMaintenanceCost: currentStats.yearlyStats.totalMaintenanceCost,
-                  populationGrowth: currentStats.yearlyStats.populationGrowth,
-                  facilityCount: currentStats.yearlyStats.facilityCount,
-                  infrastructureEfficiency: currentStats.yearlyStats.infrastructureEfficiency
-                },
-                // 前年度の評価データも保存
-                previousYearEvaluation: currentStats.yearlyEvaluation
-              }
-            });
-            console.log(`前年度(${currentStats.yearlyStats.year})の統計データと評価データを保存しました`);
-          } 
-          else {
-            console.log(`前年度の統計データが存在しないため、保存をスキップします`);
-          }
+    // 月の進行
+    if (newStats.date.week > 4) {
+      newStats.date.week = 1;
+      newStats.date.month++;
+      
+      // 年の進行
+      if (newStats.date.month > 12) {
+        newStats.date.month = 1;
+        newStats.date.year++;
+        console.log(`年度変更: ${stats.date.year} → ${newStats.date.year}`);
+      }
+      
+      // 日付のみ更新
+      set({
+        stats: {
+          ...get().stats,
+          date: newStats.date
         }
-        
-        // 月次タスク実行後の最新状態を取得して日付のみ更新
-        const currentStats = get().stats;
-        
-        set({
-          stats: {
-            ...currentStats,
-            date: newStats.date
-          }
-        });
-      } else {
+      });
+    } else {
       // 週の進行のみの場合
       set({ stats: newStats });
     }
