@@ -102,3 +102,20 @@ export interface YearlySupportHistory {
   yearEndRatings: Record<FactionType, number>;  // 年末時点の支持率
   totalChanges: Record<FactionType, number>;    // 年間の総変化量
 }
+
+// 支持率計算に使用する都市の状態データ
+export interface CityStateForSupport {
+  satisfaction: number;           // 満足度（0-100）
+  population: number;             // 人口
+  populationGrowth: number;       // 人口増加率
+  taxRevenue: number;             // 税収
+  taxRevenueGrowth: number;       // 税収成長率
+  infrastructureEfficiency: number; // インフラ効率（0-1）
+  infrastructureSurplus: number;   // インフラ余剰
+  commercialFacilityCount: number; // 商業施設数
+  industrialFacilityCount: number; // 工業施設数
+  parkCount: number;               // 公園数
+  totalFacilityCount: number;      // 総施設数
+  fiscalBalance: number;           // 財政バランス（収入-支出）
+  workforceEfficiency: number;     // 労働力効率（0-1）
+}
