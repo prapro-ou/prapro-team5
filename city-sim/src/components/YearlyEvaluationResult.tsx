@@ -147,17 +147,17 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
   }
 
   return (
-    <div className="fixed inset-0 bg-black z-[4000] flex items-center justify-center animate-fadeIn">
+    <div className="fixed inset-0 bg-black z-[4000] flex items-center justify-center">
       <div className="w-full h-full bg-gray-900 overflow-y-auto">
         {/* ヘッダー */}
-        <div className="bg-gray-800 p-8 text-center border-b border-gray-700 animate-slideDown">
-          <h1 className="text-4xl font-bold text-gray-200 mb-6 animate-fadeInUp">
-            {evaluation.year}年度 年末評価結果
+        <div className="bg-gray-800 p-8 text-center border-b border-gray-700 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out">
+          <h1 className="text-4xl font-bold text-gray-200 mb-6 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out">
+            {evaluation.year}年度 年間評価結果
           </h1>
-          <div className="text-7xl font-bold mb-6" style={{ color: gradeInfo.color }}>
+          <div className="text-7xl font-bold mb-6 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-300" style={{ color: gradeInfo.color }}>
             {evaluation.grade}
           </div>
-          <div className="text-2xl text-gray-300 font-medium animate-fadeInUp delay-300">
+          <div className="text-2xl text-gray-300 font-medium transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-500">
             総合スコア: {evaluation.totalScore}点
           </div>
         </div>
@@ -165,14 +165,14 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
         {/* メインコンテンツ */}
         <div className="p-12 space-y-8 max-w-6xl mx-auto">
           {/* 評価コメント */}
-          <div className="text-center animate-fadeInUp delay-500">
+          <div className="text-center transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-700">
             <p className="text-2xl text-gray-300 leading-relaxed">
               {gradeInfo.message}
             </p>
           </div>
 
           {/* 補助金情報 */}
-          <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-600 animate-fadeInUp delay-700">
+          <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-600 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-900">
             <div className="flex items-center justify-center gap-4 mb-4">
               <TbCash size={40} className="text-yellow-500" />
               <h2 className="text-3xl font-bold text-gray-200">補助金</h2>
@@ -187,7 +187,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
 
           {/* 詳細評価項目 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 animate-fadeInUp delay-900 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1100 hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-2xl font-bold mb-6 text-gray-200 flex items-center gap-3">
                 <TbChartBar className="text-blue-400 animate-spin-slow" />
                 評価詳細
@@ -240,7 +240,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 animate-fadeInUp delay-1100 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1300 hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-2xl font-bold mb-6 text-gray-200 flex items-center gap-3">
                 <TbStar className="text-yellow-400" />
                 年度サマリー
@@ -267,7 +267,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
           </div>
 
           {/* 次の年度へのメッセージ */}
-          <div className="bg-gray-800 rounded-xl p-8 border border-gray-600 text-center animate-fadeInUp delay-1300 hover:scale-105 transition-transform duration-300">
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-600 text-center transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1500 hover:scale-105 transition-transform duration-300">
             <h3 className="text-2xl font-bold mb-4 text-gray-200">次の年度に向けて</h3>
             <p className="text-xl text-gray-300 leading-relaxed">
               {evaluation.grade === 'S' || evaluation.grade === 'A' 
@@ -281,7 +281,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
         </div>
 
         {/* フッター */}
-        <div className="bg-gray-800 p-8 border-t border-gray-700 mt-auto animate-fadeInUp delay-1500">
+        <div className="bg-gray-800 p-8 border-t border-gray-700 mt-auto transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1700">
           <div className="text-center">
             <button
               onClick={handleContinue}
