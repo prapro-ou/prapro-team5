@@ -150,3 +150,196 @@ export interface SupportCalculationResult {
   };
   totalScore: number;              // 総合スコア
 }
+
+// 支持率レベル
+export type SupportLevel = 'very_low' | 'low' | 'neutral' | 'high' | 'very_high';
+
+// 支持率レベルに応じた効果の定義
+export interface SupportLevelEffect {
+  level: SupportLevel;
+  minRating: number;               // 最小支持率
+  maxRating: number;               // 最大支持率
+  effects: {
+    // 税収関連
+    taxMultiplier?: number;        // 税収倍率
+    
+    // 人口関連
+    populationGrowthMultiplier?: number; // 人口増加倍率
+    populationOutflowRate?: number;      // 人口流出率（%）
+    
+    // 満足度関連
+    satisfactionBonus?: number;          // 満足度ボーナス
+    satisfactionPenalty?: number;        // 満足度ペナルティ
+    
+    // 施設関連
+    facilityEfficiencyMultiplier?: number; // 施設効率倍率
+    constructionCostMultiplier?: number;   // 建設コスト倍率
+    
+    // インフラ関連
+    infrastructureEfficiencyBonus?: number; // インフラ効率ボーナス
+    
+    // 補助金関連
+    subsidyMultiplier?: number;           // 補助金倍率
+    
+    // その他
+    workforceEfficiencyBonus?: number;    // 労働力効率ボーナス
+    maintenanceCostMultiplier?: number;   // 維持費倍率
+  };
+}
+
+// 各勢力の支持率レベル効果定義（要調整）
+export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = {
+  central_government: [
+    {
+      level: 'very_low',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        taxMultiplier: 0.7,           // 税収30%減少
+        subsidyMultiplier: 0.5,       // 補助金50%減少
+        constructionCostMultiplier: 1.3, // 建設コスト30%増加
+      }
+    },
+    {
+      level: 'low',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        taxMultiplier: 0.85,          // 税収15%減少
+        subsidyMultiplier: 0.8,       // 補助金20%減少
+        constructionCostMultiplier: 1.15, // 建設コスト15%増加
+      }
+    },
+    {
+      level: 'neutral',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        taxMultiplier: 1.1,           // 税収10%増加
+        subsidyMultiplier: 1.2,       // 補助金20%増加
+        constructionCostMultiplier: 0.9, // 建設コスト10%減少
+      }
+    },
+    {
+      level: 'very_high',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        taxMultiplier: 1.2,           // 税収20%増加
+        subsidyMultiplier: 1.5,       // 補助金50%増加
+        constructionCostMultiplier: 0.8, // 建設コスト20%減少
+        infrastructureEfficiencyBonus: 0.1, // インフラ効率10%向上
+      }
+    }
+  ],
+  citizens: [
+    {
+      level: 'very_low',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        populationOutflowRate: 0.1,   // 人口10%流出
+        satisfactionPenalty: -20,     // 満足度20減少
+        facilityEfficiencyMultiplier: 0.8, // 施設効率20%減少
+      }
+    },
+    {
+      level: 'low',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        populationOutflowRate: 0.05,  // 人口5%流出
+        satisfactionPenalty: -10,     // 満足度10減少
+        facilityEfficiencyMultiplier: 0.9, // 施設効率10%減少
+      }
+    },
+    {
+      level: 'neutral',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        populationGrowthMultiplier: 1.2, // 人口増加20%増加
+        satisfactionBonus: 10,        // 満足度10増加
+        facilityEfficiencyMultiplier: 1.05, // 施設効率5%向上
+      }
+    },
+    {
+      level: 'very_high',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        populationGrowthMultiplier: 1.5, // 人口増加50%増加
+        satisfactionBonus: 20,        // 満足度20増加
+        facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
+        maintenanceCostMultiplier: 0.9, // 維持費10%減少
+      }
+    }
+  ],
+  chamber_of_commerce: [
+    {
+      level: 'very_low',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        taxMultiplier: 0.8,           // 税収20%減少
+        facilityEfficiencyMultiplier: 0.7, // 施設効率30%減少
+        workforceEfficiencyBonus: -0.2, // 労働力効率20%減少
+      }
+    },
+    {
+      level: 'low',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        taxMultiplier: 0.9,           // 税収10%減少
+        facilityEfficiencyMultiplier: 0.85, // 施設効率15%減少
+        workforceEfficiencyBonus: -0.1, // 労働力効率10%減少
+      }
+    },
+    {
+      level: 'neutral',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        taxMultiplier: 1.15,          // 税収15%増加
+        facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
+        workforceEfficiencyBonus: 0.1, // 労働力効率10%向上
+      }
+    },
+    {
+      level: 'very_high',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        taxMultiplier: 1.3,           // 税収30%増加
+        facilityEfficiencyMultiplier: 1.2, // 施設効率20%向上
+        workforceEfficiencyBonus: 0.2, // 労働力効率20%向上
+        maintenanceCostMultiplier: 0.85, // 維持費15%減少
+      }
+    }
+  ]
+};
