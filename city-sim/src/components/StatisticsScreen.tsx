@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbTrophy } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
@@ -10,7 +10,7 @@ interface StatisticsPanelProps {
   onClose: () => void;
 }
 
-type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'achievement';
+type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy';
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -25,70 +25,166 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'economy', name: '経済', icon: TbCash  },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
-    { id: 'achievement', name: '実績', icon: TbChartBar },
   ];
 
   // 基本タブのコンテンツ
   const renderBasicTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* 都市状況カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
-          <TbStar className="text-yellow-400" />
-          都市状況
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-400">Lv.{stats.level}</div>
-            <div className="text-xs text-gray-400">レベル</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-400">{stats.population.toLocaleString()}</div>
-            <div className="text-xs text-gray-400">人口</div>
-          </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+    <div className="space-y-6">
+      {/* 基本情報セクション */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 都市状況カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-blue-300 flex items-center gap-2">
+            <TbStar className="text-yellow-400" />
+            都市状況
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-400">Lv.{stats.level}</div>
+              <div className="text-xs text-gray-400">レベル</div>
             </div>
-            <div className="text-xs text-gray-400">月次収支</div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-400">{stats.population.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">人口</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+              </div>
+              <div className="text-xs text-gray-400">月次収支</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
+              <div className="text-xs text-gray-400">資金</div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
-            <div className="text-xs text-gray-400">資金</div>
+        </div>
+
+        {/* 時間・進行カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+            <TbCalendar className="text-blue-400" />
+            時間・進行
+          </h3>
+          <div className="space-y-3">
+            {/* 現在の日付 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">現在の日付</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-blue-400">{stats.date.year}</span>
+                <span className="text-gray-400">年</span>
+                <span className="text-lg font-bold text-green-400">{stats.date.month}</span>
+                <span className="text-gray-400">月</span>
+                <span className="text-lg font-bold text-purple-400">{stats.date.week}</span>
+                <span className="text-gray-400">週目</span>
+              </div>
+            </div>
+            
+            {/* 累計週数 */}
+            <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+              <span className="text-gray-300">ゲーム開始からの週数</span>
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-bold text-yellow-400">{stats.date.totalWeeks}</span>
+                <span className="text-gray-400">週</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 時間・進行カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
-          <TbCalendar className="text-blue-400" />
-          時間・進行
-        </h3>
-        <div className="space-y-3">
-          {/* 現在の日付 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">現在の日付</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-blue-400">{stats.date.year}</span>
-              <span className="text-gray-400">年</span>
-              <span className="text-lg font-bold text-green-400">{stats.date.month}</span>
-              <span className="text-gray-400">月</span>
-              <span className="text-lg font-bold text-purple-400">{stats.date.week}</span>
-              <span className="text-gray-400">週目</span>
+      {/* 前年度評価結果セクション */}
+      {stats.previousYearEvaluation && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-600 shadow-lg">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
+            <TbChartBar className="text-blue-400" />
+            前年度({stats.previousYearEvaluation.year}) 評価結果
+          </h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-yellow-500">{stats.previousYearEvaluation.grade}</div>
+              <div className="text-sm text-gray-400">総合評価</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-400">{stats.previousYearEvaluation.totalScore}</div>
+              <div className="text-sm text-gray-400">総合スコア</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-400">{stats.previousYearEvaluation.subsidy.toLocaleString()}</div>
+              <div className="text-sm text-gray-400">補助金</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-400">{stats.previousYearEvaluation.year}</div>
+              <div className="text-sm text-gray-400">評価年度</div>
             </div>
           </div>
           
-          {/* 累計週数 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">ゲーム開始からの週数</span>
-            <div className="flex items-center gap-1">
-              <span className="text-2xl font-bold text-yellow-400">{stats.date.totalWeeks}</span>
-              <span className="text-gray-400">週</span>
+          {/* 詳細評価項目 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+              <h4 className="text-lg font-bold mb-3 text-gray-200">評価詳細</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-300">発展度合い</span>
+                  <span className="font-bold text-blue-400">{stats.previousYearEvaluation.developmentScore}/40点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">支持率</span>
+                  <span className="font-bold text-green-400">{stats.previousYearEvaluation.approvalRating}/30点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">満足度スコア</span>
+                  <span className="font-bold text-purple-400">{stats.previousYearEvaluation.satisfactionScore}/20点</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">ミッション達成</span>
+                  <span className="font-bold text-yellow-400">{stats.previousYearEvaluation.missionCompletion}/10点</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+              <h4 className="text-lg font-bold mb-3 text-gray-200">評価コメント</h4>
+              <div className="text-sm space-y-2">
+                {stats.previousYearEvaluation.grade === 'S' && (
+                  <p className="text-blue-300">素晴らしい都市運営でした！中央政府はあなたを高く評価しています。</p>
+                )}
+                {stats.previousYearEvaluation.grade === 'A' && (
+                  <p className="text-green-300">優秀な都市運営でした。中央政府はあなたの活躍に期待しています。</p>
+                )}
+                {stats.previousYearEvaluation.grade === 'B' && (
+                  <p className="text-blue-300">良好な都市運営でした。中央政府はあなたの活躍に注目しています。</p>
+                )}
+                {stats.previousYearEvaluation.grade === 'C' && (
+                  <p className="text-orange-300">まずまずの都市運営でした。中央政府はより一層の努力を求めています。</p>
+                )}
+                {stats.previousYearEvaluation.grade === 'D' && (
+                  <p className="text-red-300">改善の余地がありました。中央政府は計画の見直しを要求しています。</p>
+                )}
+                {stats.previousYearEvaluation.grade === 'E' && (
+                  <p className="text-red-400">都市運営に課題がありました。中央政府はあなたを問題視しています。</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* 年末評価未実施の場合の表示 */}
+      {!stats.previousYearEvaluation && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-gray-300 flex items-center gap-2">
+            <TbTrophy className="text-gray-400" />
+            年末評価
+          </h3>
+          <div className="text-center text-gray-400">
+            <p className="mb-2">年末評価は12月第4週に実行されます</p>
+            <p className="text-sm">現在の進行状況: {stats.date.year}年{stats.date.month}月{stats.date.week}週目</p>
+            {stats.date.month === 12 && stats.date.week === 4 && (
+              <p className="text-yellow-400 font-bold mt-2">今週が年末評価の週です！</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -403,14 +499,6 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     );
   };
 
-  // 実績タブのコンテンツ
-  const renderAchievementTab = () => (
-    <div className="text-center text-gray-400">
-      <h2 className="text-2xl mb-4">実績タブ</h2>
-      <p>ここに実績情報が表示されます</p>
-    </div>
-  );
-
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
@@ -422,8 +510,6 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         return renderIndustryTab();
       case 'infrastructure':
         return renderInfrastructureTab();
-      case 'achievement':
-        return renderAchievementTab();
       default:
         return renderBasicTab();
     }

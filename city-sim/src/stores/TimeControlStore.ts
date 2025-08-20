@@ -94,7 +94,8 @@ export const useTimeControlStore = create<TimeControlState>((set, get) => {
       const isModalOpen = uiState.isSettingsOpen || 
                          uiState.isCreditsOpen || 
                          uiState.isSaveLoadOpen || 
-                         uiState.isStatisticsOpen;
+                         uiState.isStatisticsOpen ||
+                         uiState.isYearlyEvaluationResultOpen;
       
       if (isModalOpen && !isPaused) {
         // モーダルが開いたとき、現在一時停止していない場合は停止

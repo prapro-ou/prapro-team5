@@ -9,9 +9,12 @@ import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
-import { getCurrentWorkforceAllocations, executeMonthlyWorkforceAllocation } from './EconomyStore';
+import { executeMonthlyWorkforceAllocation } from './EconomyStore';
 import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
+import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
+import { useUIStore } from './UIStore';
+import { useTimeControlStore } from './TimeControlStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -53,7 +56,6 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
           money: currentMoney + taxRevenue
         }
       });
-      console.log(`Total Tax Revenue: +$${taxRevenue}`);
     }
   }
 };
@@ -69,7 +71,6 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
   // 活動中の施設のみ維持費を支払う
   facilities.forEach(facility => {
     if (!facility.isActive) {
-      console.log(`施設 ${facility.type} (${facility.id}) は道路未接続のため維持費を免除`);
       return;
     }
     
@@ -87,7 +88,6 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
         money: currentMoney - totalCost
       }
     });
-    console.log(`Maintenance Cost: -$${totalCost}`);
   }
 };
 /**
@@ -112,14 +112,12 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   for (const res of residentials) {
     // 道路接続されていない住宅施設からの人口増加は停止
     if (!res.isActive) {
-      console.log(`住宅施設 ${res.id} は道路未接続のため人口増加を停止`);
       continue;
     }
     
     const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
     totalIncrease += Math.floor(basePop * growthrate * random); // 条件係数を後で追加
   }
-  console.log(`Population Growth: +${totalIncrease}`);
   get().addPopulation(totalIncrease);
 };
 
@@ -133,7 +131,6 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   // 1. 製品を生産する
   const producedGoods = calculateProduction(currentStats, facilities);
   if (producedGoods > 0) {
-    console.log(`Produced goods: +${producedGoods}`);
   }
 
   // 2. 製品を消費して収益を得る
@@ -143,17 +140,11 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
       ...currentStats,
       money: currentStats.money + revenue
     };
-    console.log(`Consumed goods: -${consumed}, Revenue from commerce: +${revenue}`);
   }
   
   // 3. 製品需給状況をログ出力
   const { getProductSupplyDemandStatus } = useProductStore.getState();
-  const { demand, production, efficiency } = getProductSupplyDemandStatus(facilities);
-  console.log(`=== 製品需給状況 ===`);
-  console.log(`需要: [原材料:${demand[0]}, 中間製品:${demand[1]}, 最終製品:${demand[2]}, サービス:${demand[3]}]`);
-  console.log(`供給: [原材料:${production[0]}, 中間製品:${production[1]}, 最終製品:${production[2]}, サービス:${production[3]}]`);
-  console.log(`製品効率: ${(efficiency * 100).toFixed(1)}%`);
-  console.log(`====================`);
+  getProductSupplyDemandStatus(facilities);
   
   // 最終的な状態を更新
   set({ stats: currentStats });
@@ -176,13 +167,11 @@ const processInfrastructure: MonthlyTask = (get, set) => {
   // 水道不足
   if (shortage.water > 0) {
     satisfactionPenalty += Math.min(20, shortage.water / 10);
-    console.log(`Water shortage: -${shortage.water}, Satisfaction penalty: -${Math.min(20, shortage.water / 10)}`);
   }
   
   // 電気不足
   if (shortage.electricity > 0) {
     satisfactionPenalty += Math.min(20, shortage.electricity / 10);
-    console.log(`Electricity shortage: -${shortage.electricity}, Satisfaction penalty: -${Math.min(20, shortage.electricity / 10)}`);
   }
   
   // 満足度更新
@@ -195,7 +184,6 @@ const processInfrastructure: MonthlyTask = (get, set) => {
         satisfaction: newSatisfaction
       }
     });
-    console.log(`Infrastructure shortage total penalty: -${satisfactionPenalty}`);
   }
 };
 
@@ -213,7 +201,129 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
       monthlyBalance: { income, expense, balance }
     }
   });
-  console.log(`Monthly Balance: Income +$${income}, Expense -$${expense}, Balance +$${balance}`);
+};
+
+/**
+ * 月次データを累積するタスク
+ */
+const accumulateMonthlyData: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const currentMonth = stats.date.month - 1; // 配列のインデックスは0ベース
+  
+  // 年度が変わった場合は累積データをリセット
+  if (stats.monthlyAccumulation.year !== stats.date.year) {
+    set({
+      stats: {
+        ...stats,
+        monthlyAccumulation: {
+          year: stats.date.year,
+          monthlyTaxRevenue: new Array(12).fill(0),
+          monthlyMaintenanceCost: new Array(12).fill(0),
+          monthlyPopulation: new Array(12).fill(0),
+          monthlySatisfaction: new Array(12).fill(50)
+        }
+      }
+    });
+  }
+  
+  // 現在の月次データを累積
+  const newAccumulation = { ...stats.monthlyAccumulation };
+  
+  // 税収を累積（市庁舎がある場合のみ）
+  const facilities = useFacilityStore.getState().facilities;
+  const hasCityHall = facilities.some(f => f.type === 'city_hall');
+  if (hasCityHall && stats.population > 0) {
+    const taxRevenue = calculateTotalTaxRevenue(stats, facilities);
+    newAccumulation.monthlyTaxRevenue[currentMonth] = taxRevenue;
+  }
+  
+  // 維持費を累積
+  let totalMaintenanceCost = 0;
+  facilities.forEach(facility => {
+    if (facility.isActive) {
+      const data = FACILITY_DATA[facility.type];
+      if (data && data.maintenanceCost) {
+        totalMaintenanceCost += data.maintenanceCost;
+      }
+    }
+  });
+  newAccumulation.monthlyMaintenanceCost[currentMonth] = totalMaintenanceCost;
+  
+  // 人口と満足度を累積
+  newAccumulation.monthlyPopulation[currentMonth] = stats.population;
+  newAccumulation.monthlySatisfaction[currentMonth] = stats.satisfaction;
+  
+  set({
+    stats: {
+      ...stats,
+      monthlyAccumulation: newAccumulation
+    }
+  });
+  
+};
+
+/**
+ * 年末評価処理タスク
+ */
+const processYearlyEvaluation: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  
+  // 12月の最終週の場合のみ実行
+  if (stats.date.month === 12 && stats.date.week === 4) {
+    
+    const facilities = useFacilityStore.getState().facilities;
+    const { executeYearlyEvaluation, calculateYearlyStats } = useYearlyEvaluationStore.getState();
+    
+    // 現在の年度の統計データを計算
+    const yearlyStats = calculateYearlyStats(stats, facilities);
+    
+    // 年末評価を実行
+    const yearlyEvaluation = executeYearlyEvaluation(stats, facilities);
+
+    // 前年度データの保存処理
+    
+    // 前年度の統計データを構築（月次累積データから計算）
+    const previousYearStats = {
+      year: stats.date.year,
+      totalTaxRevenue: stats.monthlyAccumulation.monthlyTaxRevenue.reduce((sum, revenue) => sum + revenue, 0),
+      totalMaintenanceCost: stats.monthlyAccumulation.monthlyMaintenanceCost.reduce((sum, cost) => sum + cost, 0),
+      populationGrowth: stats.monthlyAccumulation.monthlyPopulation[11] - stats.monthlyAccumulation.monthlyPopulation[0],
+      facilityCount: facilities.length,
+      infrastructureEfficiency: facilities.filter(f => f.isActive).length / Math.max(facilities.length, 1)
+    };
+    
+    // 評価結果、年次統計、前年度データを一括でGameStoreの状態に反映
+    set({
+      stats: {
+        ...stats,
+        yearlyEvaluation,
+        yearlyStats,
+        previousYearStats: { ...previousYearStats },
+        previousYearEvaluation: { ...yearlyEvaluation }
+      }
+    });
+
+    // 補助金を資金に追加
+    if (yearlyEvaluation.subsidy > 0) {
+      const currentMoney = get().stats.money;
+      set({
+        stats: {
+          ...get().stats,
+          money: currentMoney + yearlyEvaluation.subsidy
+        }
+      });
+      
+      console.log(`年末評価完了: ${yearlyEvaluation.grade}評価 (${yearlyEvaluation.totalScore}点)`);
+      console.log(`補助金: +¥${yearlyEvaluation.subsidy.toLocaleString()}`);
+      console.log(`前年度データ保存完了: 税収${previousYearStats.totalTaxRevenue}, 維持費${previousYearStats.totalMaintenanceCost}, 人口増加${previousYearStats.populationGrowth}`);
+      
+      // 年末評価完了時に時間を停止
+      useTimeControlStore.getState().pause();
+      
+      // 年末評価結果表示画面を自動的に開く
+      useUIStore.getState().openYearlyEvaluationResult();
+    }
+  }
 };
 
 /*
@@ -245,7 +355,6 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
       },
       levelUpMessage: levelUpMsg
     });
-    console.log(`Level Up! 都市レベル${stats.level} → ${newLevel}`);
   }
 }
 // --- ストアの作成 ---
@@ -258,7 +367,18 @@ const INITIAL_STATS: GameStats = {
     satisfaction: 50,
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
-    monthlyBalance: { income: 0, expense: 0, balance: 0 } // 月次収支の初期値
+    monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
+    yearlyEvaluation: null, // 年次評価データ（初期値はnull）
+    yearlyStats: null, // 年次統計データ（初期値はnull）
+    previousYearStats: null, // 前年度統計データ（初期値はnull）
+    previousYearEvaluation: null, // 前年度評価データ（初期値はnull）
+    monthlyAccumulation: { // 月次データの累積（初期値は12ヶ月分の0配列）
+      year: 2024,
+      monthlyTaxRevenue: new Array(12).fill(0),
+      monthlyMaintenanceCost: new Array(12).fill(0),
+      monthlyPopulation: new Array(12).fill(0),
+      monthlySatisfaction: new Array(12).fill(50)
+    }
 }
 
 
@@ -272,7 +392,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       // 人口0の場合は配分をスキップ
       if (stats.population === 0) {
-        console.log('人口0のため労働力配分をスキップ');
         return;
       }
       
@@ -287,27 +406,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
           workforceAllocations: newAllocations
         }
       });
-      
-      // 労働力配分の状況をログ出力
-      const allocations = getCurrentWorkforceAllocations(get().stats);
-      if (allocations.length > 0) {
-        console.log('=== 労働力配分状況 ===');
-        allocations.forEach(allocation => {
-          const efficiencyPercent = (allocation.efficiency * 100).toFixed(0);
-          console.log(`${allocation.facility.type}: ${allocation.assignedWorkforce}人配分, ${efficiencyPercent}%稼働`);
-        });
-        console.log('=====================');
-      }
     },
     calculateTaxRevenue,
     payMaintenanceCost,
     processEconomicCycle,
     applyParkSatisfactionPenalty,
     processInfrastructure,
-    processMonthlyBalance, // 月次収支計算タスクを追加
+    processMonthlyBalance,
+    processYearlyEvaluation,
+    accumulateMonthlyData,
     adjustPopulationByGrowth,
     citizenFeedTask,
-    // 他の月次タスクをここに追加
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
@@ -336,7 +445,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newStats.date.week++;
     newStats.date.totalWeeks++;
     
-    // 月の進行
+    // 月次タスクの実行（第4週の時点で実行）
+    if (newStats.date.week === 4) {
+      // 月次タスク実行
+    }
+    
+    // 月の進行（4週目が終わったら次の月へ）
     if (newStats.date.week > 4) {
       newStats.date.week = 1;
       newStats.date.month++;
@@ -345,12 +459,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (newStats.date.month > 12) {
         newStats.date.month = 1;
         newStats.date.year++;
+        console.log(`年度変更: ${stats.date.year} → ${newStats.date.year}`);
       }
       
-      // 月次タスクの実行
-      monthlyTasks.forEach(task => task(get, set));
-      
-      // 月次タスク実行後の最新状態を取得して日付のみ更新
+      // 日付更新とその他の状態更新を一括で実行
       const currentStats = get().stats;
       set({
         stats: {
@@ -370,6 +482,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     // レベルアップチェック
     checkLevelUp(get().stats, set);
+
+    // 月次タスク実行完了直後に前年度データを保存
+    if (newStats.date.week === 4) {
+      monthlyTasks.forEach((task, _index) => {
+        task(get, set);
+      });
+      
+      // 月次タスク実行完了直後に前年度データを保存
+      const currentStats = get().stats;
+      if (currentStats.yearlyEvaluation && !currentStats.previousYearEvaluation) {
+        set({
+          stats: {
+            ...currentStats,
+            previousYearEvaluation: { ...currentStats.yearlyEvaluation }
+          }
+        });
+      }
+    }
   },
 
   addPopulation: (count) => {
@@ -438,10 +568,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   loadState: (savedState: any) => {
     if (savedState && savedState.stats) {
+      const savedStats = savedState.stats;
+      
+      // 新しく追加したフィールドの初期化
+      const validatedStats: GameStats = {
+        ...INITIAL_STATS, // デフォルト値を設定
+        ...savedStats,
+      yearlyEvaluation: savedStats.yearlyEvaluation || null,
+      yearlyStats: savedStats.yearlyStats || null,
+      previousYearStats: savedStats.previousYearStats || null,
+      previousYearEvaluation: savedStats.previousYearEvaluation || null,
+        monthlyAccumulation: savedStats.monthlyAccumulation || {
+          year: savedStats.date?.year || 2024,
+          monthlyTaxRevenue: new Array(12).fill(0),
+          monthlyMaintenanceCost: new Array(12).fill(0),
+          monthlyPopulation: new Array(12).fill(0),
+          monthlySatisfaction: new Array(12).fill(50)
+        }
+      };
+      
       set({
-        stats: savedState.stats,
+        stats: validatedStats,
         levelUpMessage: savedState.levelUpMessage || null
       });
+      
     }
   },
 
