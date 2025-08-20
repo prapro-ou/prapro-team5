@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { BGMPlayer } from './SoundSettings';
 import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
 
 type Props = {

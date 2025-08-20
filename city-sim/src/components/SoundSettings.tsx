@@ -28,7 +28,7 @@ export function BGMPlayer() {
     bgmVolume, setBgmVolume,
     sfxVolume, setSfxVolume,
     snsVolume, setSNSVolume,
-    isBgmMuted, setBgmMuted,
+    isBgmMuted,
     isSfxMuted, setSfxMuted,
     isSNSMuted, setSNSMuted
   } = useSoundStore();
