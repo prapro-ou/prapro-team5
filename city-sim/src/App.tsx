@@ -200,7 +200,6 @@ function App() {
             }, 100);
           }}
         />
-        
         {/* スタート画面中でも設定パネルを表示可能にする */}
         {isSettingsOpen && (
           <SettingsPanel 
@@ -212,6 +211,10 @@ function App() {
               setShowStartScreen(true);
             }}
           />
+        )}
+        {/* スタート画面でもクレジットパネルを表示可能にする */}
+        {isCreditsOpen && (
+          <CreditsPanel onClose={closeCredits} />
         )}
       </>
     );
