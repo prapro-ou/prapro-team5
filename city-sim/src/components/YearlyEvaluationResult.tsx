@@ -187,7 +187,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
 
           {/* 詳細評価項目 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1100 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 ease-out delay-1100 hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-2xl font-bold mb-6 text-gray-200 flex items-center gap-3">
                 <TbChartBar className="text-blue-400 animate-spin-slow" />
                 評価詳細
@@ -240,7 +240,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1300 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 transform translate-y-0 opacity-100 ease-out delay-1300 hover:shadow-lg transition-shadow duration-300">
               <h3 className="text-2xl font-bold mb-6 text-gray-200 flex items-center gap-3">
                 <TbStar className="text-yellow-400" />
                 年度サマリー
@@ -267,7 +267,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
           </div>
 
           {/* 次の年度へのメッセージ */}
-          <div className="bg-gray-800 rounded-xl p-8 border border-gray-600 text-center transform translate-y-0 opacity-100 transition-all duration-1000 ease-out delay-1500 hover:scale-105 transition-transform duration-300">
+          <div className="bg-gray-800 rounded-xl p-8 border border-gray-600 text-center transform translate-y-0 opacity-100 ease-out delay-1500 hover:scale-105 transition-transform duration-300">
             <h3 className="text-2xl font-bold mb-4 text-gray-200">次の年度に向けて</h3>
             <p className="text-xl text-gray-300 leading-relaxed">
               {evaluation.grade === 'S' || evaluation.grade === 'A' 
