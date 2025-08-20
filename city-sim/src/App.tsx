@@ -8,6 +8,7 @@ import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
+import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
@@ -66,7 +67,9 @@ function App() {
     toggleInfrastructureInfo,
     isStatisticsOpen,
     openStatistics,
-    closeStatistics
+    closeStatistics,
+    isYearlyEvaluationResultOpen,
+    closeYearlyEvaluationResult
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -275,6 +278,13 @@ function App() {
   if (isStatisticsOpen) {
     return (
       <StatisticsPanel onClose={closeStatistics} />
+    );
+  }
+
+  // 年末評価結果表示画面
+  if (isYearlyEvaluationResultOpen) {
+    return (
+      <YearlyEvaluationResult onClose={closeYearlyEvaluationResult} />
     );
   }
 
