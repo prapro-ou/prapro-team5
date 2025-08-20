@@ -317,12 +317,28 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
         ...stats,
         yearlyEvaluation,
         yearlyStats,
-        previousYearStats,
-        previousYearEvaluation: yearlyEvaluation
+        previousYearStats: { ...previousYearStats }, // 深いコピー
+        previousYearEvaluation: { ...yearlyEvaluation } // 深いコピー
       }
     });
 
-    console.log(get().stats.previousYearEvaluation);
+    // 保存直後の状態を確認
+    console.log('=== 年末評価完了後の状態確認 ===');
+    const savedStats = get().stats;
+    console.log('previousYearStats:', savedStats.previousYearStats);
+    console.log('previousYearEvaluation:', savedStats.previousYearEvaluation);
+    console.log('yearlyEvaluation:', savedStats.yearlyEvaluation);
+    console.log('yearlyStats:', savedStats.yearlyStats);
+
+    // 参照確認
+    console.log('=== 参照確認 ===');
+    console.log('savedStats === get().stats:', savedStats === get().stats);
+    console.log('savedStats.previousYearStats === get().stats.previousYearStats:', savedStats.previousYearStats === get().stats.previousYearStats);
+    console.log('savedStats.previousYearEvaluation === get().stats.previousYearEvaluation:', savedStats.previousYearEvaluation === get().stats.previousYearEvaluation);
+    console.log('previousYearStats object reference:', previousYearStats);
+    console.log('yearlyEvaluation object reference:', yearlyEvaluation);
+    console.log('previousYearEvaluation === yearlyEvaluation:', savedStats.previousYearEvaluation === yearlyEvaluation);
+    console.log('============================');
     
     // 補助金を資金に追加
     if (yearlyEvaluation.subsidy > 0) {
