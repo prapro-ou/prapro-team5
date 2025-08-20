@@ -14,6 +14,7 @@ import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStor
 import { useProductStore } from './ProductStore';
 import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
 import { useUIStore } from './UIStore';
+import { useTimeControlStore } from './TimeControlStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -315,6 +316,9 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
       console.log(`年末評価完了: ${yearlyEvaluation.grade}評価 (${yearlyEvaluation.totalScore}点)`);
       console.log(`補助金: +¥${yearlyEvaluation.subsidy.toLocaleString()}`);
       console.log(`前年度データ保存完了: 税収${previousYearStats.totalTaxRevenue}, 維持費${previousYearStats.totalMaintenanceCost}, 人口増加${previousYearStats.populationGrowth}`);
+      
+      // 年末評価完了時に時間を停止
+      useTimeControlStore.getState().pause();
       
       // 年末評価結果表示画面を自動的に開く
       useUIStore.getState().openYearlyEvaluationResult();
