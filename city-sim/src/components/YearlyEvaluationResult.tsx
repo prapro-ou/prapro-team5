@@ -26,7 +26,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
       const timer = setTimeout(() => {
         setShowIntro(false);
         setShowContent(true);
-      }, 3000); // 3秒後にメインコンテンツを表示
+      }, 5000); // 5秒後にメインコンテンツを表示
       
       return () => clearTimeout(timer);
     }
