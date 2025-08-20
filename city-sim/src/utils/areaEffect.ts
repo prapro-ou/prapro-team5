@@ -105,7 +105,7 @@ function cellKeyFromCoord(x: number, y: number, cellSize: number): string {
 	return `${cx}:${cy}`;
 }
 
-export function buildSpatialIndex(facilities: Facility[], cellSize: number = 10): SpatialIndex {
+export function buildSpatialIndex(facilities: Facility[], cellSize: number = 8): SpatialIndex {
 	const byType: Record<string, Map<string, Facility[]>> = {};
 	const maxRadiusByType: Record<string, number> = {};
 
