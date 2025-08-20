@@ -10,7 +10,7 @@ interface StatisticsPanelProps {
   onClose: () => void;
 }
 
-type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'achievement';
+type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy';
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -25,7 +25,6 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'economy', name: '経済', icon: TbCash  },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
-    { id: 'achievement', name: '実績', icon: TbChartBar },
   ];
 
   // 基本タブのコンテンツ
@@ -500,14 +499,6 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     );
   };
 
-  // 実績タブのコンテンツ
-  const renderAchievementTab = () => (
-    <div className="text-center text-gray-400">
-      <h2 className="text-2xl mb-4">実績タブ</h2>
-      <p>ここに実績情報が表示されます</p>
-    </div>
-  );
-
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
@@ -519,8 +510,6 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         return renderIndustryTab();
       case 'infrastructure':
         return renderInfrastructureTab();
-      case 'achievement':
-        return renderAchievementTab();
       default:
         return renderBasicTab();
     }
