@@ -103,6 +103,17 @@ export interface YearlySupportHistory {
   totalChanges: Record<FactionType, number>;    // 年間の総変化量
 }
 
+// 支持率システム全体の状態
+export interface SupportSystemState {
+  factionSupports: FactionSupport[];
+  monthlyHistory: MonthlySupportHistory[];
+  yearlyHistory: YearlySupportHistory[];
+  lastCalculationDate: {
+    year: number;
+    month: number;
+  };
+}
+
 // 支持率計算に使用する都市の状態データ
 export interface CityStateForSupport {
   satisfaction: number;           // 満足度（0-100）
