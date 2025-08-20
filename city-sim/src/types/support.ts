@@ -119,3 +119,23 @@ export interface CityStateForSupport {
   fiscalBalance: number;           // 財政バランス（収入-支出）
   workforceEfficiency: number;     // 労働力効率（0-1）
 }
+
+// 支持率の計算結果
+export interface SupportCalculationResult {
+  factionType: FactionType;
+  calculatedRating: number;        // 計算された支持率
+  factors: {                       // 各要素の寄与度
+    taxStability: number;
+    infrastructure: number;
+    development: number;
+    fiscalBalance: number;
+    satisfaction: number;
+    parksAndGreenery: number;
+    populationGrowth: number;
+    commercialActivity: number;
+    industrialActivity: number;
+    workforceEfficiency: number;
+    infrastructureSurplus: number;
+  };
+  totalScore: number;              // 総合スコア
+}
