@@ -109,7 +109,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
               <div className="text-sm text-gray-400">総合スコア</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-400">¥{stats.previousYearEvaluation.subsidy.toLocaleString()}</div>
+              <div className="text-3xl font-bold text-green-400">{stats.previousYearEvaluation.subsidy.toLocaleString()}</div>
               <div className="text-sm text-gray-400">補助金</div>
             </div>
             <div className="text-center">
