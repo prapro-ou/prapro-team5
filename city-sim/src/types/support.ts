@@ -79,3 +79,11 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
     }
   }
 };
+
+// 各勢力の現在の支持率
+export interface FactionSupport {
+  type: FactionType;
+  currentRating: number;        // 現在の支持率（0-100）
+  previousRating: number;       // 前月の支持率（0-100）
+  change: number;               // 変化量（-100 ～ +100）
+}
