@@ -311,7 +311,8 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
       infrastructureEfficiency: facilities.filter(f => f.isActive).length / Math.max(facilities.length, 1)
     };
     
-    // 評価結果、年次統計、前年度データを同時にGameStoreの状態に反映
+    // 評価結果、年次統計、前年度データを一括でGameStoreの状態に反映
+    // これにより非同期処理の競合を防ぐ
     set({
       stats: {
         ...stats,
@@ -340,7 +341,7 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
     console.log('previousYearEvaluation === yearlyEvaluation:', savedStats.previousYearEvaluation === yearlyEvaluation);
     console.log('============================');
     
-    // 補助金を資金に追加
+    // 補助金を資金に追加（状態更新を一括化）
     if (yearlyEvaluation.subsidy > 0) {
       const currentMoney = get().stats.money;
       set({
@@ -458,8 +459,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     applyParkSatisfactionPenalty,
     processInfrastructure,
     processMonthlyBalance,
-    processYearlyEvaluation, // 年末評価を先に実行（月次データ累積より前）
-    accumulateMonthlyData, // 月次データ累積タスク（年末評価の後）
+    processYearlyEvaluation, // 年末評価を先に実行（前年度データ保存含む）
+    accumulateMonthlyData,   // 月次データ累積タスク（年末評価の後、新しい年度のデータをリセット）
     adjustPopulationByGrowth,
     citizenFeedTask,
     // 他の月次タスクをここに追加
@@ -490,15 +491,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // 週の進行
     newStats.date.week++;
     newStats.date.totalWeeks++;
-    
-        // 月次タスクの実行（第4週の時点で実行）
+
+    // 月次タスクの実行（第4週の時点で実行）
     if (newStats.date.week === 4) {
-      monthlyTasks.forEach(task => task(get, set));
+      // 月次タスク実行
     }
-    
-    // 月の進行
-    if (newStats.date.week > 4) {
-      newStats.date.week = 1;
+
+    // 月の進行（4週目が終わったら次の月へ）
+    if (newStats.date.week > 4) {  // 5週目になったら
+      newStats.date.week = 1;      // 1週目にリセット
       newStats.date.month++;
       
       // 年の進行
@@ -508,10 +509,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         console.log(`年度変更: ${stats.date.year} → ${newStats.date.year}`);
       }
       
-      // 日付のみ更新
+      // 日付更新とその他の状態更新を一括で実行
+      const currentStats = get().stats;
       set({
         stats: {
-          ...get().stats,
+          ...currentStats,
           date: newStats.date
         }
       });
@@ -527,6 +529,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     // レベルアップチェック
     checkLevelUp(get().stats, set);
+
+    // 月次タスク実行完了直後に前年度データを保存
+    if (newStats.date.week === 4) {
+      monthlyTasks.forEach((task, index) => {
+        task(get, set);
+      });
+      
+      // 月次タスク実行完了直後に前年度データを保存
+      const currentStats = get().stats;
+      if (currentStats.yearlyEvaluation && !currentStats.previousYearEvaluation) {
+        set({
+          stats: {
+            ...currentStats,
+            previousYearEvaluation: { ...currentStats.yearlyEvaluation }
+          }
+        });
+      }
+    }
   },
 
   addPopulation: (count) => {
