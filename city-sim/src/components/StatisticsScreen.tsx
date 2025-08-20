@@ -97,7 +97,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       {stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-600 shadow-lg">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
-            <TbTrophy className="text-yellow-500" />
+            <TbChartBar className="text-blue-400" />
             前年度({stats.previousYearEvaluation.year}) 評価結果
           </h3>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
