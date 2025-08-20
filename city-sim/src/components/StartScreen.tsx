@@ -338,6 +338,7 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
           設定
         </button>
       </div>
+
     </div>
   );
 };

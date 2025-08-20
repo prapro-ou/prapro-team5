@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { useSoundStore } from '../stores/SoundStore';
 // 効果音グローバル関数をexport
 export let playBuildSound = () => {};
 export let playLevelUpSound = () => {};
@@ -22,25 +23,31 @@ import pressEnterSfxSrc from '../assets/press_enter.mp3';
  * BGMと効果音の再生・音量調整を行うコンポーネント．
  */
 export function BGMPlayer() {
-  // SNS通知音専用ミュート状態・音量
-  const [snsVolume, setSNSVolume] = useState(0.1);
-  // SNS通知音専用ミュート状態
-  const [isSNSMuted, setIsSNSMuted] = useState(true);
-  // --- State Declarations ---
-  const [isBgmPlaying, setIsBgmPlaying] = useState(false);
-  const [bgmVolume, setBgmVolume] = useState(0.2);
+  // グローバルストアから音量・ミュート状態を取得
+  const {
+    bgmVolume, setBgmVolume,
+    sfxVolume, setSfxVolume,
+    snsVolume, setSNSVolume,
+    isBgmMuted,
+    isSfxMuted, setSfxMuted,
+    isSNSMuted, setSNSMuted
+  } = useSoundStore();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const {
+    isBgmPlaying, setIsBgmPlaying,
+  } = useSoundStore();
 
-  const [sfxVolume, setSfxVolume] = useState(0.7);
-  // SEがミュートされているかを管理する状態を追加（初期値trueでミュート）
-  const [isSfxMuted, setIsSfxMuted] = useState(true);
-
-  // --- Effects ---
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = bgmVolume;
+      audioRef.current.muted = isBgmMuted;
+      if (isBgmPlaying) {
+        audioRef.current.play().catch(() => {});
+      } else {
+        audioRef.current.pause();
+      }
     }
-  }, [bgmVolume]);
+  }, [bgmVolume, isBgmMuted, isBgmPlaying]);
 
   // --- Functions ---
   /**
@@ -67,6 +74,7 @@ export function BGMPlayer() {
       setIsBgmPlaying(false);
     } else {
       audioRef.current.volume = bgmVolume;
+      audioRef.current.muted = isBgmMuted;
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.then(() => setIsBgmPlaying(true))
@@ -83,7 +91,7 @@ export function BGMPlayer() {
    */
   const toggleSfxMute = () => {
     const nextMuteState = !isSfxMuted;
-    setIsSfxMuted(nextMuteState);
+    setSfxMuted(nextMuteState);
 
     // ミュートを解除したときに、確認用のテスト音を鳴らす
     if (!nextMuteState) {
@@ -156,7 +164,7 @@ export function BGMPlayer() {
       sfx.volume = snsVolume;
       sfx.play().catch(() => {});
     };
-  }, [isSfxMuted, sfxVolume, isSNSMuted]);
+  }, [isSfxMuted, sfxVolume, isSNSMuted, snsVolume]);
 
   // --- Render ---
   return (
@@ -225,7 +233,7 @@ export function BGMPlayer() {
             className="w-32 h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer"
           />
           <button
-            onClick={() => setIsSNSMuted(m => !m)}
+            onClick={() => setSNSMuted(!isSNSMuted)}
             className={`bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition-colors`}
           >
             {isSNSMuted ? <TbBellOff /> : <TbBell />}
