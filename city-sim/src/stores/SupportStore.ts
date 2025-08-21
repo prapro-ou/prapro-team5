@@ -296,3 +296,6 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     set({ state: createInitialState() });
   }
 }));
+
+// 自動登録
+saveLoadRegistry.register('support', useSupportStore.getState());
