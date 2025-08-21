@@ -20,7 +20,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const { getProductSupplyDemandStatus } = useProductStore();
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
-  const { getAllFactionSupports } = useSupportStore();
+  const { getAllFactionSupports, getActiveEffects } = useSupportStore();
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -587,6 +587,110 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                         }
                       </div>
                     </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 支持率効果パネル */}
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
+            <TbBolt className="text-yellow-400" />
+            支持率による効果
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {factionSupports.map((factionSupport) => {
+              const activeEffects = getActiveEffects(factionSupport.type);
+              
+              const getFactionName = (type: string) => {
+                switch (type) {
+                  case 'central_government': return '中央政府';
+                  case 'citizens': return '市民';
+                  case 'chamber_of_commerce': return '商工会';
+                  default: return type;
+                }
+              };
+
+              const getFactionColor = (type: string) => {
+                switch (type) {
+                  case 'central_government': return 'text-blue-400';
+                  case 'citizens': return 'text-green-400';
+                  case 'chamber_of_commerce': return 'text-purple-400';
+                  default: return 'text-gray-400';
+                }
+              };
+
+              const hasEffects = Object.keys(activeEffects).length > 0;
+
+              return (
+                <div key={factionSupport.type} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                  <h4 className={`text-lg font-bold mb-3 ${getFactionColor(factionSupport.type)}`}>
+                    {getFactionName(factionSupport.type)}
+                  </h4>
+                  <div className="space-y-2">
+                    {hasEffects ? (
+                      Object.entries(activeEffects).map(([effectKey, effectValue]) => {
+                        if (effectValue === undefined) return null;
+                        
+                        const getEffectName = (key: string) => {
+                          switch (key) {
+                            case 'taxMultiplier': return '税収倍率';
+                            case 'populationGrowthMultiplier': return '人口増加倍率';
+                            case 'populationOutflowRate': return '人口流出率';
+                            case 'satisfactionBonus': return '満足度ボーナス';
+                            case 'satisfactionPenalty': return '満足度ペナルティ';
+                            case 'facilityEfficiencyMultiplier': return '施設効率倍率';
+                            case 'constructionCostMultiplier': return '建設コスト倍率';
+                            case 'infrastructureEfficiencyBonus': return 'インフラ効率ボーナス';
+                            case 'subsidyMultiplier': return '補助金倍率';
+                            case 'workforceEfficiencyBonus': return '労働力効率ボーナス';
+                            case 'maintenanceCostMultiplier': return '維持費倍率';
+                            default: return key;
+                          }
+                        };
+
+                        const getEffectValue = (key: string, value: number) => {
+                          if (key.includes('Multiplier')) {
+                            return `${(value * 100).toFixed(0)}%`;
+                          }
+                          if (key.includes('Bonus') || key.includes('Penalty')) {
+                            return value > 0 ? `+${value}` : `${value}`;
+                          }
+                          if (key.includes('Rate')) {
+                            return `${(value * 100).toFixed(1)}%`;
+                          }
+                          return value.toString();
+                        };
+
+                        const getEffectColor = (key: string, value: number) => {
+                          if (key.includes('Penalty') || key.includes('Outflow')) {
+                            return 'text-red-400';
+                          }
+                          if (value > 1 || (key.includes('Bonus') && value > 0)) {
+                            return 'text-green-400';
+                          }
+                          if (value < 1 || (key.includes('Penalty') && value < 0)) {
+                            return 'text-red-400';
+                          }
+                          return 'text-gray-400';
+                        };
+
+                        return (
+                          <div key={effectKey} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-300">{getEffectName(effectKey)}</span>
+                            <span className={`font-bold ${getEffectColor(effectKey, effectValue)}`}>
+                              {getEffectValue(effectKey, effectValue)}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center text-gray-400 text-sm">
+                        標準効果（変更なし）
+                      </div>
+                    )}
                   </div>
                 </div>
               );
