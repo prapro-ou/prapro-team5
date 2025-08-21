@@ -1,5 +1,5 @@
 // 前月の不足状態を記憶する変数（モジュールスコープ）
-let prevShortage = { water: false, electricity: false, park: false };
+let prevShortage = { water: false, electricity: false, park: false, police: false };
 import { useFacilityStore } from "./FacilityStore";
 import { useFeedStore } from "./FeedStore";
 import { getResidentialsWithoutPark } from "../utils/parkEffect";
@@ -7,12 +7,27 @@ import { useInfrastructureStore } from "./InfrastructureStore";
 import type { MonthlyTask } from "./GameStore";
 
 export const citizenFeedTask: MonthlyTask = (get) => {
+  // 前回警察署不足だったか記憶する（モジュールスコープで保持）
+  if (typeof prevShortage.police === 'undefined') prevShortage.police = false;
   const facilities = useFacilityStore.getState().facilities;
   const stats = get().stats;
   const feedStore = useFeedStore.getState();
   const now = Date.now();
   let feedAdded = false;
 
+  // 警察署不足メッセージ（罵倒系含むランダム）
+  const policeMessages = [
+    "近くに警察署がなくて不安です…誰か助けて！🚨",
+    "この街、治安悪すぎ！警察署くらい建てろよ！😡",
+    "警察署がないとかありえない…市長何してんの？👎",
+    "泥棒に入られそうで毎日怖い！早く警察署作って！",
+    "警察署が遠すぎて意味ない！もっと増やせ！",
+    "治安対策ゼロ？市長サボりすぎだろ！",
+    "警察署がないから夜も眠れない…責任取れ！",
+    "この街、犯罪者の天国かよ…警察署は？",
+    "警察署がないとか、住民のこと考えてないだろ！",
+    "市長、警察署建てる気ある？やる気出せ！"
+  ];
   // 警察署不足判定
   const policeFacilities = facilities.filter(f => f.type === 'police');
   const policeRadiusResidentials: { house: any, isCovered: boolean }[] = [];
@@ -28,16 +43,42 @@ export const citizenFeedTask: MonthlyTask = (get) => {
   });
   const outOfRangePoliceResidentials = policeRadiusResidentials.filter(r => !r.isCovered);
   if (outOfRangePoliceResidentials.length > 0) {
-    // 警察署が近くにない住宅があれば文句メッセージ
+    // 警察署が近くにない住宅があれば文句メッセージ（ランダム）
     outOfRangePoliceResidentials.forEach(({ house }) => {
+      const msg = policeMessages[Math.floor(Math.random() * policeMessages.length)];
       feedStore.addFeed({
-        text: `近くに警察署がなくて不安です… `,
+        text: `${msg} (${house.position.x},${house.position.y})`,
         icon: '🚨',
         timestamp: now,
         mood: 'negative'
       });
     });
     feedAdded = true;
+    prevShortage.police = true;
+  } else {
+    // 前回警察署不足だったが、今月は解消された場合
+    if (prevShortage.police) {
+      const policeThanksMessages = [
+        "新しく警察署ができて安心して暮らせるようになった！👮‍♂️",
+        "治安が良くなって夜もぐっすり眠れる！ありがとう！",
+        "警察署ができてみんな喜んでる！市長グッジョブ！",
+        "これで泥棒も怖くない！警察署最高！",
+        "警察署ができて街の雰囲気が明るくなった！",
+        "やっと警察署ができた！これで安心！",
+        "警察署ができて子どもたちも安心して遊べる！",
+        "警察署ありがとう！これで安心して暮らせる！",
+        "市長、警察署設置ありがとう！みんな感謝してる！"
+      ];
+      const msg = policeThanksMessages[Math.floor(Math.random() * policeThanksMessages.length)];
+      feedStore.addFeed({
+        text: msg,
+        icon: '👮‍♂️',
+        timestamp: now,
+        mood: 'positive'
+      });
+      feedAdded = true;
+    }
+    prevShortage.police = false;
   }
 
   // 資源不足（お店がある時だけ表示）
