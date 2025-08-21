@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
-import type { FactionType } from '../types/support';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // 年次統計データの型定義
