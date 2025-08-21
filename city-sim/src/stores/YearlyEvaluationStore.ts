@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
+import type { FactionType } from '../types/support';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // 年次統計データの型定義
@@ -17,7 +18,7 @@ export interface YearlyStats {
 export interface YearlyEvaluation {
   year: number;
   developmentScore: number;      // 発展度合い（0-100）
-  approvalRating: number;        // 支持率（0-100）（未実装）
+  approvalRating: number;        // 支持率（0-100）
   satisfactionScore: number;     // 満足度スコア（0-100）
   missionCompletion: number;     // ミッション達成数（未実装）
   totalScore: number;            // 総合評価スコア（0-100）
@@ -33,7 +34,7 @@ interface YearlyEvaluationStore {
   calculateDevelopmentScore: (yearlyStats: YearlyStats, previousYearStats?: YearlyStats) => number;
   
   // 支持率の計算
-  calculateApprovalRating: () => number;
+  calculateApprovalRating: (stats: GameStats) => number;
   
   // 満足度スコアの計算（年間平均満足度、公園効果、工業区画の影響）
   calculateSatisfactionScore: (stats: GameStats, facilities: Facility[]) => number;
@@ -121,8 +122,10 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((_set, get
   },
   
   // 支持率の計算（30点満点）（未実装）
-  calculateApprovalRating: (): number => {
-    return 0;
+  calculateApprovalRating: (stats: GameStats): number => {
+    // ここでは仮の実装として、ゲームの満足度を支持率として使用
+    // 実際の支持率システムはFactionTypeによって管理される
+    return Math.floor(stats.satisfaction * 0.1);
   },
   
   // 満足度スコアの計算（20点満点）
@@ -188,7 +191,7 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((_set, get
   executeYearlyEvaluation: (stats: GameStats, facilities: Facility[]): YearlyEvaluation => {
     const yearlyStats = get().calculateYearlyStats(stats, facilities);
     const developmentScore = get().calculateDevelopmentScore(yearlyStats, stats.previousYearStats || undefined);
-    const approvalRating = get().calculateApprovalRating();
+    const approvalRating = get().calculateApprovalRating(stats);
     const satisfactionScore = get().calculateSatisfactionScore(stats, facilities);
     const missionCompletion = get().calculateMissionCompletion();
     
