@@ -516,7 +516,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   recalculateSatisfaction: (facilities) => {
     const { stats } = get();
-    let totalSatisfaction = 50; // 基本満足度
+    let totalSatisfaction = stats.satisfaction;
+    // ペナルティ分を反映
+    if (typeof stats.happinessPenalty === 'number') {
+      totalSatisfaction -= stats.happinessPenalty;
+    }
     
     // 公園の効果を計算
     facilities.forEach(facility => {
@@ -538,7 +542,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           }
         });
         
-        totalSatisfaction += affectedHouses * 5; // 公園1つにつき5ポイント
+        totalSatisfaction += affectedHouses * 1; // 公園1つにつき1ポイント
       }
     });
     
@@ -553,6 +557,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       stats: {
         ...stats,
         satisfaction: totalSatisfaction
+  ,happinessPenalty: 0 // ペナルティ値をリセット
       }
     });
   },

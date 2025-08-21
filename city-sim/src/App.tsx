@@ -27,6 +27,7 @@ import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
+import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -139,6 +140,12 @@ function App() {
     }
   }, [facilities.length, showStartScreen]); // facilities.lengthのみを監視
 
+   useEffect(() => {
+     if (!showStartScreen) {
+     startHappinessDecayTask();
+     console.log("HappinessDecayTask started");
+    }
+   }, [showStartScreen, facilities.length]);
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   

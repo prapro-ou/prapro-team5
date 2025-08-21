@@ -21,7 +21,8 @@ interface FacilityStore {
   getFacilityAt: (position: Position) => Facility | null;
   checkCanPlace: (position: Position, facilityType: FacilityType, gridSize: { width: number; height: number }) => boolean;
   createFacility: (position: Position, type: FacilityType) => Facility;
-  
+  isFacilityInRadius: (type: FacilityType, x: number, y: number, radius: number) => boolean;
+
   // 道路接続状態管理
   updateRoadConnectivity: (gridSize: { width: number; height: number }) => void;
   clearRoadConnectivityCache: () => void;
@@ -131,7 +132,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     const facilityData = FACILITY_DATA[type];
     const radius = Math.floor(facilityData.size / 2);
     const occupiedTiles: Position[] = [];
-    
     // 占有するタイルを計算
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
@@ -141,7 +141,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         });
       }
     }
-    
     return {
       id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
@@ -152,6 +151,17 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       isConnected: false, // 初期状態では接続されていない
       isActive: false     // 初期状態では停止中
     };
+  },
+
+  isFacilityInRadius: (type: FacilityType, x: number, y: number, radius: number): boolean => {
+    const { facilities } = get();
+    return facilities.some(facility => {
+      if (facility.type !== type) return false;
+      const fx = facility.position.x;
+      const fy = facility.position.y;
+      const dist = Math.sqrt((fx - x) ** 2 + (fy - y) ** 2);
+      return dist <= radius;
+    });
   },
 
   // 道路接続状態管理
