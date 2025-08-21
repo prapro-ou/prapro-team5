@@ -123,8 +123,7 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((_set, get
   
   // 支持率の計算（30点満点）（未実装）
   calculateApprovalRating: (stats: GameStats): number => {
-    // ここでは仮の実装として、ゲームの満足度を支持率として使用
-    // 実際の支持率システムはFactionTypeによって管理される
+    // 仮実装
     return Math.floor(stats.satisfaction * 0.1);
   },
   
