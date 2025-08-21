@@ -3,6 +3,7 @@ export interface GameStats {
   money: number;
   population: number;
   satisfaction: number;
+  happinessPenalty?: number; // 満足度減少ペナルティ（警察署などの効果範囲外）
   // 労働力配分情報
   workforceAllocations: {
     facilityId: string;

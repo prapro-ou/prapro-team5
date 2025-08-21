@@ -7,11 +7,38 @@ import { useInfrastructureStore } from "./InfrastructureStore";
 import type { MonthlyTask } from "./GameStore";
 
 export const citizenFeedTask: MonthlyTask = (get) => {
-  const stats = get().stats;
   const facilities = useFacilityStore.getState().facilities;
+  const stats = get().stats;
   const feedStore = useFeedStore.getState();
   const now = Date.now();
   let feedAdded = false;
+
+  // 警察署不足判定
+  const policeFacilities = facilities.filter(f => f.type === 'police');
+  const policeRadiusResidentials: { house: any, isCovered: boolean }[] = [];
+  facilities.filter(f => f.type === 'residential').forEach(house => {
+    const { position } = house;
+    const isCovered = policeFacilities.some(police => {
+      const radius = police.effectRadius ?? 0;
+      const dx = police.position.x - position.x;
+      const dy = police.position.y - position.y;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
+    });
+    policeRadiusResidentials.push({ house, isCovered });
+  });
+  const outOfRangePoliceResidentials = policeRadiusResidentials.filter(r => !r.isCovered);
+  if (outOfRangePoliceResidentials.length > 0) {
+    // 警察署が近くにない住宅があれば文句メッセージ
+    outOfRangePoliceResidentials.forEach(({ house }) => {
+      feedStore.addFeed({
+        text: `近くに警察署がなくて不安です… `,
+        icon: '🚨',
+        timestamp: now,
+        mood: 'negative'
+      });
+    });
+    feedAdded = true;
+  }
 
   // 資源不足（お店がある時だけ表示）
     const hasShop = facilities.some(f => f.type === "commercial");
