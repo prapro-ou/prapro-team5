@@ -30,6 +30,15 @@ interface SupportStore {
   calculateSupportRatings: (cityState: CityStateForSupport) => Record<FactionType, number>;
   calculateFactionSupport: (factionType: FactionType, cityState: CityStateForSupport) => SupportCalculationResult;
   
+  // 支持率による効果
+  getSupportLevel: (rating: number) => 'very_low' | 'low' | 'neutral' | 'high' | 'very_high';
+  getActiveEffects: (factionType: FactionType) => SupportLevelEffect['effects'];
+  getAllActiveEffects: () => Record<FactionType, SupportLevelEffect['effects']>;
+  
+  // 履歴の管理
+  recordMonthlyHistory: (year: number, month: number) => void;
+  recordYearlyHistory: (year: number) => void;
+
   // セーブ・ロード機能
   saveState: () => any;
   loadState: (savedState: any) => void;
