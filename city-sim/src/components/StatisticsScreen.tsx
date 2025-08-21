@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
@@ -27,7 +27,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'economy', name: '経済', icon: TbCash  },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
-    { id: 'support', name: '支持率', icon: TbFlag },
+    { id: 'support', name: '支持・勢力', icon: TbFlag },
   ];
 
   // 基本タブのコンテンツ
@@ -176,7 +176,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       {!stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <h3 className="text-lg font-bold mb-3 text-gray-300 flex items-center gap-2">
-            <TbFlag className="text-gray-400" />
+            <TbTrophy className="text-gray-400" />
             年末評価
           </h3>
           <div className="text-center text-gray-400">
@@ -508,11 +508,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     
     return (
       <div className="space-y-6">
-        {/* 支持率状況パネル */}
+        {/* 支持状況パネル */}
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
             <TbFlag className="text-blue-400" />
-            支持率状況
+            支持状況
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {factionSupports.map((factionSupport) => {
@@ -597,7 +597,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         {/* 支持率効果パネル */}
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
-            <TbBolt className="text-yellow-400" />
+            <TbScale className="text-yellow-400" />
             支持率による効果
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
