@@ -515,8 +515,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   recalculateSatisfaction: (facilities) => {
-    const { stats } = get();
-    let totalSatisfaction = 50; // 基本満足度
+  const { stats } = get();
+  let totalSatisfaction = stats.satisfaction; // 現在の満足度から加算・減算
     
     // 公園の効果を計算
     facilities.forEach(facility => {
