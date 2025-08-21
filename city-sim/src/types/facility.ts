@@ -122,8 +122,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 150,
     infrastructureDemand: { water: 100, electricity: 100 },
-    productDemand: [0, 0, 0, 0],
-    productProduction: [0, 0, 0, 10],
+    effectRadius: 9,
   },
   industrial: {
     type: 'industrial',
@@ -145,8 +144,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 200,
     infrastructureDemand: { water: 200, electricity: 200 },
-    productDemand: [10, 0, 0, 0],
-    productProduction: [0, 20, 0, 0],
+    effectRadius: 11,
   },
   road: {
     type: 'road',
@@ -182,6 +180,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
     satisfaction: 10, // 設置すると満足度が少し上がる
+    effectRadius: 21, // 21マス範囲に効果
   },
   // 公園のデータを追加
   park: {
@@ -222,6 +221,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 0,
     attractiveness: 100,
     infrastructureSupply: { water: 0, electricity: 5000 },
+    effectRadius: 11,
   },
 
   water_plant: {
@@ -235,5 +235,6 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 0,
     attractiveness: 100,
     infrastructureSupply: { water: 5000, electricity: 0 },
+    effectRadius: 11,
   }
 }
