@@ -39,7 +39,6 @@ export function createSaveData(
 		cityName,
 		gameStats,
 		levelUpMessage: null,
-		usedWorkforce: 0,
 		facilities,
 		terrainMap: terrainArray,
 		infrastructureStatus,

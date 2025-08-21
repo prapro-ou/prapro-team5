@@ -7,9 +7,10 @@ import { saveLoadRegistry } from './SaveLoadRegistry';
 interface TerrainStore {
   // 状態
   terrainMap: Map<string, TerrainType>;
+  generatedRoads: Array<{x: number, y: number, variantIndex: number}>;
   
   // アクション
-  generateTerrain: (gridSize: GridSize) => void;
+  generateTerrain: (gridSize: GridSize) => Array<{x: number, y: number, variantIndex: number}>;
   setTerrainAt: (x: number, y: number, terrain: TerrainType) => void;
   getTerrainAt: (x: number, y: number) => TerrainType;
   resetTerrain: (gridSize: GridSize) => void;
@@ -22,11 +23,16 @@ interface TerrainStore {
 
 export const useTerrainStore = create<TerrainStore>((set, get) => ({
   terrainMap: new Map(),
+  generatedRoads: [],
 
   // 地形生成
   generateTerrain: (gridSize: GridSize) => {
-    const terrainMap = generateNaturalTerrainMap(gridSize);
-    set({ terrainMap });
+    const result = generateNaturalTerrainMap(gridSize);
+    set({ 
+      terrainMap: result.terrainMap,
+      generatedRoads: result.generatedRoads
+    });
+    return result.generatedRoads;
   },
 
   // 特定の位置の地形を設定
@@ -55,14 +61,14 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
   },
 
   saveState: () => {
-    const { terrainMap } = get();
+    const { terrainMap, generatedRoads } = get();
     const terrainArray: Array<{ x: number; y: number; terrain: TerrainType }> = [];
     terrainMap.forEach((terrain, key) => {
       const [x, y] = key.split(',').map(Number);
       terrainArray.push({ x, y, terrain });
     });
     
-    return { terrainArray };
+    return { terrainArray, generatedRoads };
   },
 
   loadState: (savedState: any) => {
@@ -73,7 +79,8 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
         newTerrainMap.set(`${item.x},${item.y}`, item.terrain);
       });
       
-      set({ terrainMap: newTerrainMap });
+      const generatedRoads = savedState.generatedRoads || [];
+      set({ terrainMap: newTerrainMap, generatedRoads });
     }
   }
 }));

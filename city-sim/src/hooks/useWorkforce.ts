@@ -49,7 +49,9 @@ export const allocateWorkforce = (
 	facilities: Facility[],
 	availableWorkforce: number
 ): WorkforceAllocation[] => {
-	const sortedFacilities = sortFacilitiesByAttractiveness(facilities);
+	// 活動中の施設のみを対象とする
+	const activeFacilities = facilities.filter(facility => facility.isActive);
+	const sortedFacilities = sortFacilitiesByAttractiveness(activeFacilities);
 	const allocations: WorkforceAllocation[] = [];
 	let remainingWorkforce = availableWorkforce;
 

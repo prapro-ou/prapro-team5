@@ -2,10 +2,10 @@ import { create } from 'zustand';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import { FACILITY_DATA } from '../types/facility';
-import { useGameStore } from './GameStore';
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { isFacilityConnectedToValidRoadNetwork, clearConnectionCache } from '../utils/roadConnectivity';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -21,6 +21,11 @@ interface FacilityStore {
   getFacilityAt: (position: Position) => Facility | null;
   checkCanPlace: (position: Position, facilityType: FacilityType, gridSize: { width: number; height: number }) => boolean;
   createFacility: (position: Position, type: FacilityType) => Facility;
+  isFacilityInRadius: (type: FacilityType, x: number, y: number, radius: number) => boolean;
+
+  // 道路接続状態管理
+  updateRoadConnectivity: (gridSize: { width: number; height: number }) => void;
+  clearRoadConnectivityCache: () => void;
   
   // セーブ・ロード機能
   saveState: () => any;
@@ -40,12 +45,16 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     set(state => ({
       facilities: [...state.facilities, facility]
     }));
+    // 施設が追加されたらキャッシュをクリア
+    clearConnectionCache();
   },
 
   removeFacility: (facilityId) => {
     set(state => ({
       facilities: state.facilities.filter(f => f.id !== facilityId)
     }));
+    // 施設が削除されたらキャッシュをクリア
+    clearConnectionCache();
   },
   
   clearFacilities: () => {
@@ -123,7 +132,6 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     const facilityData = FACILITY_DATA[type];
     const radius = Math.floor(facilityData.size / 2);
     const occupiedTiles: Position[] = [];
-    
     // 占有するタイルを計算
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
@@ -133,15 +141,51 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         });
       }
     }
-    
     return {
       id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
       position,
       occupiedTiles,
       variantIndex: 0,
-      effectRadius: facilityData.effectRadius
+      effectRadius: facilityData.effectRadius,
+      isConnected: false, // 初期状態では接続されていない
+      isActive: false     // 初期状態では停止中
     };
+  },
+
+  isFacilityInRadius: (type: FacilityType, x: number, y: number, radius: number): boolean => {
+    const { facilities } = get();
+    return facilities.some(facility => {
+      if (facility.type !== type) return false;
+      const fx = facility.position.x;
+      const fy = facility.position.y;
+      const dist = Math.sqrt((fx - x) ** 2 + (fy - y) ** 2);
+      return dist <= radius;
+    });
+  },
+
+  // 道路接続状態管理
+  updateRoadConnectivity: (gridSize) => {
+    const { facilities } = get();
+    const updatedFacilities = facilities.map(facility => {
+      const isConnected = isFacilityConnectedToValidRoadNetwork(facility, facilities, gridSize);
+      
+      // 道路接続状態に基づいて施設の活動状態を決定
+      // 道路施設は常に活動中、その他の施設は接続状態に依存
+      const isActive = facility.type === 'road' || isConnected;
+      
+      return {
+        ...facility,
+        isConnected,
+        isActive
+      };
+    });
+    
+    set({ facilities: updatedFacilities });
+  },
+
+  clearRoadConnectivityCache: () => {
+    clearConnectionCache();
   },
 
   // セーブ・ロード機能
@@ -155,8 +199,14 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
 
   loadState: (savedState: any) => {
     if (savedState && savedState.facilities) {
+      // 古いセーブデータにはisActiveプロパティがない可能性があるため、デフォルト値を設定
+      const facilitiesWithDefaults = savedState.facilities.map((facility: any) => ({
+        ...facility,
+        isActive: facility.isActive !== undefined ? facility.isActive : facility.isConnected
+      }));
+      
       set({
-        facilities: savedState.facilities,
+        facilities: facilitiesWithDefaults,
         selectedFacilityType: savedState.selectedFacilityType || null
       });
     }

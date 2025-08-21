@@ -7,12 +7,14 @@ import { CreditsPanel } from './components/CreditsPanel'
 import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
+import { StatisticsPanel } from './components/StatisticsScreen';
+import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbAward, TbChartBar } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -24,6 +26,8 @@ import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
+import { useTimeControlStore } from './stores/TimeControlStore';
+import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -61,7 +65,12 @@ function App() {
     closeCredits,
     switchToCredits,
     setSelectedTile,
-    toggleInfrastructureInfo
+    toggleInfrastructureInfo,
+    isStatisticsOpen,
+    openStatistics,
+    closeStatistics,
+    isYearlyEvaluationResultOpen,
+    closeYearlyEvaluationResult
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -69,6 +78,9 @@ function App() {
 
   // ゲーム統計情報・レベルアップ通知
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
+  
+  // 時間制御
+  const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
 
   const GRID_WIDTH = 120;  // グリッドの幅
   const GRID_HEIGHT = 120; // グリッドの高さ
@@ -94,14 +106,25 @@ function App() {
   // 時間経過を処理するuseEffect
   useEffect(() => {
     if (showStartScreen) return; // スタート画面中はタイマーを動かさない
+    if (isPaused) return; // 一時停止中はタイマーを動かさない
+
+    const interval = getCurrentInterval();
+    if (interval === Infinity) return; // 一時停止中
 
     const timerId = setInterval(() => {
       advanceTime();
-    }, 5000); // 5秒ごとに時間を進める
+    }, interval);
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
-  }, [advanceTime, showStartScreen]);
+  }, [advanceTime, showStartScreen, isPaused, getCurrentInterval]);
+
+  // 統計画面の状態を監視して時間制御をチェック
+  useEffect(() => {
+    if (!showStartScreen) {
+      checkModalState();
+    }
+  }, [isStatisticsOpen, showStartScreen, checkModalState]);
 
   // インフラ計算
   useEffect(() => {
@@ -109,13 +132,40 @@ function App() {
     calculateInfrastructure(facilities);
   }, [facilities]);
 
+  // 道路接続状態の更新（施設が変更された時のみ）
+  useEffect(() => {
+    if (!showStartScreen && facilities.length > 0) {
+      const { updateRoadConnectivity } = useFacilityStore.getState();
+      updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+    }
+  }, [facilities.length, showStartScreen]); // facilities.lengthのみを監視
+
+   useEffect(() => {
+     if (!showStartScreen) {
+     startHappinessDecayTask();
+     console.log("HappinessDecayTask started");
+    }
+   }, [showStartScreen, facilities.length]);
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   
   // ゲーム開始時の地形生成（新規ゲーム時のみ）
   useEffect(() => {
     if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
-      generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      
+      // 生成された道路をFacilityStoreに登録
+      if (generatedRoads.length > 0) {
+        const { addFacility, createFacility } = useFacilityStore.getState();
+        generatedRoads.forEach(road => {
+          const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+          roadFacility.variantIndex = road.variantIndex;
+          roadFacility.isConnected = true; // 生成された道路は接続されている
+          addFacility(roadFacility);
+        });
+        
+        console.log(`${generatedRoads.length}個の道路が生成されました`);
+      }
     }
   }, [showStartScreen, generateTerrain]);
 
@@ -137,9 +187,23 @@ function App() {
     addFacility(newFacility);
     // 設置音を鳴らす
     playBuildSound();
-    // もし設置した施設が住宅なら、人口を100人増やす
+    // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
     if (type === 'residential') {
-      addPopulation(100);
+      // 道路接続状態を更新
+      const { updateRoadConnectivity } = useFacilityStore.getState();
+      updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+      
+      // 更新された施設リストを取得
+      const updatedFacilities = useFacilityStore.getState().facilities;
+      const placedFacility = updatedFacilities.find(f => f.id === newFacility.id);
+      
+      // 道路に接続されている場合のみ人口を増やす
+      if (placedFacility && placedFacility.isConnected) {
+        addPopulation(100);
+        console.log('住宅が道路に接続されました。人口が100人増加しました。');
+      } else {
+        console.log('住宅が道路に接続されていません。人口は増加しません。');
+      }
     }
     // 施設を設置した後に満足度を再計算する
     // この時、更新後の施設リストを取得して渡す
@@ -200,7 +264,6 @@ function App() {
             }, 100);
           }}
         />
-        
         {/* スタート画面中でも設定パネルを表示可能にする */}
         {isSettingsOpen && (
           <SettingsPanel 
@@ -213,7 +276,25 @@ function App() {
             }}
           />
         )}
+        {/* スタート画面でもクレジットパネルを表示可能にする */}
+        {isCreditsOpen && (
+          <CreditsPanel onClose={closeCredits} />
+        )}
       </>
+    );
+  }
+
+  // 統計画面
+  if (isStatisticsOpen) {
+    return (
+      <StatisticsPanel onClose={closeStatistics} />
+    );
+  }
+
+  // 年末評価結果表示画面
+  if (isYearlyEvaluationResultOpen) {
+    return (
+      <YearlyEvaluationResult onClose={closeYearlyEvaluationResult} />
     );
   }
 
@@ -231,7 +312,7 @@ function App() {
             }}
             className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
           >
-            <TbTrophy size={24} className="text-yellow-400" />
+            <TbAward size={24} className="text-yellow-400" />
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (
@@ -268,6 +349,14 @@ function App() {
         className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         <TbAlignLeft2 />
+      </button>
+
+      {/* 統計画面ボタン */}
+      <button
+        onClick={openStatistics}
+        className="fixed top-40 left-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbChartBar />
       </button>
 
       {/* インフラ情報パネル */}
@@ -339,6 +428,11 @@ function App() {
       
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
+      
+      {/* 統計画面 */}
+      {/* isStatisticsOpen && (
+        <StatisticsPanel onClose={closeStatistics} />
+      ) */}
     </div>
     
   );

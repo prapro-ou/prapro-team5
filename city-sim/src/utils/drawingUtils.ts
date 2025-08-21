@@ -153,8 +153,12 @@ const getEffectColor = (selectedPosition: Position | null, facilities: Facility[
   if (!selectedFacility) return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
   
   switch (selectedFacility.type) {
-    case 'park': return DRAWING_CONSTANTS.PARK_EFFECT_COLOR;
-    default: return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
+    case 'park':
+      return DRAWING_CONSTANTS.PARK_EFFECT_COLOR;
+    case 'police':
+      return DRAWING_CONSTANTS.POLICE_EFFECT_COLOR;
+    default:
+      return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
   }
 };
 
