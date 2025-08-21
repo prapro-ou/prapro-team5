@@ -209,7 +209,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgPaths: ['images/buildings/police.png'],
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 12,
-    effectRadius: 20// 8マス範囲に効果
+    effectRadius: 25,
   },
   electric_plant: {
     type: 'electric_plant',
