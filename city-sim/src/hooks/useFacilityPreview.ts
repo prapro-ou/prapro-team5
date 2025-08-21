@@ -139,6 +139,7 @@ export const useFacilityPreview = ({
         case 'road': return 'bg-gray-400 opacity-70';
         case 'city_hall': return 'bg-purple-300 opacity-70';
         case 'park': return 'bg-lime-200 opacity-70';
+        case 'police': return 'bg-fuchsia-400 opacity-80'; // 警察署は蛍光ピンク
         default: return 'bg-green-300 opacity-70';
       }
     }

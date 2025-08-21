@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant";
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -197,7 +197,20 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
   },
-  // インフラ関連
+  // 警察署
+  police: {
+    type: 'police',
+    name: '警察署',
+    size: 3,
+    cost: 800,
+    maintenanceCost: 40,
+    description: '治安を向上させ、周囲の満足度を上げる施設',
+    category: 'government',
+    imgPaths: ['images/buildings/police.png'],
+    imgSizes: [{ width: 96, height: 79 }],
+    satisfaction: 12,
+    effectRadius: 20// 8マス範囲に効果
+  },
   electric_plant: {
     type: 'electric_plant',
     name: '発電所',
