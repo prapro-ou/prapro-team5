@@ -15,6 +15,8 @@ import { useProductStore } from './ProductStore';
 import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
 import { useUIStore } from './UIStore';
 import { useTimeControlStore } from './TimeControlStore';
+import { useSupportStore } from './SupportStore';
+import type { CityStateForSupport } from '../types/support';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -204,6 +206,60 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
 };
 
 /**
+ * 支持率を更新するタスク
+ */
+const updateSupportRatings: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  const { calculateSupportRatings, recordMonthlyHistory } = useSupportStore.getState();
+  
+  // 都市の状態データを構築
+  const cityState: CityStateForSupport = {
+    satisfaction: stats.satisfaction,
+    population: stats.population,
+    populationGrowth: 0, // 前月比の人口増加（後で計算）
+    taxRevenue: stats.monthlyBalance.income,
+    taxRevenueGrowth: 0, // 前月比の税収成長（後で計算）
+    infrastructureEfficiency: 0, // インフラ効率（後で計算）
+    infrastructureSurplus: 0, // インフラ余剰（後で計算）
+    commercialFacilityCount: facilities.filter(f => f.type === 'commercial').length,
+    industrialFacilityCount: facilities.filter(f => f.type === 'industrial').length,
+    parkCount: facilities.filter(f => f.type === 'park').length,
+    totalFacilityCount: facilities.length,
+    fiscalBalance: stats.monthlyBalance.balance,
+    workforceEfficiency: 0.8 // 仮の値（後で実際の計算に置き換え）
+  };
+  
+  // 支持率を計算
+  const newSupportRatings = calculateSupportRatings(cityState);
+  
+  // SupportStoreの支持率を更新
+  useSupportStore.getState().updateAllFactionSupports(newSupportRatings);
+  
+  // 月次履歴を記録
+  recordMonthlyHistory(stats.date.year, stats.date.month);
+  
+  // 支持率データを月次累積データに追加
+  const currentMonth = stats.date.month - 1;
+  const newAccumulation = { ...stats.monthlyAccumulation };
+  
+  // 各勢力の支持率を累積
+  Object.entries(newSupportRatings).forEach(([factionType, rating]) => {
+    if (!newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings]) {
+      newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings] = new Array(12).fill(50);
+    }
+    newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings][currentMonth] = rating;
+  });
+  
+  set({
+    stats: {
+      ...stats,
+      monthlyAccumulation: newAccumulation
+    }
+  });
+};
+
+/**
  * 月次データを累積するタスク
  */
 const accumulateMonthlyData: MonthlyTask = (get, set) => {
@@ -220,7 +276,12 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
           monthlyTaxRevenue: new Array(12).fill(0),
           monthlyMaintenanceCost: new Array(12).fill(0),
           monthlyPopulation: new Array(12).fill(0),
-          monthlySatisfaction: new Array(12).fill(50)
+          monthlySatisfaction: new Array(12).fill(50),
+          monthlySupportRatings: {
+            central_government: new Array(12).fill(50),
+            citizens: new Array(12).fill(50),
+            chamber_of_commerce: new Array(12).fill(50)
+          }
         }
       }
     });
@@ -377,7 +438,22 @@ const INITIAL_STATS: GameStats = {
       monthlyTaxRevenue: new Array(12).fill(0),
       monthlyMaintenanceCost: new Array(12).fill(0),
       monthlyPopulation: new Array(12).fill(0),
-      monthlySatisfaction: new Array(12).fill(50)
+      monthlySatisfaction: new Array(12).fill(50),
+      monthlySupportRatings: {
+        central_government: new Array(12).fill(50),
+        citizens: new Array(12).fill(50),
+        chamber_of_commerce: new Array(12).fill(50)
+      }
+    },
+    supportSystem: {
+      factionSupports: [
+        { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
+        { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
+        { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+      ],
+      monthlyHistory: [],
+      yearlyHistory: [],
+      lastCalculationDate: { year: 2024, month: 1 }
     }
 }
 
@@ -417,6 +493,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accumulateMonthlyData,
     adjustPopulationByGrowth,
     citizenFeedTask,
+    updateSupportRatings,
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),

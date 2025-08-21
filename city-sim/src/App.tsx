@@ -14,7 +14,7 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbTrophy, TbChartBar } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbAward, TbChartBar } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -312,7 +312,7 @@ function App() {
             }}
             className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
           >
-            <TbTrophy size={24} className="text-yellow-400" />
+            <TbAward size={24} className="text-yellow-400" />
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
           {hasClaimableRewards() && (

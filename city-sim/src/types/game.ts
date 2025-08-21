@@ -1,3 +1,5 @@
+import type { FactionType, SupportSystemState } from './support';
+
 export interface GameStats {
   level: number; 
   money: number;
@@ -24,6 +26,8 @@ export interface GameStats {
     expense: number;
     balance: number;
   };
+  // 支持率システムの状態
+  supportSystem: SupportSystemState;
   // 年次評価データ
   yearlyEvaluation: {
     year: number;
@@ -71,6 +75,7 @@ export interface GameStats {
     monthlyMaintenanceCost: number[]; // 月次維持費の配列（12ヶ月分）
     monthlyPopulation: number[];      // 月次人口の配列（12ヶ月分）
     monthlySatisfaction: number[];    // 月次満足度の配列（12ヶ月分）
+    monthlySupportRatings: Record<FactionType, number[]>; // 月次支持率の配列（12ヶ月分）
   };
 }
 
