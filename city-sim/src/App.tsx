@@ -188,7 +188,7 @@ function App() {
     // 設置音を鳴らす
     playBuildSound();
     // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
-    if (type === 'residential') {
+    if (facilityData.category === 'residential') {
       // 道路接続状態を更新
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
@@ -199,8 +199,12 @@ function App() {
       
       // 道路に接続されている場合のみ人口を増やす
       if (placedFacility && placedFacility.isConnected) {
-        addPopulation(100);
-        console.log('住宅が道路に接続されました。人口が100人増加しました。');
+        if (typeof facilityData.basePopulation === 'number') {
+          addPopulation(facilityData.basePopulation);
+          console.log(`住宅が道路に接続されました。人口が${facilityData.basePopulation}人増加しました。`);
+        } else {
+          console.warn('basePopulation is undefined for this facility type.');
+        }
       } else {
         console.log('住宅が道路に接続されていません。人口は増加しません。');
       }
