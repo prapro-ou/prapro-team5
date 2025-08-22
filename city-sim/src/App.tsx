@@ -406,7 +406,10 @@ function App() {
 
       {/* 施設削除モード切替ボタン（左下パネル切り替えボタンのすぐ上） */}
       <button
-        onClick={() => setDeleteMode(v => !v)}
+        onClick={() => {
+          playPanelSound();
+          setDeleteMode(v => !v);
+        }}
         className={`fixed bottom-20 left-4 bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[950] ${deleteMode ? 'ring-4 ring-red-400' : ''}`}
       >
         {deleteMode ? '削除モード中（施設をクリックで削除）' : '施設削除'}
