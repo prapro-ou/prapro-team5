@@ -38,6 +38,11 @@ export interface UIStore {
   openYearlyEvaluationResult: () => void;
   closeYearlyEvaluationResult: () => void;
   
+  // ミッションパネル
+  isMissionPanelOpen: boolean;
+  openMissionPanel: () => void;
+  closeMissionPanel: () => void;
+  
   // 選択されたタイル
   selectedTile: Position | null;
   setSelectedTile: (tile: Position | null) => void;
@@ -54,6 +59,7 @@ export const useUIStore = create<UIStore>((set) => ({
   isSaveLoadOpen: false,
   isStatisticsOpen: false,
   isYearlyEvaluationResultOpen: false,
+  isMissionPanelOpen: false,
 
   togglePanel: () => {
     set((state) => {
@@ -123,5 +129,13 @@ export const useUIStore = create<UIStore>((set) => ({
   closeYearlyEvaluationResult: () => {
     playPanelSound();
     set({ isYearlyEvaluationResultOpen: false });
+  },
+  openMissionPanel: () => {
+    playPanelSound();
+    set({ isMissionPanelOpen: true });
+  },
+  closeMissionPanel: () => {
+    playPanelSound();
+    set({ isMissionPanelOpen: false });
   },
 }));
