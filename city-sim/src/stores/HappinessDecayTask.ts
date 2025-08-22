@@ -4,7 +4,7 @@ import type { FacilityType, Facility } from '../types/facility';
 
 // 幸福度減少の設定
 const CHECK_INTERVAL = 1000 * 10; // 10秒ごと
-const DECAY_AMOUNT = 5; // 幸福度減少量
+const DECAY_AMOUNT = 3; // 幸福度減少量
 const REQUIRED_FACILITIES: FacilityType[] = ['police'];
 
 // 住宅の幸福度を減少させる処理
@@ -52,8 +52,8 @@ function decayHappinessIfNoFacilityNearby() {
       return Math.sqrt(dx * dx + dy * dy) <= radius;
     });
     if (!isParkCovered) {
-      parkPenalty += 2; // 住宅1件ごとに-2
-      console.log(`公園の効果範囲外: 住宅(${position.x},${position.y}) 満足度-2`);
+      parkPenalty += 1; // 住宅1件ごとに-1
+      console.log(`公園の効果範囲外: 住宅(${position.x},${position.y}) 満足度-1`);
     }
   });
   // ペナルティをstats.happinessPenaltyに累積
