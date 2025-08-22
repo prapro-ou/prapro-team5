@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police";
+export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -85,6 +85,7 @@ export interface Facility {
 // 施設のマスターデータ
 // cost, maintenanceCost, description は仮の値
 export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
+
   residential: {
     type: 'residential',
     name: '住宅区画',
@@ -101,6 +102,24 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productDemand: [0, 0, 0, 0],
     productProduction: [0, 0, 0, 0],
     basePopulation: 100,
+  },
+  large_residential: {
+    type: 'large_residential',
+    name: '大型住宅区画',
+    size: 3,
+    cost: 400,
+    maintenanceCost: 80,
+    description: '大きめの住宅区画。',
+    category: 'residential',
+    imgPaths: ['images/buildings/residential2.png'], // 画像は仮
+    imgSizes: [{ width: 96, height: 120 }],
+    satisfaction: 0,
+    baseAssetValue: 300,
+    infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 0],
+    basePopulation: 400,
+    effectRadius: 13,
   },
   commercial: {
     type: 'commercial', 
@@ -124,6 +143,29 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     infrastructureDemand: { water: 100, electricity: 100 },
     effectRadius: 9,
   },
+large_commercial: {
+    type: 'large_commercial',
+    name: '大型商業施設',
+    size: 7,
+    cost: 500,
+    maintenanceCost: 120,
+    description: '大規模な商業施設',
+    category: 'commercial',
+    imgPaths: ['images/buildings/commercial.png'], 
+    imgSizes: [{ width: 224, height: 160 }],
+    satisfaction: 15,
+    attractiveness: 200,
+    workforceRequired: {
+      min: 10,
+      max: 50,
+      baseRevenue: 500,
+      baseConsumption: 20
+    },
+    baseAssetValue: 500,
+    infrastructureDemand: { water: 300, electricity: 300 },
+    effectRadius: 18,
+  },
+
   industrial: {
     type: 'industrial',
     name: '工業区画',
@@ -179,6 +221,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 100,
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
+    imgPaths: ['images/buildings/city_hall.png'],
+    imgSizes: [{ width: 160, height: 99 }],
     satisfaction: 10, // 設置すると満足度が少し上がる
     effectRadius: 21, // 21マス範囲に効果
   },
@@ -192,7 +236,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '周囲の住宅の満足度が下がるのを防ぐ施設',
     category: 'government', // 公共カテゴリに変更
     imgPaths: ['images/buildings/park.png'],
-    imgSizes: [{ width: 96, height: 79 }],
+    imgSizes: [{ width: 96, height: 56 }],
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
   },
@@ -210,6 +254,19 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     satisfaction: 12,
     effectRadius: 25,
   },
+  hospital: {
+    type: 'hospital',
+    name: '病院',
+    size: 3,
+    cost: 800,
+    maintenanceCost: 40,
+    description: '健康を守り、周囲の満足度を上げる施設',
+    category: 'government',
+    imgPaths: ['images/buildings/hospital.png'], 
+    imgSizes: [{ width: 96, height: 79 }],
+    satisfaction: 12,
+    effectRadius: 25,
+  },
   electric_plant: {
     type: 'electric_plant',
     name: '発電所',
@@ -218,6 +275,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 100,
     description: '電力を生産する施設',
     category: 'infrastructure',
+    imgPaths: ['images/buildings/electric_plant.png'], 
+    imgSizes: [{ width: 96, height: 70 }],
     satisfaction: 0,
     attractiveness: 100,
     infrastructureSupply: { water: 0, electricity: 5000 },

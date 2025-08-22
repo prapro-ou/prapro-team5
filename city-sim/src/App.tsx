@@ -76,6 +76,9 @@ function App() {
   // スタート画面の表示状態
   const [showStartScreen, setShowStartScreen] = useState(true);
 
+  // 施設削除モード状態
+  const [deleteMode, setDeleteMode] = useState(false);
+
   // ゲーム統計情報・レベルアップ通知
   const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
   
@@ -90,9 +93,10 @@ function App() {
     facilities, 
     selectedFacilityType, 
     setSelectedFacilityType, 
-    addFacility,
-    checkCanPlace,
-    createFacility 
+  addFacility,
+  checkCanPlace,
+  createFacility,
+  removeFacility
   } = useFacilityStore();
 
   // 報酬パネル表示状態のみAppで管理
@@ -188,7 +192,7 @@ function App() {
     // 設置音を鳴らす
     playBuildSound();
     // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
-    if (type === 'residential') {
+    if (facilityData.category === 'residential') {
       // 道路接続状態を更新
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
@@ -199,8 +203,12 @@ function App() {
       
       // 道路に接続されている場合のみ人口を増やす
       if (placedFacility && placedFacility.isConnected) {
-        addPopulation(100);
-        console.log('住宅が道路に接続されました。人口が100人増加しました。');
+        if (typeof facilityData.basePopulation === 'number') {
+          addPopulation(facilityData.basePopulation);
+          console.log(`住宅が道路に接続されました。人口が${facilityData.basePopulation}人増加しました。`);
+        } else {
+          console.warn('basePopulation is undefined for this facility type.');
+        }
       } else {
         console.log('住宅が道路に接続されていません。人口は増加しません。');
       }
@@ -221,20 +229,36 @@ function App() {
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
     };
     
-    // 同じ位置をクリックした場合は選択を解除
-    if (selectedTile && 
-        selectedTile.x === correctedPosition.x && 
-        selectedTile.y === correctedPosition.y) {
-      setSelectedTile(null);
-      return;
-    }
-    
-    // 新しい位置を選択
-    setSelectedTile(correctedPosition);
-    
-    if (selectedFacilityType) {
-      placeFacility(correctedPosition, selectedFacilityType);
-    }
+      if (deleteMode) {
+        // 削除モード時は施設があれば削除
+        const facility = facilities.find(f =>
+          f.occupiedTiles.some(tile => tile.x === correctedPosition.x && tile.y === correctedPosition.y)
+        );
+        if (facility) {
+          // 住宅施設なら人口減算
+          const facilityData = FACILITY_DATA[facility.type];
+          if (facilityData.category === 'residential' && typeof facilityData.basePopulation === 'number') {
+            addPopulation(-facilityData.basePopulation);
+          }
+          removeFacility(facility.id);
+          // setDeleteMode(false); // 削除後も削除モードを維持
+          return;
+        }
+      } else {
+        // 通常モード
+        // 同じ位置をクリックした場合は選択を解除
+        if (selectedTile && 
+            selectedTile.x === correctedPosition.x && 
+            selectedTile.y === correctedPosition.y) {
+          setSelectedTile(null);
+          return;
+        }
+        // 新しい位置を選択
+        setSelectedTile(correctedPosition);
+        if (selectedFacilityType) {
+          placeFacility(correctedPosition, selectedFacilityType);
+        }
+      }
   };
 
   // レベルアップ通知を一定時間で消す
@@ -380,6 +404,13 @@ function App() {
         </div>
       </div>
 
+      {/* 施設削除モード切替ボタン（左下パネル切り替えボタンのすぐ上） */}
+      <button
+        onClick={() => setDeleteMode(v => !v)}
+        className={`fixed bottom-20 left-4 bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[950] ${deleteMode ? 'ring-4 ring-red-400' : ''}`}
+      >
+        {deleteMode ? '削除モード中（施設をクリックで削除）' : '施設削除'}
+      </button>
       {/* パネル切り替えボタン */}
       <button 
         onClick={togglePanel}
@@ -391,13 +422,13 @@ function App() {
       {/* 施設建設パネル */}
       {showPanel && (
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/10 p-6 rounded-lg shadow-2xl z-[800] backdrop-blur-sm w-2xl">
-            <div className="flex-1">
-              <FacilitySelector 
-                selectedType={selectedFacilityType}
-                onSelectType={setSelectedFacilityType}
-                money={stats.money}
-              />
-            </div>
+          <div className="flex-1">
+            <FacilitySelector 
+              selectedType={selectedFacilityType}
+              onSelectType={setSelectedFacilityType}
+              money={stats.money}
+            />
+          </div>
         </div>
       )}
 
