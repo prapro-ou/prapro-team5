@@ -18,6 +18,7 @@ import { useUIStore } from './UIStore';
 import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
+import { useMissionStore } from './MissionStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -254,6 +255,14 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
       monthlyBalance: { income, expense, balance }
     }
   });
+};
+
+/**
+ * ミッション条件チェックタスク
+ */
+const checkMissionConditions: MonthlyTask = (_get, _set) => {
+  const { checkMissionConditions } = useMissionStore.getState();
+  checkMissionConditions();
 };
 
 /**
@@ -545,6 +554,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     adjustPopulationByGrowth,
     citizenFeedTask,
     updateSupportRatings,
+    checkMissionConditions,
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
