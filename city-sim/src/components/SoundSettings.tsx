@@ -10,6 +10,7 @@ export let playSelectSound = () => {};
 export let playSelect1Sound = () => {};
 export let playBgm2Sound = () => {};
 export let stopBgm2Sound = () => {};
+export let playDeleatSound = () => {}; // 施設削除用SE
 // TbBellOffアイコンを追加
 import { TbMusic, TbMusicOff, TbVolume, TbVolumeOff, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
@@ -22,6 +23,7 @@ import selectSfxSrc from '../assets/select.mp3';
 import select1SfxSrc from '../assets/select1.mp3';
 import pressEnterSfxSrc from '../assets/press_enter.mp3';
 import bgm2Src from '../assets/bgm2.mp3';
+import deleatSfxSrc from '../assets/deleat.mp3';
 
 let bgm2Audio: HTMLAudioElement | null = null;
 
@@ -189,6 +191,12 @@ export function BGMPlayer() {
         bgm2Audio.currentTime = 0;
         bgm2Audio = null;
       }
+    };
+    playDeleatSound = () => {
+      if (isSfxMuted) return;
+      const sfx = new Audio(deleatSfxSrc);
+      sfx.volume = sfxVolume;
+      sfx.play().catch(() => {});
     };
   }, [isSfxMuted, sfxVolume, isSNSMuted, snsVolume]);
 
