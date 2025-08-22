@@ -152,7 +152,7 @@ large_commercial: {
     description: '大規模な商業施設',
     category: 'commercial',
     imgPaths: ['images/buildings/commercial.png'], 
-    imgSizes: [{ width: 224, height: 160 }],
+    imgSizes: [{ width: 224, height: 135 }],
     satisfaction: 15,
     attractiveness: 200,
     workforceRequired: {
