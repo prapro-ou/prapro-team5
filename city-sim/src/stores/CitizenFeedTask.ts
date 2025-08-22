@@ -1,5 +1,5 @@
 // 前月の不足状態を記憶する変数（モジュールスコープ）
-let prevShortage = { water: false, electricity: false, park: false, police: false };
+let prevShortage = { water: false, electricity: false, park: false, police: false, hospital: false };
 import { useFacilityStore } from "./FacilityStore";
 import { useFeedStore } from "./FeedStore";
 import { getResidentialsWithoutPark } from "../utils/parkEffect";
@@ -7,6 +7,8 @@ import { useInfrastructureStore } from "./InfrastructureStore";
 import type { MonthlyTask } from "./GameStore";
 
 export const citizenFeedTask: MonthlyTask = (get) => {
+  // 前回病院不足だったか記憶する（モジュールスコープで保持）
+  if (typeof prevShortage.hospital === 'undefined') prevShortage.hospital = false;
   // 前回警察署不足だったか記憶する（モジュールスコープで保持）
   if (typeof prevShortage.police === 'undefined') prevShortage.police = false;
   const facilities = useFacilityStore.getState().facilities;
@@ -16,6 +18,17 @@ export const citizenFeedTask: MonthlyTask = (get) => {
   let feedAdded = false;
 
   // 警察署不足メッセージ（罵倒系含むランダム）
+  // 病院不足メッセージ（罵倒系含むランダム）
+  const hospitalMessages = [
+    "近くに病院がなくて不安です…体調悪いのにどうすればいいんだ！🏥",
+    "この街、医療体制ひどすぎ！病院くらい建てろよ！😡",
+    "病院がないとかありえない…市長何してんの？👎",
+    "病院が遠すぎて意味ない！もっと増やせ！",
+    "病院がないから毎日不安…責任取れ！",
+    "この街、病人は放置かよ…病院は？",
+    "病院がないとか、住民のこと考えてないだろ！",
+    "市長、病院建てる気ある？やる気出せ！"
+  ];
   const policeMessages = [
     "近くに警察署がなくて不安です…誰か助けて！🚨",
     "この街、治安悪すぎ！警察署くらい建てろよ！😡",
@@ -29,6 +42,59 @@ export const citizenFeedTask: MonthlyTask = (get) => {
     "市長、警察署建てる気ある？やる気出せ！"
   ];
   // 警察署不足判定
+  // 病院不足判定
+  const hospitalFacilities = facilities.filter(f => f.type === 'hospital');
+  const hospitalRadiusResidentials: { house: any, isCovered: boolean }[] = [];
+  facilities.filter(f => f.type === 'residential').forEach(house => {
+    const { position } = house;
+    const isCovered = hospitalFacilities.some(hospital => {
+      const radius = hospital.effectRadius ?? 0;
+      const dx = hospital.position.x - position.x;
+      const dy = hospital.position.y - position.y;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
+    });
+    hospitalRadiusResidentials.push({ house, isCovered });
+  });
+  const outOfRangeHospitalResidentials = hospitalRadiusResidentials.filter(r => !r.isCovered);
+  if (outOfRangeHospitalResidentials.length > 0) {
+    // 病院が近くにない住宅があれば文句メッセージ（ランダム）
+    outOfRangeHospitalResidentials.forEach(() => {
+      const msg = hospitalMessages[Math.floor(Math.random() * hospitalMessages.length)];
+      feedStore.addFeed({
+        text: msg,
+        icon: '🏥',
+        timestamp: now,
+        mood: 'negative'
+      });
+    });
+    feedAdded = true;
+    prevShortage.hospital = true;
+  } else {
+    // 前回病院不足だったが、今月は解消された場合
+    if (prevShortage.hospital) {
+      const hospitalThanksMessages = [
+        "新しく病院ができて安心して暮らせるようになった！🏥",
+        "医療体制が良くなってみんな安心！ありがとう！",
+        "病院ができてみんな喜んでる！市長グッジョブ！",
+        "これで体調悪くても安心！病院最高！",
+        "病院ができて街の雰囲気が明るくなった！",
+        "やっと病院ができた！これで安心！",
+        "病院ができて子どもたちも安心して遊べる！",
+        "病院ができて住民の不安が減った！",
+        "病院ありがとう！これで安心して暮らせる！",
+        "市長、病院設置ありがとう！みんな感謝してる！"
+      ];
+      const msg = hospitalThanksMessages[Math.floor(Math.random() * hospitalThanksMessages.length)];
+      feedStore.addFeed({
+        text: msg,
+        icon: '🏥',
+        timestamp: now,
+        mood: 'positive'
+      });
+      feedAdded = true;
+    }
+    prevShortage.hospital = false;
+  }
   const policeFacilities = facilities.filter(f => f.type === 'police');
   const policeRadiusResidentials: { house: any, isCovered: boolean }[] = [];
   facilities.filter(f => f.type === 'residential').forEach(house => {
@@ -44,10 +110,10 @@ export const citizenFeedTask: MonthlyTask = (get) => {
   const outOfRangePoliceResidentials = policeRadiusResidentials.filter(r => !r.isCovered);
   if (outOfRangePoliceResidentials.length > 0) {
     // 警察署が近くにない住宅があれば文句メッセージ（ランダム）
-    outOfRangePoliceResidentials.forEach(({ house }) => {
+    outOfRangePoliceResidentials.forEach(() => {
       const msg = policeMessages[Math.floor(Math.random() * policeMessages.length)];
       feedStore.addFeed({
-        text: `${msg} (${house.position.x},${house.position.y})`,
+        text: msg,
         icon: '🚨',
         timestamp: now,
         mood: 'negative'
