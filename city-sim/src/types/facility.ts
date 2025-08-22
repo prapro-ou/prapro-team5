@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
+export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -103,6 +103,24 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productProduction: [0, 0, 0, 0],
     basePopulation: 100,
   },
+  large_residential: {
+    type: 'large_residential',
+    name: '大型住宅区画',
+    size: 3,
+    cost: 400,
+    maintenanceCost: 80,
+    description: '大きめの住宅区画。',
+    category: 'residential',
+    imgPaths: ['images/buildings/residential.png'], // 画像は仮
+    imgSizes: [{ width: 96, height: 79 }],
+    satisfaction: 0,
+    baseAssetValue: 300,
+    infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 0],
+    basePopulation: 400,
+    effectRadius: 13,
+  },
   commercial: {
     type: 'commercial', 
     name: '商業区画',
@@ -133,7 +151,7 @@ large_commercial: {
     maintenanceCost: 120,
     description: '大規模な商業施設',
     category: 'commercial',
-    imgPaths: ['images/buildings/commercial.png'], // 画像は仮
+    imgPaths: ['images/buildings/commercial.png'], 
     imgSizes: [{ width: 224, height: 160 }],
     satisfaction: 15,
     attractiveness: 200,
