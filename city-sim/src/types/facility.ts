@@ -111,8 +111,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 80,
     description: '大きめの住宅区画。',
     category: 'residential',
-    imgPaths: ['images/buildings/residential.png'], // 画像は仮
-    imgSizes: [{ width: 96, height: 79 }],
+    imgPaths: ['images/buildings/residential2.png'], // 画像は仮
+    imgSizes: [{ width: 96, height: 120 }],
     satisfaction: 0,
     baseAssetValue: 300,
     infrastructureDemand: { water: 200, electricity: 200 },
@@ -221,6 +221,8 @@ large_commercial: {
     maintenanceCost: 100,
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
+    imgPaths: ['images/buildings/city_hall.png'],
+    imgSizes: [{ width: 160, height: 99 }],
     satisfaction: 10, // 設置すると満足度が少し上がる
     effectRadius: 21, // 21マス範囲に効果
   },
@@ -234,7 +236,7 @@ large_commercial: {
     description: '周囲の住宅の満足度が下がるのを防ぐ施設',
     category: 'government', // 公共カテゴリに変更
     imgPaths: ['images/buildings/park.png'],
-    imgSizes: [{ width: 96, height: 79 }],
+    imgSizes: [{ width: 96, height: 56 }],
     satisfaction: 5,
     effectRadius: 13 //13マス範囲に効果
   },
@@ -273,6 +275,8 @@ large_commercial: {
     maintenanceCost: 100,
     description: '電力を生産する施設',
     category: 'infrastructure',
+    imgPaths: ['images/buildings/electric_plant.png'], 
+    imgSizes: [{ width: 96, height: 70 }],
     satisfaction: 0,
     attractiveness: 100,
     infrastructureSupply: { water: 0, electricity: 5000 },
