@@ -11,8 +11,8 @@ const creditsData = [
   { role: 'ディレクター', name: 'あなた' },
   { role: 'プログラム', name: 'あなた' },
   { role: 'デザイン', name: 'あなた' },
-  { role: 'BGM', name: 'shimtone様よりMorning Glory' },
-  { role: 'SE', name: '小森平様' },
+  { role: 'BGM', bgmNames: ['Morning Glory', 'to the Air', 'Precious Thoughts'], author: 'shimtone', authorUrl: 'https://dova-s.jp/_contents/author/profile295.html' },
+  { role: 'SE', name: '小森平様', authorUrl: 'https://taira-komori.net/' },
   { role: 'スペシャルサンクス', name: 'プレイヤーの皆さん' },
 ];
 
@@ -44,18 +44,28 @@ export const CreditsPanel: React.FC<CreditsPanelProps> = ({ onClose }) => {
           {creditsData.map((credit, index) => (
             <div key={index}>
               <p className="text-lg text-gray-400">{credit.role}</p>
-              {credit.role === 'SE' ? (
+              {credit.role === 'BGM' ? (
+                <>
+                  <div className="mb-1">
+                    {Array.isArray(credit.bgmNames)
+                      ? credit.bgmNames.map((name, i) => (
+                          <div key={i} className="text-xl font-semibold text-white">{name}</div>
+                        ))
+                      : <span className="text-xl font-semibold text-white">{credit.bgmNames}</span>
+                    }
+                  </div>
+                  <a 
+                    href={credit.authorUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lg text-blue-400 hover:text-blue-300 underline transition-colors"
+                  >
+                    {credit.author}
+                  </a>
+                </>
+              ) : credit.role === 'SE' ? (
                 <a 
-                  href="https://taira-komori.net/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-2xl font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
-                >
-                  {credit.name}
-                </a>
-              ) : credit.role === 'BGM' ? (
-                <a 
-                  href="https://dova-s.jp/_contents/author/profile295.html"
+                  href={credit.authorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-2xl font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
