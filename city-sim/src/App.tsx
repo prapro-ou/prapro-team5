@@ -443,11 +443,6 @@ function App() {
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
       
-      {/* 統計画面 */}
-      {/* isStatisticsOpen && (
-        <StatisticsPanel onClose={closeStatistics} />
-      ) */}
-      
       {/* ミッションパネル */}
       {isMissionPanelOpen && (
         <MissionPanel onClose={closeMissionPanel} />
