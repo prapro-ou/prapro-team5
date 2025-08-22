@@ -9,12 +9,13 @@ import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
+import MissionPanel from './components/MissionPanel';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbAward, TbChartBar } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbAward, TbChartBar, TbChecklist } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -70,7 +71,10 @@ function App() {
     openStatistics,
     closeStatistics,
     isYearlyEvaluationResultOpen,
-    closeYearlyEvaluationResult
+    closeYearlyEvaluationResult,
+    isMissionPanelOpen,
+    openMissionPanel,
+    closeMissionPanel
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -359,6 +363,16 @@ function App() {
         <TbChartBar />
       </button>
 
+      {/* ミッションボタン */}
+      <button
+        onClick={() => {
+          openMissionPanel();
+        }}
+        className="fixed top-55 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbChecklist />
+      </button>
+
       {/* インフラ情報パネル */}
       {isInfrastructureInfoOpen && (
         <div className="fixed top-25 left-25 z-[1100]">
@@ -433,6 +447,11 @@ function App() {
       {/* isStatisticsOpen && (
         <StatisticsPanel onClose={closeStatistics} />
       ) */}
+      
+      {/* ミッションパネル */}
+      {isMissionPanelOpen && (
+        <MissionPanel onClose={closeMissionPanel} />
+      )}
     </div>
     
   );
