@@ -8,6 +8,8 @@ export let playPressEnterSound = () => {};
 export let playCoinSound = () => {};
 export let playSelectSound = () => {};
 export let playSelect1Sound = () => {};
+export let playBgm2Sound = () => {};
+export let stopBgm2Sound = () => {};
 // TbBellOffアイコンを追加
 import { TbMusic, TbMusicOff, TbVolume, TbVolumeOff, TbBell, TbBellOff } from "react-icons/tb";
 import bgmSrc from '../assets/bgm.mp3';
@@ -18,6 +20,9 @@ import coinSfxSrc from '../assets/coin.mp3';
 import selectSfxSrc from '../assets/select.mp3';
 import select1SfxSrc from '../assets/select1.mp3';
 import pressEnterSfxSrc from '../assets/press_enter.mp3';
+import bgm2Src from '../assets/bgm2.mp3';
+
+let bgm2Audio: HTMLAudioElement | null = null;
 
 /**
  * BGMと効果音の再生・音量調整を行うコンポーネント．
@@ -163,6 +168,24 @@ export function BGMPlayer() {
       const sfx = new Audio(pressEnterSfxSrc);
       sfx.volume = snsVolume;
       sfx.play().catch(() => {});
+    };
+    playBgm2Sound = () => {
+      if (isBgmMuted) return;
+      if (bgm2Audio) {
+        bgm2Audio.pause();
+        bgm2Audio.currentTime = 0;
+      }
+      bgm2Audio = new Audio(bgm2Src);
+      bgm2Audio.volume = bgmVolume;
+      bgm2Audio.loop = true;
+      bgm2Audio.play().catch(() => {});
+    };
+    stopBgm2Sound = () => {
+      if (bgm2Audio) {
+        bgm2Audio.pause();
+        bgm2Audio.currentTime = 0;
+        bgm2Audio = null;
+      }
     };
   }, [isSfxMuted, sfxVolume, isSNSMuted, snsVolume]);
 
