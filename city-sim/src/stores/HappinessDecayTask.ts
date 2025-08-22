@@ -14,25 +14,41 @@ function decayHappinessIfNoFacilityNearby() {
   // 住宅施設一覧取得
   const houses: Facility[] = facilityStore.facilities.filter(f => f.type === 'residential');
   const facilities = facilityStore.facilities;
-  let penalty = 0;
+  let policePenalty = 0;
+  let parkPenalty = 0;
   houses.forEach(house => {
     const { position } = house;
-    // 公園・警察署などのeffectRadius内に住宅が入っているか判定
-    const isCovered = facilities.some(facility => {
-      if (!REQUIRED_FACILITIES.includes(facility.type)) return false;
+    // 警察署のeffectRadius内に住宅が入っているか判定
+    const isPoliceCovered = facilities.some(facility => {
+      if (facility.type !== 'police') return false;
       const radius = facility.effectRadius ?? 0;
       const dx = facility.position.x - position.x;
       const dy = facility.position.y - position.y;
       return Math.sqrt(dx * dx + dy * dy) <= radius;
     });
-    if (!isCovered) {
-      penalty += DECAY_AMOUNT;
+    if (!isPoliceCovered) {
+      policePenalty += DECAY_AMOUNT;
       console.log(`警察署の効果範囲外: 住宅(${position.x},${position.y}) 幸福度-${DECAY_AMOUNT}`);
+    }
+    // 公園のeffectRadius内に住宅が入っているか判定（活動中の公園のみ）
+    const isParkCovered = facilities.some(facility => {
+      if (facility.type !== 'park' || !facility.isActive) return false;
+      const radius = facility.effectRadius ?? 0;
+      const dx = facility.position.x - position.x;
+      const dy = facility.position.y - position.y;
+      return Math.sqrt(dx * dx + dy * dy) <= radius;
+    });
+    if (!isParkCovered) {
+      parkPenalty += 2; // 住宅1件ごとに-2
+      console.log(`公園の効果範囲外: 住宅(${position.x},${position.y}) 満足度-2`);
     }
   });
   // ペナルティをstats.happinessPenaltyに累積
-  gameStore.stats.happinessPenalty = (gameStore.stats.happinessPenalty ?? 0) + penalty;
-  console.log(`ペナルティ累積: ${gameStore.stats.happinessPenalty}（住宅数: ${houses.length}、警察署数: ${facilities.filter(f => f.type === 'police').length}）`);
+  gameStore.stats.happinessPenalty = (gameStore.stats.happinessPenalty ?? 0) + policePenalty;
+  // 公園ペナルティは直接満足度から減算
+  gameStore.stats.satisfaction = Math.max(0, (gameStore.stats.satisfaction ?? 0) - parkPenalty);
+  console.log(`警察署ペナルティ累積: ${gameStore.stats.happinessPenalty}（住宅数: ${houses.length}、警察署数: ${facilities.filter(f => f.type === 'police').length}）`);
+  console.log(`公園ペナルティ累積: -${parkPenalty}（住宅数: ${houses.length}、公園数: ${facilities.filter(f => f.type === 'park').length}）`);
 }
 
 // 定期的に幸福度減少処理を実行

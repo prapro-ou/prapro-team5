@@ -5,7 +5,6 @@ import { useFacilityStore } from './FacilityStore';
 import { FACILITY_DATA } from '../types/facility';
 import { citizenFeedTask } from './CitizenFeedTask';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
-import { applyParkSatisfactionPenalty } from './ParkSatisfactionTask';
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
@@ -537,7 +536,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     calculateTaxRevenue,
     payMaintenanceCost,
     processEconomicCycle,
-    applyParkSatisfactionPenalty,
     processInfrastructure,
     processMonthlyBalance,
     processYearlyEvaluation,
