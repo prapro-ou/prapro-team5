@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police";
+export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -85,6 +85,19 @@ export interface Facility {
 // 施設のマスターデータ
 // cost, maintenanceCost, description は仮の値
 export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
+  hospital: {
+    type: 'hospital',
+    name: '病院',
+    size: 3,
+    cost: 800,
+    maintenanceCost: 40,
+    description: '健康を守り、周囲の満足度を上げる施設',
+    category: 'government',
+    imgPaths: ['images/buildings/hospital.png'], 
+    imgSizes: [{ width: 96, height: 79 }],
+    satisfaction: 12,
+    effectRadius: 25,
+  },
   residential: {
     type: 'residential',
     name: '住宅区画',
