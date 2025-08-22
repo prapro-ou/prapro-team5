@@ -22,6 +22,7 @@ import SNSicon from './assets/SNSicon.png';
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
+import { useMissionStore } from './stores/MissionStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
@@ -416,6 +417,7 @@ function App() {
             useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
             useInfrastructureStore.getState().resetToInitial();
             useRewardStore.getState().resetToInitial();
+            useMissionStore.getState().resetToInitial();
             
             // 設定パネルを閉じて、スタート画面を表示
             closeSettings();
