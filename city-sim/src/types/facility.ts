@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
+export type FacilityType = "residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -85,19 +85,7 @@ export interface Facility {
 // 施設のマスターデータ
 // cost, maintenanceCost, description は仮の値
 export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
-  hospital: {
-    type: 'hospital',
-    name: '病院',
-    size: 3,
-    cost: 800,
-    maintenanceCost: 40,
-    description: '健康を守り、周囲の満足度を上げる施設',
-    category: 'government',
-    imgPaths: ['images/buildings/hospital.png'], 
-    imgSizes: [{ width: 96, height: 79 }],
-    satisfaction: 12,
-    effectRadius: 25,
-  },
+
   residential: {
     type: 'residential',
     name: '住宅区画',
@@ -137,6 +125,29 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     infrastructureDemand: { water: 100, electricity: 100 },
     effectRadius: 9,
   },
+large_commercial: {
+    type: 'large_commercial',
+    name: '大型商業施設',
+    size: 7,
+    cost: 500,
+    maintenanceCost: 120,
+    description: '大規模な商業施設',
+    category: 'commercial',
+    imgPaths: ['images/buildings/commercial.png'], // 画像は仮
+    imgSizes: [{ width: 224, height: 160 }],
+    satisfaction: 15,
+    attractiveness: 200,
+    workforceRequired: {
+      min: 10,
+      max: 50,
+      baseRevenue: 500,
+      baseConsumption: 20
+    },
+    baseAssetValue: 500,
+    infrastructureDemand: { water: 300, electricity: 300 },
+    effectRadius: 18,
+  },
+
   industrial: {
     type: 'industrial',
     name: '工業区画',
@@ -219,6 +230,19 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '治安を向上させ、周囲の満足度を上げる施設',
     category: 'government',
     imgPaths: ['images/buildings/police.png'],
+    imgSizes: [{ width: 96, height: 79 }],
+    satisfaction: 12,
+    effectRadius: 25,
+  },
+  hospital: {
+    type: 'hospital',
+    name: '病院',
+    size: 3,
+    cost: 800,
+    maintenanceCost: 40,
+    description: '健康を守り、周囲の満足度を上げる施設',
+    category: 'government',
+    imgPaths: ['images/buildings/hospital.png'], 
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 12,
     effectRadius: 25,
