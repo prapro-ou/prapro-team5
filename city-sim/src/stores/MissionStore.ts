@@ -154,7 +154,7 @@ class ConditionEngine {
   /**
    * 複合条件の評価（将来の拡張用）
    */
-  static evaluateCompoundCondition(condition: any, gameState: any, facilities: any[]): ConditionCheckResult {
+  static evaluateCompoundCondition(condition: any, _gameState: any, _facilities: any[]): ConditionCheckResult {
     // TODO: 複合条件の実装
     return {
       condition,
@@ -375,7 +375,7 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
   },
   
   // 進捗更新
-  updateMissionProgress: (id: string) => {
+  updateMissionProgress: (_id: string) => {
     get().checkMissionConditions();
   },
   
