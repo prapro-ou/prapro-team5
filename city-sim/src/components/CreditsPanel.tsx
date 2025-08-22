@@ -8,9 +8,10 @@ interface CreditsPanelProps {
 
 // クレジットに表示するデータ
 const creditsData = [
-  { role: 'ディレクター', name: 'あなた' },
-  { role: 'プログラム', name: 'あなた' },
-  { role: 'デザイン', name: 'あなた' },
+  { role: 'プロデューサー', name: '橋本 旺都' },
+  { role: 'ディレクター', name: '遠田 光佑' },
+  { role: 'プログラム', name: '遠田 光佑,中村 悠一,黒杉 太稀' },
+  { role: '施設イラスト', name: '濱崎 蒼平' },
   { role: 'BGM', bgmNames: ['Morning Glory', 'to the Air', 'Precious Thoughts'], author: 'shimtone', authorUrl: 'https://dova-s.jp/_contents/author/profile295.html' },
   { role: 'SE', name: '小森平様', authorUrl: 'https://taira-komori.net/' },
   { role: 'スペシャルサンクス', name: 'プレイヤーの皆さん' },
