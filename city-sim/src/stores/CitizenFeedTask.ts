@@ -2,7 +2,6 @@
 let prevShortage = { water: false, electricity: false, park: false, police: false, hospital: false };
 import { useFacilityStore } from "./FacilityStore";
 import { useFeedStore } from "./FeedStore";
-import { getResidentialsWithoutPark } from "../utils/parkEffect";
 import { useInfrastructureStore } from "./InfrastructureStore";
 import type { MonthlyTask } from "./GameStore";
 
@@ -166,7 +165,21 @@ export const citizenFeedTask: MonthlyTask = (get) => {
   // 公園不足判定
   const residentials = facilities.filter(f => f.type === 'residential');
   const parks = facilities.filter(f => f.type === 'park');
-  const outOfRangeResidentials = getResidentialsWithoutPark(residentials, parks);
+  // 公園effectRadius範囲外の住宅を抽出
+  const outOfRangeResidentials: typeof residentials = [];
+  residentials.forEach(house => {
+    const inRange = parks.some(park => {
+      if (!park.effectRadius) return false;
+      const px = park.position.x;
+      const py = park.position.y;
+      return house.occupiedTiles.some(tile => {
+        const dx = tile.x - px;
+        const dy = tile.y - py;
+        return park.effectRadius !== undefined && Math.sqrt(dx * dx + dy * dy) <= park.effectRadius;
+      });
+    });
+    if (!inRange) outOfRangeResidentials.push(house);
+  });
   const isParkShortage = outOfRangeResidentials.length > 0;
   const parkMessages = [
     "近くに公園がなくて、子どもを遊ばせる場所がないよ！🌳",
