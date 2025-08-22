@@ -44,7 +44,7 @@ export default function MissionPanel({ onClose }: MissionPanelProps) {
   };
 
   return (
-    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 w-[600px] max-h-[600px] z-[3000]">
+    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl p-8 w-[600px] max-h-[500px] z-[3000]">
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800">ミッション</h2>
@@ -78,7 +78,7 @@ export default function MissionPanel({ onClose }: MissionPanelProps) {
       </div>
 
       {/* ミッション一覧 */}
-      <div className="max-h-[400px] overflow-y-auto">
+      <div className="max-h-[300px] overflow-y-auto">
         {Object.entries(missionsByCategory).map(([category, categoryMissions]) => (
           <div key={category} className="mb-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">
