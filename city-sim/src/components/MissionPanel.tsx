@@ -100,24 +100,6 @@ export default function MissionPanel({ onClose }: MissionPanelProps) {
           </div>
         )}
       </div>
-
-      {/* フッター */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => {
-              playPanelSound();
-              generateSampleMissions();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            サンプルミッション生成
-          </button>
-          <div className="text-sm text-gray-500">
-            月次処理で自動更新されます
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
