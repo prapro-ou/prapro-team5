@@ -13,6 +13,8 @@ export interface BaseMission {
 // ミッション用プロパティ
 export interface Mission extends BaseMission {
   type: 'mission';
+  conditions: Condition[];       // 発生・達成条件
+  effects: Effect[];             // 効果・報酬
   status: MissionStatus;         // 現在の状態
   progress: number;              // 進捗率（0-100）
   startDate?: GameDate;          // 開始日時
