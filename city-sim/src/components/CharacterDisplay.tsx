@@ -56,7 +56,7 @@ export function CharacterDisplay({
       case 'small':
         return { width: 128, height: 128 };
       case 'medium':
-        return { width: 192, height: 192 };
+        return { width: 256, height: 256 };
       case 'large':
         return { width: 512, height: 512 };
       default:
