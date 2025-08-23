@@ -131,6 +131,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productProduction: [0, 0, 0, 0],
     basePopulation: 400,
     effectRadius: 13,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   commercial: {
     type: 'commercial', 
@@ -158,7 +160,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
-large_commercial: {
+  large_commercial: {
     type: 'large_commercial',
     name: '大型商業施設',
     size: 7,
@@ -178,7 +180,11 @@ large_commercial: {
     },
     baseAssetValue: 500,
     infrastructureDemand: { water: 300, electricity: 300 },
+    productDemand: [0, 0, 20, 0],
+    productProduction: [0, 0, 0, 20],
     effectRadius: 18,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
 
   industrial: {
@@ -261,7 +267,7 @@ large_commercial: {
     imgPaths: ['images/buildings/park.png'],
     imgSizes: [{ width: 96, height: 56 }],
     satisfaction: 5,
-    effectRadius: 13 //13マス範囲に効果
+    effectRadius: 13, //13マス範囲に効果
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
@@ -278,6 +284,8 @@ large_commercial: {
     imgSizes: [{ width: 160, height: 99 }],
     satisfaction: 12,
     effectRadius: 25,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   hospital: {
     type: 'hospital',
@@ -292,7 +300,7 @@ large_commercial: {
     satisfaction: 12,
     effectRadius: 25,
     unlockCondition: 'initial',
-    initiallyUnlocked: true
+    initiallyUnlocked: true,
   },
   electric_plant: {
     type: 'electric_plant',
@@ -309,7 +317,7 @@ large_commercial: {
     infrastructureSupply: { water: 0, electricity: 5000 },
     effectRadius: 11,
     unlockCondition: 'initial',
-    initiallyUnlocked: true
+    initiallyUnlocked: true,
   },
   water_plant: {
     type: 'water_plant',
@@ -319,11 +327,13 @@ large_commercial: {
     maintenanceCost: 60,
     description: '水道を供給する',
     category: 'infrastructure',
+    imgPaths: ['images/buildings/water_plant.png'], 
+    imgSizes: [{ width: 96, height: 70 }],
     satisfaction: -5,
     attractiveness: 70,
     infrastructureSupply: { water: 400, electricity: 0 },
     effectRadius: 15,
     unlockCondition: 'initial',
-    initiallyUnlocked: true
+    initiallyUnlocked: true,
   }
 }
