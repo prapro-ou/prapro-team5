@@ -6,6 +6,7 @@ import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { isFacilityConnectedToValidRoadNetwork, clearConnectionCache } from '../utils/roadConnectivity';
+import { FacilityUnlockManager } from '../utils/facilityUnlockManager';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -41,7 +42,7 @@ interface FacilityStore {
 export const useFacilityStore = create<FacilityStore>((set, get) => ({
   facilities: [],
   selectedFacilityType: null,
-  unlockedFacilities: new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park']), // 初期アンロック施設
+  unlockedFacilities: FacilityUnlockManager.getInitialUnlockedFacilities(), // 自動初期化
 
   setSelectedFacilityType: (type) => {
     set({ selectedFacilityType: type });
@@ -229,9 +230,9 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       set({
         facilities: facilitiesWithDefaults,
         selectedFacilityType: savedState.selectedFacilityType || null,
-        unlockedFacilities: savedState.unlockedFacilities 
-          ? new Set(savedState.unlockedFacilities) 
-          : new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park'])
+              unlockedFacilities: savedState.unlockedFacilities 
+        ? new Set(savedState.unlockedFacilities) 
+        : FacilityUnlockManager.getInitialUnlockedFacilities()
       });
     }
   },
@@ -240,7 +241,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     set({
       facilities: [],
       selectedFacilityType: null,
-      unlockedFacilities: new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park'])
+      unlockedFacilities: FacilityUnlockManager.getInitialUnlockedFacilities()
     });
   }
 }));

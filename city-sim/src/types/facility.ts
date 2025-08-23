@@ -65,6 +65,15 @@ export interface FacilityInfo {
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
   baseAssetValue?: number;    // 基本資産価値
+  
+  // --- アンロック管理 ---
+  unlockCondition: 'initial' | 'mission' | 'achievement' | 'custom';
+  initiallyUnlocked: boolean;
+  unlockRequirements?: {
+    missionId?: string;
+    achievementId?: string;
+    customCondition?: string;
+  };
 }
 
 
@@ -101,6 +110,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productDemand: [0, 0, 0, 0],
     productProduction: [0, 0, 0, 0],
     basePopulation: 100,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   commercial: {
     type: 'commercial', 
@@ -125,6 +136,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productDemand: [0, 0, 10, 0],
     productProduction: [0, 0, 0, 10],
     effectRadius: 9,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   industrial: {
     type: 'industrial',
@@ -149,6 +162,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productDemand: [10, 0, 0, 0],
     productProduction: [0, 0, 20, 0],
     effectRadius: 11,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   road: {
     type: 'road',
@@ -173,6 +188,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
       { width: 32, height: 16 },
     ],
     satisfaction: 0,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   // 市役所のデータを追加
   city_hall: {
@@ -185,6 +202,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     category: 'government',
     satisfaction: 10, // 設置すると満足度が少し上がる
     effectRadius: 21, // 21マス範囲に効果
+    unlockCondition: 'mission',
+    initiallyUnlocked: true
   },
   // 公園のデータを追加
   park: {
@@ -193,12 +212,14 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     size: 3,
     cost: 300,
     maintenanceCost: 20,
-    description: '周囲の住宅の満足度が下がるのを防ぐ施設',
-    category: 'government', // 公共カテゴリに変更
-    imgPaths: ['images/buildings/park.png'],
+    description: '周囲の満足度を向上させる',
+    category: 'government',
+    imgPaths: ['images/buildings/residential.png'],
     imgSizes: [{ width: 96, height: 79 }],
-    satisfaction: 5,
-    effectRadius: 13 //13マス範囲に効果
+    satisfaction: 15,
+    effectRadius: 15,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
   },
   // 警察署
   police: {
@@ -213,32 +234,37 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     imgSizes: [{ width: 96, height: 79 }],
     satisfaction: 12,
     effectRadius: 25,
+    unlockCondition: 'mission',
+    initiallyUnlocked: true
   },
   electric_plant: {
     type: 'electric_plant',
     name: '発電所',
     size: 3,
-    cost: 1000,
-    maintenanceCost: 100,
-    description: '電力を生産する施設',
+    cost: 1500,
+    maintenanceCost: 80,
+    description: '電力を供給する',
     category: 'infrastructure',
-    satisfaction: 0,
-    attractiveness: 100,
-    infrastructureSupply: { water: 0, electricity: 5000 },
-    effectRadius: 11,
+    satisfaction: -8,
+    attractiveness: 60,
+    infrastructureSupply: { water: 0, electricity: 300 },
+    effectRadius: 15,
+    unlockCondition: 'mission',
+    initiallyUnlocked: true
   },
-
   water_plant: {
     type: 'water_plant',
     name: '浄水所',
     size: 3,
-    cost: 1000,
-    maintenanceCost: 100,
-    description: '水を生産する施設',
+    cost: 1200,
+    maintenanceCost: 60,
+    description: '水道を供給する',
     category: 'infrastructure',
-    satisfaction: 0,
-    attractiveness: 100,
-    infrastructureSupply: { water: 5000, electricity: 0 },
-    effectRadius: 11,
+    satisfaction: -5,
+    attractiveness: 70,
+    infrastructureSupply: { water: 400, electricity: 0 },
+    effectRadius: 15,
+    unlockCondition: 'mission',
+    initiallyUnlocked: true
   }
 }

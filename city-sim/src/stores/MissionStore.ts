@@ -16,6 +16,7 @@ import { calculateTotalTaxRevenue, getCurrentWorkforceAllocations, calculateMont
 import { loadMissionsFromJSON, getDefaultMissions } from '../utils/missionLoader';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { playCoinSound } from '../components/SoundSettings';
+import { FacilityUnlockManager } from '../utils/facilityUnlockManager';
 
 // ミッションストアのインターフェース
 interface MissionStore {
@@ -465,16 +466,9 @@ class EffectEngine {
           if (effect.target) {
             try {
               const facilityStore = useFacilityStore.getState();
-              // 施設をアンロック
-              if (facilityStore.unlockFacility) {
-                facilityStore.unlockFacility(effect.target as any);
-                success = true;
-                message = `施設「${effect.target}」がアンロックされました`;
-              } 
-              else {
-                success = false;
-                message = 'アンロック機能が利用できません';
-              }
+              facilityStore.unlockFacility(effect.target as any);
+              success = true;
+              message = `施設「${effect.target}」がアンロックされました`;
             } catch (error) {
               success = false;
               message = `施設アンロックエラー: ${error}`;
@@ -608,6 +602,16 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
           
           // 効果を即座に適用
           setTimeout(() => {
+            // ミッションIDベースで自動アンロック
+            const facilitiesToUnlock = FacilityUnlockManager.getUnlockableByMission(mission.id);
+            if (facilitiesToUnlock.length > 0) {
+              const facilityStore = useFacilityStore.getState();
+              facilitiesToUnlock.forEach(facilityType => {
+                facilityStore.unlockFacility(facilityType);
+              });
+              console.log(`🔓 施設「${facilitiesToUnlock.join('、')}」がアンロックされました`);
+            }
+            
             get().applyMissionEffects({ ...mission, status: 'completed' });
             playCoinSound(); // 完了音を再生
             console.log(`✅ ミッション「${mission.name}」が自動完了しました！`);
