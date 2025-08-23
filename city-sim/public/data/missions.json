@@ -1,0 +1,314 @@
+{
+  "missions": [
+    {
+      "id": "mission_population_100",
+      "name": "人口100人達成",
+      "description": "人口を100人にしましょう",
+      "type": "mission",
+      "category": "development",
+      "priority": 1,
+      "conditions": [
+        { "type": "population", "op": ">=", "value": 100 }
+      ],
+      "effects": [
+        { "type": "money", "value": 5000 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": true,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_residential_5",
+      "name": "住宅5つ建設",
+      "description": "住宅施設を5つ建設しましょう",
+      "type": "mission",
+      "category": "development",
+      "priority": 2,
+      "conditions": [
+        { "type": "facility_type_count", "op": ">=", "value": 5, "target": "residential" }
+      ],
+      "effects": [
+        { "type": "population", "value": 200 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": true,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_money_5000",
+      "name": "資金5000円達成",
+      "description": "所持金を5000円にしましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 3,
+      "conditions": [
+        { "type": "money", "op": ">=", "value": 5000 }
+      ],
+      "effects": [
+        { "type": "satisfaction", "value": 10 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_citizen_support",
+      "name": "市民の支持を得よう",
+      "description": "市民の支持率を60%以上にしましょう",
+      "type": "mission",
+      "category": "social",
+      "priority": 4,
+      "conditions": [
+        { "type": "support_rating", "op": ">=", "value": 60, "target": "citizens" }
+      ],
+      "effects": [
+        { "type": "money", "value": 3000 },
+        { "type": "faction_support", "target": "citizens", "value": 5 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_government_favor",
+      "name": "政府からの依頼",
+      "description": "商業施設を3つ建設して、経済を活性化することを求められています",
+      "type": "mission",
+      "category": "infrastructure",
+      "priority": 5,
+      "conditions": [
+        { "type": "facility_type_count", "op": ">=", "value": 3, "target": "commercial" }
+      ],
+      "effects": [
+        { "type": "faction_support", "target": "central_government", "value": 15 },
+        { "type": "money", "value": 5000 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_water_infrastructure",
+      "name": "水道インフラ整備",
+      "description": "水道供給を10以上確保して、安定した水の供給を実現しましょう",
+      "type": "mission",
+      "category": "infrastructure",
+      "priority": 6,
+      "conditions": [
+        { "type": "infrastructure_supply", "op": ">=", "value": 10, "target": "water" }
+      ],
+      "effects": [
+        { "type": "money", "value": 4000 },
+        { "type": "satisfaction", "value": 5 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_power_grid",
+      "name": "電力網の安定化",
+      "description": "電力供給率を120%以上にして、電力の安定供給を実現しましょう",
+      "type": "mission",
+      "category": "infrastructure",
+      "priority": 7,
+      "conditions": [
+        { "type": "infrastructure_ratio", "op": ">=", "value": 120, "target": "electricity" }
+      ],
+      "effects": [
+        { "type": "money", "value": 6000 },
+        { "type": "faction_support", "target": "central_government", "value": 10 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_infrastructure_balance",
+      "name": "インフラバランス達成",
+      "description": "水道と電力の両方で安定した供給を確保しましょう",
+      "type": "mission",
+      "category": "infrastructure",
+      "priority": 8,
+      "conditions": [
+        { "type": "infrastructure_balance", "op": ">=", "value": 5, "target": "water" },
+        { "type": "infrastructure_balance", "op": ">=", "value": 5, "target": "electricity" }
+      ],
+      "effects": [
+        { "type": "money", "value": 8000 },
+        { "type": "satisfaction", "value": 15 },
+        { "type": "faction_support", "target": "citizens", "value": 10 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": true
+    },
+    {
+      "id": "mission_tax_revenue_boost",
+      "name": "税収1000円達成",
+      "description": "月次税収を1000円以上にして、財政を安定させましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 9,
+      "conditions": [
+        { "type": "tax_revenue", "op": ">=", "value": 1000 }
+      ],
+      "effects": [
+        { "type": "money", "value": 5000 },
+        { "type": "faction_support", "target": "central_government", "value": 8 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_balanced_budget",
+      "name": "収支の黒字化",
+      "description": "月次収入を月次支出より多くして、財政を安定させましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 10,
+      "conditions": [
+        { "type": "monthly_income", "op": ">", "value": 500 },
+        { "type": "monthly_expense", "op": "<", "value": 400 }
+      ],
+      "effects": [
+        { "type": "money", "value": 3000 },
+        { "type": "satisfaction", "value": 10 },
+        { "type": "faction_support", "target": "citizens", "value": 8 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_workforce_optimization",
+      "name": "労働力の最適化",
+      "description": "労働力効率を75%以上にして、経済を活性化しましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 11,
+      "conditions": [
+        { "type": "workforce_efficiency", "op": ">=", "value": 75 }
+      ],
+      "effects": [
+        { "type": "money", "value": 5000 },
+        { "type": "satisfaction", "value": 15 },
+        { "type": "faction_support", "target": "chamber_of_commerce", "value": 10 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": true
+    },
+    {
+      "id": "mission_cost_control",
+      "name": "コスト管理の達成",
+      "description": "月次支出を300以下に抑えて、効率的な運営を実現しましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 12,
+      "conditions": [
+        { "type": "monthly_expense", "op": "<=", "value": 300 }
+      ],
+      "effects": [
+        { "type": "money", "value": 4000 },
+        { "type": "faction_support", "target": "central_government", "value": 12 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_raw_material_production",
+      "name": "原材料の確保",
+      "description": "原材料の生産を10以上にして、産業の基盤を整えましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 13,
+      "conditions": [
+        { "type": "product_production", "op": ">=", "value": 10, "target": "0" }
+      ],
+      "effects": [
+        { "type": "money", "value": 3000 },
+        { "type": "satisfaction", "value": 5 },
+        { "type": "faction_support", "target": "citizens", "value": 8 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_final_product_chain",
+      "name": "製品供給チェーンの確立",
+      "description": "最終製品の生産を15以上にして、住民の需要を満たしましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 14,
+      "conditions": [
+        { "type": "product_production", "op": ">=", "value": 15, "target": "2" }
+      ],
+      "effects": [
+        { "type": "money", "value": 6000 },
+        { "type": "satisfaction", "value": 15 },
+        { "type": "faction_support", "target": "chamber_of_commerce", "value": 12 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": false
+    },
+    {
+      "id": "mission_service_economy",
+      "name": "サービス経済の発展",
+      "description": "サービス生産を25以上にして、現代的な経済を構築しましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 15,
+      "conditions": [
+        { "type": "product_production", "op": ">=", "value": 25, "target": "3" }
+      ],
+      "effects": [
+        { "type": "money", "value": 8000 },
+        { "type": "satisfaction", "value": 20 },
+        { "type": "faction_support", "target": "chamber_of_commerce", "value": 15 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": true
+    },
+    {
+      "id": "mission_production_efficiency",
+      "name": "生産効率の最適化",
+      "description": "製品効率を90%以上にして、需給バランスを取りましょう",
+      "type": "mission",
+      "category": "economic",
+      "priority": 16,
+      "conditions": [
+        { "type": "product_efficiency", "op": ">=", "value": 90 }
+      ],
+      "effects": [
+        { "type": "money", "value": 10000 },
+        { "type": "satisfaction", "value": 25 },
+        { "type": "faction_support", "target": "chamber_of_commerce", "value": 20 }
+      ],
+      "status": "available",
+      "progress": 0,
+      "autoAccept": false,
+      "isRepeatable": true
+    }
+  ]
+} 
