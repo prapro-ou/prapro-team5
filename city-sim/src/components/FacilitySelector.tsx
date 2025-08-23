@@ -1,8 +1,9 @@
 import type { CategoryKey, FacilityType } from "../types/facility";
 import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
 import { useState, useEffect } from "react";
-import { TbCash } from "react-icons/tb";
+import { TbCash, TbLock } from "react-icons/tb";
 import { playPanelSound, playSelectSound, playSelect1Sound } from "./SoundSettings";
+import { useFacilityStore } from "../stores/FacilityStore";
 
 interface FacilitySelectorProps {
   selectedType: FacilityType | null;  // 現在選択されている施設タイプ
@@ -13,6 +14,7 @@ interface FacilitySelectorProps {
 export function FacilitySelector({ selectedType, onSelectType, money }: FacilitySelectorProps) {
   const [category, setCategory] = useState<CategoryKey>("residential");
   const [detailType, setDetailType] = useState<FacilityType | null>(null);
+  const { isFacilityUnlocked } = useFacilityStore();
 
   // カテゴリや選択中施設が変わったら詳細を閉じる
   useEffect(() => {
@@ -55,10 +57,14 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
           {categorizedFacilities[category]?.map((facility) => {
             const isSelected = selectedType === facility.type;
             const canAfford = money >= facility.cost;
+            const isUnlocked = isFacilityUnlocked(facility.type);
+            const isDisabled = !canAfford || !isUnlocked;
+            
             return (
               <div key={facility.type} className="flex flex-col items-start min-w-[140px]">
                 <button
                   onClick={() => {
+                    if (!isUnlocked) return; // ロック中は何もしない
                     if (isSelected) {
                       onSelectType(null);
                     } else {
@@ -66,15 +72,22 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
                       onSelectType(facility.type);
                     }
                   }}
-                  disabled={!canAfford}
-                  className={`px-3 py-2 text-xs rounded text-left transition-colors flex-shrink-0 w-full ${
+                  disabled={isDisabled}
+                  className={`px-3 py-2 text-xs rounded text-left transition-colors flex-shrink-0 w-full relative ${
                     isSelected 
                       ? 'bg-gray-200 text-gray-900 shadow-lg' 
-                      : canAfford
-                        ? 'bg-white text-gray-800 hover:bg-gray-300'
-                        : 'bg-gray-500 text-gray-800 cursor-not-allowed'
+                      : !isUnlocked
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : canAfford
+                          ? 'bg-white text-gray-800 hover:bg-gray-300'
+                          : 'bg-gray-500 text-gray-800 cursor-not-allowed'
                   }`}
                 >
+                  {!isUnlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded">
+                      <TbLock className="text-red-400" size={20} />
+                    </div>
+                  )}
                   <div className="font-semibold">{facility.name}</div>
                   <div className="text-sm flex items-center gap-1"><TbCash/>{facility.cost.toLocaleString()}</div>
                   <div className="text-xs opacity-75">{facility.description}</div>
@@ -111,14 +124,8 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
           <div><b>{FACILITY_DATA[detailType].name}</b></div>
           <div>コスト: ¥{FACILITY_DATA[detailType].cost?.toLocaleString() ?? '-'}</div>
           <div>維持費: ¥{FACILITY_DATA[detailType].maintenanceCost?.toLocaleString() ?? '-'}/月</div>
-          {'requiredWorkforce' in FACILITY_DATA[detailType] && (
-            <div>必要労働力: {FACILITY_DATA[detailType].requiredWorkforce?.toLocaleString() ?? 0}</div>
-          )}
-          {'produceGoods' in FACILITY_DATA[detailType] && (
-            <div>生産量: {FACILITY_DATA[detailType].produceGoods ?? 0} 製品/週</div>
-          )}
-          {'consumeGoods' in FACILITY_DATA[detailType] && (
-            <div>消費量: {FACILITY_DATA[detailType].consumeGoods ?? 0} 製品/週</div>
+          {FACILITY_DATA[detailType].workforceRequired && (
+            <div>必要労働力: {FACILITY_DATA[detailType].workforceRequired?.min}-{FACILITY_DATA[detailType].workforceRequired?.max}人</div>
           )}
           <div>満足度: {FACILITY_DATA[detailType].satisfaction ?? 0}</div>
         </div>

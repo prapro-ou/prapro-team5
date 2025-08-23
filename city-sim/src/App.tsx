@@ -4,17 +4,17 @@ import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
-import { InfrastructureInfo } from './components/InfrastructureInfo'
 import StartScreen from './components/StartScreen'
 import RewardPanel from './components/RewardPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
+import MissionPanel from './components/MissionPanel';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAlignLeft2, TbAward, TbChartBar } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -22,6 +22,7 @@ import SNSicon from './assets/SNSicon.png';
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
+import { useMissionStore } from './stores/MissionStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
 import { useRewardStore } from './stores/RewardStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
@@ -57,7 +58,6 @@ function App() {
     showPanel,
     isSettingsOpen,
     isCreditsOpen,
-    isInfrastructureInfoOpen,
     selectedTile,
     togglePanel,
     openSettings,
@@ -65,12 +65,14 @@ function App() {
     closeCredits,
     switchToCredits,
     setSelectedTile,
-    toggleInfrastructureInfo,
     isStatisticsOpen,
     openStatistics,
     closeStatistics,
     isYearlyEvaluationResultOpen,
-    closeYearlyEvaluationResult
+    closeYearlyEvaluationResult,
+    isMissionPanelOpen,
+    openMissionPanel,
+    closeMissionPanel
   } = useUIStore();
 
   // スタート画面の表示状態
@@ -367,28 +369,25 @@ function App() {
       {/* 情報パネル */}
       <InfoPanel />
       
-      {/* インフラパネルボタン */}
-      <button
-        onClick={toggleInfrastructureInfo}
-        className="fixed top-25 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
-      >
-        <TbAlignLeft2 />
-      </button>
-
       {/* 統計画面ボタン */}
       <button
         onClick={openStatistics}
-        className="fixed top-40 left-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+        className="fixed top-25 left-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         <TbChartBar />
       </button>
 
-      {/* インフラ情報パネル */}
-      {isInfrastructureInfoOpen && (
-        <div className="fixed top-25 left-25 z-[1100]">
-          <InfrastructureInfo onClose={toggleInfrastructureInfo} />
-        </div>
-      )}
+      {/* ミッションボタン */}
+      <button
+        onClick={() => {
+          openMissionPanel();
+        }}
+        className="fixed top-40 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        <TbChecklist />
+      </button>
+
+
 
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
@@ -452,6 +451,7 @@ function App() {
             useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
             useInfrastructureStore.getState().resetToInitial();
             useRewardStore.getState().resetToInitial();
+            useMissionStore.getState().resetToInitial();
             
             // 設定パネルを閉じて、スタート画面を表示
             closeSettings();
@@ -463,10 +463,10 @@ function App() {
       {/* クレジットパネル */}
       {isCreditsOpen && <CreditsPanel onClose={closeCredits} />}
       
-      {/* 統計画面 */}
-      {/* isStatisticsOpen && (
-        <StatisticsPanel onClose={closeStatistics} />
-      ) */}
+      {/* ミッションパネル */}
+      {isMissionPanelOpen && (
+        <MissionPanel onClose={closeMissionPanel} />
+      )}
     </div>
     
   );

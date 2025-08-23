@@ -1,12 +1,12 @@
-// 勢力の種類
+// 派閥の種類
 export type FactionType = 'central_government' | 'citizens' | 'chamber_of_commerce';
 
-// 勢力の基本情報
+// 派閥の基本情報
 export interface FactionInfo {
   type: FactionType;
   name: string;
   description: string;
-  // 各勢力が重視する要素の重み付け（合計100%）
+  // 各派閥が重視する要素の重み付け（合計100%）
   priorities: {
     taxStability: number;        // 税収の安定性
     infrastructure: number;      // インフラ整備
@@ -22,7 +22,7 @@ export interface FactionInfo {
   };
 }
 
-// 勢力のマスターデータ
+// 派閥のマスターデータ
 export const FACTION_DATA: Record<FactionType, FactionInfo> = {
   central_government: {
     type: 'central_government',
@@ -80,7 +80,7 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
   }
 };
 
-// 各勢力の現在の支持率
+// 各派閥の現在の支持率
 export interface FactionSupport {
   type: FactionType;
   currentRating: number;        // 現在の支持率（0-100）
@@ -187,7 +187,7 @@ export interface SupportLevelEffect {
   };
 }
 
-// 各勢力の支持率レベル効果定義（要調整）
+// 各派閥の支持率レベル効果定義（要調整）
 export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = {
   central_government: [
     {

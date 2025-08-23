@@ -17,6 +17,7 @@ import { useUIStore } from './UIStore';
 import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
+import { useMissionStore } from './MissionStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -249,6 +250,14 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
 };
 
 /**
+ * ミッション条件チェックタスク
+ */
+const checkMissionConditions: MonthlyTask = (_get, _set) => {
+  const { checkMissionConditions } = useMissionStore.getState();
+  checkMissionConditions();
+};
+
+/**
  * 支持率を更新するタスク
  */
 const updateSupportRatings: MonthlyTask = (get, set) => {
@@ -286,7 +295,7 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   const currentMonth = stats.date.month - 1;
   const newAccumulation = { ...stats.monthlyAccumulation };
   
-  // 各勢力の支持率を累積
+  // 各派閥の支持率を累積
   Object.entries(newSupportRatings).forEach(([factionType, rating]) => {
     if (!newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings]) {
       newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings] = new Array(12).fill(50);
@@ -536,6 +545,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     adjustPopulationByGrowth,
     citizenFeedTask,
     updateSupportRatings,
+    checkMissionConditions,
   ],
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),

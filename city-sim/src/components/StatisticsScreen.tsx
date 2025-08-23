@@ -27,7 +27,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'economy', name: '経済', icon: TbCash  },
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
-    { id: 'support', name: '支持・勢力', icon: TbFlag },
+    { id: 'support', name: '支持・派閥', icon: TbFlag },
   ];
 
   // 基本タブのコンテンツ
