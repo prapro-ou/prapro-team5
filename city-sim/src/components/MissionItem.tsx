@@ -116,6 +116,14 @@ export function MissionItem({ mission }: MissionItemProps) {
                   ? `満足度${condition.value}以上`
                   : condition.type === 'support_rating' && condition.target
                   ? `${condition.target}支持率${condition.value}%以上`
+                  : condition.type === 'infrastructure_supply' && condition.target
+                  ? `${condition.target === 'water' ? '水道' : '電力'}供給${condition.value}以上`
+                  : condition.type === 'infrastructure_demand' && condition.target
+                  ? `${condition.target === 'water' ? '水道' : '電力'}需要${condition.value}以上`
+                  : condition.type === 'infrastructure_balance' && condition.target
+                  ? `${condition.target === 'water' ? '水道' : '電力'}バランス${condition.value}以上`
+                  : condition.type === 'infrastructure_ratio' && condition.target
+                  ? `${condition.target === 'water' ? '水道' : '電力'}供給率${condition.value}%以上`
                   : `${condition.type}: ${condition.op} ${condition.value}`
                 }
               </div>

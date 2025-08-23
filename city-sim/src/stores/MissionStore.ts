@@ -10,6 +10,7 @@ import type {
 import { useGameStore } from './GameStore';
 import { useFacilityStore } from './FacilityStore';
 import { useSupportStore } from './SupportStore';
+import { useInfrastructureStore } from './InfrastructureStore';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // ミッションストアのインターフェース
@@ -114,6 +115,110 @@ class ConditionEngine {
           } else {
             actualValue = 0;
             message = '派閥支持率の取得には対象派閥の指定が必要です';
+          }
+          break;
+          
+        case 'infrastructure_balance':
+          if (condition.target) {
+            try {
+              const infraStore = useInfrastructureStore.getState();
+              const status = infraStore.getInfrastructureStatus();
+              if (condition.target === 'water') {
+                actualValue = status.water.balance;
+                message = `水道バランス: ${actualValue}/${condition.value}`;
+              } else if (condition.target === 'electricity') {
+                actualValue = status.electricity.balance;
+                message = `電力バランス: ${actualValue}/${condition.value}`;
+              } else {
+                actualValue = 0;
+                message = `不明なインフラタイプ: ${condition.target}`;
+              }
+            } catch (error) {
+              actualValue = 0;
+              message = `インフラバランスの取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = 'インフラバランスの取得には対象（water/electricity）の指定が必要です';
+          }
+          break;
+          
+        case 'infrastructure_supply':
+          if (condition.target) {
+            try {
+              const infraStore = useInfrastructureStore.getState();
+              const status = infraStore.getInfrastructureStatus();
+              if (condition.target === 'water') {
+                actualValue = status.water.supply;
+                message = `水道供給: ${actualValue}/${condition.value}`;
+              } else if (condition.target === 'electricity') {
+                actualValue = status.electricity.supply;
+                message = `電力供給: ${actualValue}/${condition.value}`;
+              } else {
+                actualValue = 0;
+                message = `不明なインフラタイプ: ${condition.target}`;
+              }
+            } catch (error) {
+              actualValue = 0;
+              message = `インフラ供給の取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = 'インフラ供給の取得には対象（water/electricity）の指定が必要です';
+          }
+          break;
+          
+        case 'infrastructure_demand':
+          if (condition.target) {
+            try {
+              const infraStore = useInfrastructureStore.getState();
+              const status = infraStore.getInfrastructureStatus();
+              if (condition.target === 'water') {
+                actualValue = status.water.demand;
+                message = `水道需要: ${actualValue}/${condition.value}`;
+              } else if (condition.target === 'electricity') {
+                actualValue = status.electricity.demand;
+                message = `電力需要: ${actualValue}/${condition.value}`;
+              } else {
+                actualValue = 0;
+                message = `不明なインフラタイプ: ${condition.target}`;
+              }
+            } catch (error) {
+              actualValue = 0;
+              message = `インフラ需要の取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = 'インフラ需要の取得には対象（water/electricity）の指定が必要です';
+          }
+          break;
+          
+        case 'infrastructure_ratio':
+          if (condition.target) {
+            try {
+              const infraStore = useInfrastructureStore.getState();
+              const status = infraStore.getInfrastructureStatus();
+              let supply = 0;
+              let demand = 0;
+              
+              if (condition.target === 'water') {
+                supply = status.water.supply;
+                demand = status.water.demand;
+              } else if (condition.target === 'electricity') {
+                supply = status.electricity.supply;
+                demand = status.electricity.demand;
+              }
+              
+              // 供給率を計算（需要が0の場合は100%とする）
+              actualValue = demand > 0 ? Math.round((supply / demand) * 100) : 100;
+              message = `${condition.target}供給率: ${actualValue}%/${condition.value}%`;
+            } catch (error) {
+              actualValue = 0;
+              message = `インフラ供給率の取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = 'インフラ供給率の取得には対象（water/electricity）の指定が必要です';
           }
           break;
           
@@ -361,6 +466,65 @@ const sampleMissions: Mission[] = [
     progress: 0,
     autoAccept: false,  // 手動受注
     isRepeatable: false
+  },
+  {
+    id: 'mission_water_infrastructure',
+    name: '水道インフラ整備',
+    description: '水道供給を10以上確保して、安定した水の供給を実現しましょう',
+    type: 'mission',
+    category: 'infrastructure',
+    priority: 6,
+    conditions: [
+      { type: 'infrastructure_supply', op: '>=', value: 10, target: 'water' }
+    ],
+    effects: [
+      { type: 'money', value: 4000 },
+      { type: 'satisfaction', value: 5 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_power_grid',
+    name: '電力網の安定化',
+    description: '電力供給率を120%以上にして、電力の安定供給を実現しましょう',
+    type: 'mission',
+    category: 'infrastructure',
+    priority: 7,
+    conditions: [
+      { type: 'infrastructure_ratio', op: '>=', value: 120, target: 'electricity' }
+    ],
+    effects: [
+      { type: 'money', value: 6000 },
+      { type: 'faction_support', target: 'central_government', value: 10 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_infrastructure_balance',
+    name: 'インフラバランス達成',
+    description: '水道と電力の両方で安定した供給を確保しましょう',
+    type: 'mission',
+    category: 'infrastructure',
+    priority: 8,
+    conditions: [
+      { type: 'infrastructure_balance', op: '>=', value: 5, target: 'water' },
+      { type: 'infrastructure_balance', op: '>=', value: 5, target: 'electricity' }
+    ],
+    effects: [
+      { type: 'money', value: 8000 },
+      { type: 'satisfaction', value: 15 },
+      { type: 'faction_support', target: 'citizens', value: 10 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: true
   }
 ];
 

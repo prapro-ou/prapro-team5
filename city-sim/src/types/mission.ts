@@ -45,7 +45,11 @@ export type ConditionType =
   | 'time_elapsed'        // 経過時間（週数）
   | 'monthly_balance'     // 月次収支
   | 'support_rating'      // 派閥支持率
-  | 'infrastructure'      // インフラ状況
+  | 'infrastructure'      // インフラ状況（廃止予定）
+  | 'infrastructure_balance' // インフラバランス（水道/電気の余剰・不足）
+  | 'infrastructure_supply'  // インフラ供給量
+  | 'infrastructure_demand'  // インフラ需要量
+  | 'infrastructure_ratio'   // インフラ供給率（供給/需要）
   | 'area_effect'         // エリア効果
   | 'road_connection'     // 道路接続状況
   | 'compound'            // 複合条件
