@@ -9,7 +9,7 @@ interface MissionItemProps {
 }
 
 export function MissionItem({ mission }: MissionItemProps) {
-  const { completeMission, acceptMission } = useMissionStore();
+  const { acceptMission } = useMissionStore();
 
   // 状態に応じたスタイル
   const getStatusStyle = () => {
@@ -53,13 +53,7 @@ export function MissionItem({ mission }: MissionItemProps) {
     }
   };
 
-  // ミッション完了処理
-  const handleComplete = () => {
-    if (mission.status === 'in_progress') {
-      playCoinSound();
-      completeMission(mission.id);
-    }
-  };
+
 
   // ミッション受注処理
   const handleAccept = () => {
@@ -171,12 +165,9 @@ export function MissionItem({ mission }: MissionItemProps) {
       {/* 操作ボタン */}
       <div className="flex justify-end gap-2">
         {mission.status === 'in_progress' && (
-          <button
-            onClick={handleComplete}
-            className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded hover:bg-green-600 transition-colors"
-          >
-            完了
-          </button>
+          <span className="px-4 py-2 bg-yellow-100 text-yellow-700 text-sm font-medium rounded">
+            進行中（自動完了）
+          </span>
         )}
         {mission.status === 'available' && !mission.autoAccept && (
           <button

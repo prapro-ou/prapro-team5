@@ -15,6 +15,7 @@ import { useProductStore } from './ProductStore';
 import { calculateTotalTaxRevenue, getCurrentWorkforceAllocations, calculateMonthlyBalance } from './EconomyStore';
 import { loadMissionsFromJSON, getDefaultMissions } from '../utils/missionLoader';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { playCoinSound } from '../components/SoundSettings';
 
 // ミッションストアのインターフェース
 interface MissionStore {
@@ -593,10 +594,24 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
           ? Math.round((conditionResults.filter(r => r.result).length / conditionResults.length) * 100)
           : 0;
         
-        // 状態を更新（自動受注のみ自動でin_progressに変更）
+        // 状態を更新
         let newStatus: MissionStatus = mission.status;
+        
+        // 自動受注: 条件達成時にavailable → in_progress
         if (allConditionsMet && mission.status === 'available' && mission.autoAccept) {
           newStatus = 'in_progress';
+        }
+        
+        // 自動完了: 条件達成時にin_progress → completed
+        if (allConditionsMet && mission.status === 'in_progress') {
+          newStatus = 'completed';
+          
+          // 効果を即座に適用
+          setTimeout(() => {
+            get().applyMissionEffects({ ...mission, status: 'completed' });
+            playCoinSound(); // 完了音を再生
+            console.log(`✅ ミッション「${mission.name}」が自動完了しました！`);
+          }, 100);
         }
         
         return {
