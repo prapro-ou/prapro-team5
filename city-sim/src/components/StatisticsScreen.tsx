@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge, TbBulb, TbX } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
@@ -6,6 +6,8 @@ import { useProductStore } from '../stores/ProductStore';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { useSupportStore } from '../stores/SupportStore';
+import { CharacterDisplay } from './CharacterDisplay';
+import { useSecretaryStore } from '../stores/SecretaryStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -21,6 +23,17 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
   const { getAllFactionSupports, getActiveEffects } = useSupportStore();
+  
+  // 秘書ストア
+  const {
+    selectedCharacter,
+    characterDisplayState,
+    advices,
+    changeExpression,
+    toggleLayer,
+    markAdviceAsRead,
+    dismissAdvice
+  } = useSecretaryStore();
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -704,22 +717,89 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   // 秘書タブのコンテンツ
   const renderSecretaryTab = () => (
-    <div className="space-y-6">
-      {/* 秘書情報カード */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+    <div className="relative">
+      {/* アドバイスセクション */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg mr-56 overflow-y-auto" style={{ height: 'calc(100vh - 8.8rem)' }}>
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
-          <TbIdBadge className="text-blue-400" />
-          秘書情報
+          <TbBulb className="text-yellow-400" />
+          都市開発アドバイス
         </h3>
-        <div className="text-center text-gray-400">
-          <p className="mb-2">秘書機能は現在開発中です</p>
-          <p className="text-sm">この機能では以下を提供予定です：</p>
-          <ul className="text-sm mt-2 space-y-1">
-            <li>• 現在の開発状況のアドバイス</li>
-            <li>• 都市運営のヒント</li>
-            <li>• 問題点の早期発見</li>
-            <li>• 最適化提案</li>
-          </ul>
+        <div className="space-y-3">
+          {advices.filter(advice => !advice.isDismissed).map((advice) => (
+            <div
+              key={advice.id}
+              className={`bg-gray-700 rounded-lg p-3 border-l-4 ${
+                advice.priority === 'urgent' ? 'border-red-500' :
+                advice.priority === 'high' ? 'border-orange-500' :
+                advice.priority === 'medium' ? 'border-yellow-500' :
+                'border-blue-500'
+              } ${advice.isRead ? 'opacity-75' : ''}`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h5 className="font-semibold text-gray-200 text-sm">{advice.title}</h5>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      advice.priority === 'urgent' ? 'bg-red-600 text-white' :
+                      advice.priority === 'high' ? 'bg-orange-600 text-white' :
+                      advice.priority === 'medium' ? 'bg-yellow-600 text-white' :
+                      'bg-blue-600 text-white'
+                    }`}>
+                      {advice.priority === 'urgent' ? '緊急' :
+                       advice.priority === 'high' ? '高' :
+                       advice.priority === 'medium' ? '中' :
+                       '低'}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 text-s mb-1">{advice.message}</p>
+                  {advice.suggestion && (
+                    <p className="text-blue-300 text-s italic">{advice.suggestion}</p>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-2">
+                  {!advice.isRead && (
+                    <button
+                      onClick={() => markAdviceAsRead(advice.id)}
+                      className="text-blue-400 hover:text-blue-300 text-xs"
+                    >
+                      既読
+                    </button>
+                  )}
+                  <button
+                    onClick={() => dismissAdvice(advice.id)}
+                    className="text-gray-400 hover:text-red-400 text-xs"
+                  >
+                    <TbX size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {advices.filter(advice => !advice.isDismissed).length === 0 && (
+            <div className="text-center text-gray-400 py-4 text-sm">
+              現在のアドバイスはありません
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* 秘書キャラクター*/}
+      <div className="fixed -bottom-1 right-30 shadow-lg z-50 pointer-events-none">
+        <div className="w-48">
+          <CharacterDisplay
+            character={selectedCharacter}
+            displayState={characterDisplayState}
+            callbacks={{
+              onExpressionChange: changeExpression,
+              onLayerToggle: toggleLayer,
+              onCharacterChange: () => {
+                console.log('Character change requested');
+              }
+            }}
+            className="text-white"
+            size="xl"
+          />
         </div>
       </div>
     </div>
