@@ -122,6 +122,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 150,
     infrastructureDemand: { water: 100, electricity: 100 },
+    productDemand: [0, 0, 10, 0],
+    productProduction: [0, 0, 0, 10],
     effectRadius: 9,
   },
   industrial: {
@@ -144,6 +146,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     },
     baseAssetValue: 200,
     infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [10, 0, 0, 0],
+    productProduction: [0, 0, 20, 0],
     effectRadius: 11,
   },
   road: {
