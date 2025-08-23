@@ -3,6 +3,7 @@ let prevShortage = { water: false, electricity: false, park: false, police: fals
 import { useFacilityStore } from "./FacilityStore";
 import { useFeedStore } from "./FeedStore";
 import { useInfrastructureStore } from "./InfrastructureStore";
+import { useProductStore } from "./ProductStore";
 import type { MonthlyTask } from "./GameStore";
 
 export const citizenFeedTask: MonthlyTask = (get) => {
@@ -146,16 +147,29 @@ export const citizenFeedTask: MonthlyTask = (get) => {
     prevShortage.police = false;
   }
 
-  // 資源不足（お店がある時だけ表示）
-    const hasShop = facilities.some(f => f.type === "commercial");
-  if (hasShop && stats.goods <= 5) {
-    feedStore.addFeed({
-      text: "お店に品物が全然ないよ！工業地帯を増やして生産して！🏭",
-      icon: "shop",
-      timestamp: now,
-      mood: "negative"
-    });
-    feedAdded = true;
+  // 製品供給不足（商業施設がある時だけ表示）
+  const hasShop = facilities.some(f => f.type === "commercial" || f.type === "large_commercial");
+  if (hasShop) {
+    const productStore = useProductStore.getState();
+    const productStatus = productStore.getProductSupplyDemandStatus(facilities);
+    
+    // 製品効率が50%未満の場合に不足メッセージ
+    if (productStatus.efficiency < 0.5) {
+      const shortageMessages = [
+        "お店に品物が全然ないよ！工業地帯を増やして生産して！",
+        "商品が品切れで買い物ができない…生産量を増やして！",
+        "製品不足で困ってる…もっと工場建てて！",
+        "お店が空っぽだよ…何も買えない！"
+      ];
+      const msg = shortageMessages[Math.floor(Math.random() * shortageMessages.length)];
+      feedStore.addFeed({
+        text: msg,
+        icon: "shop",
+        timestamp: now,
+        mood: "negative"
+      });
+      feedAdded = true;
+    }
   }
 
 

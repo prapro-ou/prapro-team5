@@ -1,11 +1,10 @@
 import { useFacilityStore } from './FacilityStore';
 import { useGameStore } from './GameStore';
-import type { FacilityType, Facility } from '../types/facility';
+import type { Facility } from '../types/facility';
 
 // 幸福度減少の設定
 const CHECK_INTERVAL = 1000 * 10; // 10秒ごと
 const DECAY_AMOUNT = 3; // 幸福度減少量
-const REQUIRED_FACILITIES: FacilityType[] = ['police'];
 
 // 住宅の幸福度を減少させる処理
 function decayHappinessIfNoFacilityNearby() {
