@@ -1,14 +1,14 @@
 {
   "missions": [
     {
-      "id": "mission_population_100",
-      "name": "人口100人達成",
-      "description": "人口を100人にしましょう",
+      "id": "mission_population_1000",
+      "name": "人口1000人達成",
+      "description": "人口を1000人にしましょう",
       "type": "mission",
-      "category": "development",
+      "category": "tutorial",
       "priority": 1,
       "conditions": [
-        { "type": "population", "op": ">=", "value": 100 }
+        { "type": "population", "op": ">=", "value": 1000 }
       ],
       "effects": [
         { "type": "money", "value": 5000 }
@@ -23,7 +23,7 @@
       "name": "住宅5つ建設",
       "description": "住宅施設を5つ建設しましょう",
       "type": "mission",
-      "category": "development",
+      "category": "tutorial",
       "priority": 2,
       "conditions": [
         { "type": "facility_type_count", "op": ">=", "value": 5, "target": "residential" }
@@ -37,14 +37,14 @@
       "isRepeatable": false
     },
     {
-      "id": "mission_money_5000",
-      "name": "資金5000円達成",
-      "description": "所持金を5000円にしましょう",
+      "id": "mission_money_50000",
+      "name": "資金50000達成",
+      "description": "所持金を50000にしましょう",
       "type": "mission",
-      "category": "economic",
+      "category": "tutorial",
       "priority": 3,
       "conditions": [
-        { "type": "money", "op": ">=", "value": 5000 }
+        { "type": "money", "op": ">=", "value": 50000 }
       ],
       "effects": [
         { "type": "satisfaction", "value": 10 }
@@ -59,7 +59,7 @@
       "name": "市民の支持を得よう",
       "description": "市民の支持率を60%以上にしましょう",
       "type": "mission",
-      "category": "social",
+      "category": "tutorial",
       "priority": 4,
       "conditions": [
         { "type": "support_rating", "op": ">=", "value": 60, "target": "citizens" }
@@ -76,9 +76,9 @@
     {
       "id": "mission_government_favor",
       "name": "政府からの依頼",
-      "description": "商業施設を3つ建設して、経済を活性化することを求められています",
+      "description": "商業施設を3つ建設しましょう",
       "type": "mission",
-      "category": "infrastructure",
+      "category": "tutorial",
       "priority": 5,
       "conditions": [
         { "type": "facility_type_count", "op": ">=", "value": 3, "target": "commercial" }
@@ -97,7 +97,7 @@
       "name": "水道インフラ整備",
       "description": "水道供給を10以上確保して、安定した水の供給を実現しましょう",
       "type": "mission",
-      "category": "infrastructure",
+      "category": "tutorial",
       "priority": 6,
       "conditions": [
         { "type": "infrastructure_supply", "op": ">=", "value": 10, "target": "water" }
@@ -116,7 +116,7 @@
       "name": "電力網の安定化",
       "description": "電力供給率を120%以上にして、電力の安定供給を実現しましょう",
       "type": "mission",
-      "category": "infrastructure",
+      "category": "tutorial",
       "priority": 7,
       "conditions": [
         { "type": "infrastructure_ratio", "op": ">=", "value": 120, "target": "electricity" }
@@ -135,7 +135,7 @@
       "name": "インフラバランス達成",
       "description": "水道と電力の両方で安定した供給を確保しましょう",
       "type": "mission",
-      "category": "infrastructure",
+      "category": "tutorial",
       "priority": 8,
       "conditions": [
         { "type": "infrastructure_balance", "op": ">=", "value": 5, "target": "water" },
@@ -153,13 +153,13 @@
     },
     {
       "id": "mission_tax_revenue_boost",
-      "name": "税収1000円達成",
-      "description": "月次税収を1000円以上にして、財政を安定させましょう",
+      "name": "安定財源",
+      "description": "月次税収を10000以上にして、財源を確保しましょう",
       "type": "mission",
       "category": "economic",
       "priority": 9,
       "conditions": [
-        { "type": "tax_revenue", "op": ">=", "value": 1000 }
+        { "type": "tax_revenue", "op": ">=", "value": 10000 }
       ],
       "effects": [
         { "type": "money", "value": 5000 },
@@ -175,7 +175,7 @@
       "name": "収支の黒字化",
       "description": "月次収入を月次支出より多くして、財政を安定させましょう",
       "type": "mission",
-      "category": "economic",
+      "category": "tutorial",
       "priority": 10,
       "conditions": [
         { "type": "monthly_income", "op": ">", "value": 500 },
@@ -192,53 +192,14 @@
       "isRepeatable": false
     },
     {
-      "id": "mission_workforce_optimization",
-      "name": "労働力の最適化",
-      "description": "労働力効率を75%以上にして、経済を活性化しましょう",
-      "type": "mission",
-      "category": "economic",
-      "priority": 11,
-      "conditions": [
-        { "type": "workforce_efficiency", "op": ">=", "value": 75 }
-      ],
-      "effects": [
-        { "type": "money", "value": 5000 },
-        { "type": "satisfaction", "value": 15 },
-        { "type": "faction_support", "target": "chamber_of_commerce", "value": 10 }
-      ],
-      "status": "available",
-      "progress": 0,
-      "autoAccept": false,
-      "isRepeatable": true
-    },
-    {
-      "id": "mission_cost_control",
-      "name": "コスト管理の達成",
-      "description": "月次支出を300以下に抑えて、効率的な運営を実現しましょう",
-      "type": "mission",
-      "category": "economic",
-      "priority": 12,
-      "conditions": [
-        { "type": "monthly_expense", "op": "<=", "value": 300 }
-      ],
-      "effects": [
-        { "type": "money", "value": 4000 },
-        { "type": "faction_support", "target": "central_government", "value": 12 }
-      ],
-      "status": "available",
-      "progress": 0,
-      "autoAccept": false,
-      "isRepeatable": false
-    },
-    {
       "id": "mission_raw_material_production",
       "name": "原材料の確保",
-      "description": "原材料の生産を10以上にして、産業の基盤を整えましょう",
+      "description": "原材料の生産を100以上にして、産業の基盤を整えましょう",
       "type": "mission",
-      "category": "economic",
+      "category": "tutorial",
       "priority": 13,
       "conditions": [
-        { "type": "product_production", "op": ">=", "value": 10, "target": "0" }
+        { "type": "product_production", "op": ">=", "value": 100, "target": "0" }
       ],
       "effects": [
         { "type": "money", "value": 3000 },
