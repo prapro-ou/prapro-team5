@@ -2,6 +2,7 @@ import type { Mission } from '../types/mission';
 import { useMissionStore } from '../stores/MissionStore';
 import { MissionProgress } from './MissionProgress';
 import { playCoinSound } from './SoundSettings';
+import { getFactionDisplayName, getProductDisplayName, getInfrastructureDisplayName } from '../utils/displayUtils';
 
 interface MissionItemProps {
   mission: Mission;
@@ -115,15 +116,15 @@ export function MissionItem({ mission }: MissionItemProps) {
                   : condition.type === 'satisfaction'
                   ? `満足度${condition.value}以上`
                   : condition.type === 'support_rating' && condition.target
-                  ? `${condition.target}支持率${condition.value}%以上`
+                  ? `${getFactionDisplayName(condition.target)}支持率${condition.value}%以上`
                   : condition.type === 'infrastructure_supply' && condition.target
-                  ? `${condition.target === 'water' ? '水道' : '電力'}供給${condition.value}以上`
+                  ? `${getInfrastructureDisplayName(condition.target)}供給${condition.value}以上`
                   : condition.type === 'infrastructure_demand' && condition.target
-                  ? `${condition.target === 'water' ? '水道' : '電力'}需要${condition.value}以上`
+                  ? `${getInfrastructureDisplayName(condition.target)}需要${condition.value}以上`
                   : condition.type === 'infrastructure_balance' && condition.target
-                  ? `${condition.target === 'water' ? '水道' : '電力'}バランス${condition.value}以上`
+                  ? `${getInfrastructureDisplayName(condition.target)}バランス${condition.value}以上`
                   : condition.type === 'infrastructure_ratio' && condition.target
-                  ? `${condition.target === 'water' ? '水道' : '電力'}供給率${condition.value}%以上`
+                  ? `${getInfrastructureDisplayName(condition.target)}供給率${condition.value}%以上`
                   : condition.type === 'tax_revenue'
                   ? `税収${condition.value}円以上`
                   : condition.type === 'workforce_efficiency'
@@ -133,9 +134,9 @@ export function MissionItem({ mission }: MissionItemProps) {
                   : condition.type === 'monthly_expense'
                   ? `月次支出${condition.value}円${condition.op === '<' ? '未満' : condition.op === '<=' ? '以下' : '以上'}`
                   : condition.type === 'product_demand' && condition.target
-                  ? `${['原材料', '中間製品', '最終製品', 'サービス'][parseInt(condition.target)]}需要${condition.value}以上`
+                  ? `${getProductDisplayName(condition.target)}需要${condition.value}以上`
                   : condition.type === 'product_production' && condition.target
-                  ? `${['原材料', '中間製品', '最終製品', 'サービス'][parseInt(condition.target)]}生産${condition.value}以上`
+                  ? `${getProductDisplayName(condition.target)}生産${condition.value}以上`
                   : condition.type === 'product_efficiency'
                   ? `製品効率${condition.value}%以上`
                   : `${condition.type}: ${condition.op} ${condition.value}`
@@ -158,7 +159,7 @@ export function MissionItem({ mission }: MissionItemProps) {
                   : effect.type === 'satisfaction'
                   ? `満足度 ${effect.value >= 0 ? '+' : ''}${effect.value}`
                   : effect.type === 'faction_support'
-                  ? `${effect.target}支持率 ${effect.value >= 0 ? '+' : ''}${effect.value}`
+                  ? `${getFactionDisplayName(effect.target || '')}支持率 ${effect.value >= 0 ? '+' : ''}${effect.value}%`
                   : `${effect.type}: ${effect.value >= 0 ? '+' : ''}${effect.value}`
                 }
               </div>
