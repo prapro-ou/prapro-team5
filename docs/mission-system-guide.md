@@ -239,32 +239,110 @@ city-sim/public/data/missions.json
 { "type": "faction_support", "target": "chamber_of_commerce", "value": 8 }
 ```
 
-#### 施設アンロック関連
+#### 施設アンロック関連（現在未使用）
 
 ```json
-// 市役所をアンロック
-{ "type": "facility_unlock", "target": "city_hall", "value": 1 }
-
-// 警察署をアンロック
-{ "type": "facility_unlock", "target": "police", "value": 1 }
-
-// 発電所をアンロック
-{ "type": "facility_unlock", "target": "electric_plant", "value": 1 }
-
-// 浄水所をアンロック
-{ "type": "facility_unlock", "target": "water_plant", "value": 1 }
+// 施設アンロック効果（将来の特殊施設用）
+{ "type": "facility_unlock", "target": "new_facility", "value": 1 }
 ```
 
-### アンロック可能な施設タイプ
+### 施設アンロックシステム
 
-| 施設タイプ | 日本語名 | 説明 |
-|-----------|---------|------|
-| `city_hall` | 市役所 | 税収の拠点となる重要施設 |
-| `police` | 警察署 | 治安向上・満足度増加施設 |
-| `electric_plant` | 発電所 | 電力供給施設 |
-| `water_plant` | 浄水所 | 水道供給施設 |
+#### 現在の状態
+**すべての施設が初期からアンロック済み**になっています。施設アンロック機能は実装済みですが、現在のゲームプレイでは使用されていません。
 
-**注意**: `residential`、`commercial`、`industrial`、`road`、`park`は初期からアンロック済みです。
+#### アンロック機能の仕組み
+
+##### 1. マスターデータでの管理
+各施設は `FACILITY_DATA` でアンロック条件を管理：
+
+```typescript
+// 基本施設（初期アンロック）
+residential: {
+  // ... 基本定義
+  unlockCondition: 'initial',
+  initiallyUnlocked: true
+},
+
+// 特殊施設（ミッションアンロック）
+special_facility: {
+  // ... 基本定義
+  unlockCondition: 'mission',
+  initiallyUnlocked: false,
+  unlockRequirements: {
+    missionId: 'mission_unlock_special'
+  }
+}
+```
+
+##### 2. ミッションとの連携方法
+
+**A. 自動アンロック（推奨）**
+ミッション完了時に、ミッションIDに基づいて自動で施設をアンロック：
+
+```json
+{
+  "id": "mission_unlock_special",
+  "name": "特殊施設の解放",
+  "conditions": [
+    { "type": "population", "op": ">=", "value": 500 }
+  ],
+  "effects": [
+    { "type": "money", "value": 5000 }
+  ]
+  // facility_unlock効果は不要（自動処理）
+}
+```
+
+**B. 手動指定アンロック**
+効果で明示的に施設をアンロック：
+
+```json
+{
+  "effects": [
+    { "type": "facility_unlock", "target": "special_facility", "value": 1 }
+  ]
+}
+```
+
+##### 3. 新しい施設の追加手順
+
+1. **`FACILITY_DATA` に施設定義を追加**
+```typescript
+new_facility: {
+  type: 'new_facility',
+  name: '新施設',
+  // ... 基本プロパティ（cost, size, etc.）
+  unlockCondition: 'mission',
+  initiallyUnlocked: false,
+  unlockRequirements: {
+    missionId: 'mission_unlock_new_facility'
+  }
+}
+```
+
+2. **アンロック用ミッションを作成**
+```json
+{
+  "id": "mission_unlock_new_facility",
+  "name": "新施設建設許可",
+  "description": "人口1000人を達成して新施設の建設許可を得ましょう",
+  "conditions": [
+    { "type": "population", "op": ">=", "value": 1000 }
+  ],
+  "effects": [
+    { "type": "money", "value": 10000 }
+  ]
+  // ミッション完了時に自動でnew_facilityがアンロック
+}
+```
+
+3. **画像ファイルの配置**（必要に応じて）
+`public/images/buildings/new_facility.png`
+
+##### 4. アンロック状態の確認
+- **コンソール**: ミッション完了時に `🔓 施設「xxx」がアンロックされました` を出力
+- **UI**: FacilitySelectorで🔒アイコンの有無で確認可能
 
 ## ミッション例
 
@@ -293,26 +371,27 @@ city-sim/public/data/missions.json
 }
 ```
 
-### 施設アンロックミッション
+### 複合条件ミッション
 
 ```json
 {
-  "id": "mission_unlock_city_hall",
-  "name": "市役所の建設許可",
-  "description": "人口300人を達成して市役所の建設許可を得ましょう",
+  "id": "mission_economic_growth",
+  "name": "経済成長戦略",
+  "description": "税収2000を達成し、労働力効率を80%以上にしましょう",
   "type": "mission",
-  "category": "development",
+  "category": "economic",
   "priority": 17,
   "conditions": [
-    { "type": "population", "op": ">=", "value": 300 }
+    { "type": "tax_revenue", "op": ">=", "value": 2000 },
+    { "type": "workforce_efficiency", "op": ">=", "value": 80 }
   ],
   "effects": [
-    { "type": "facility_unlock", "target": "city_hall", "value": 1 },
-    { "type": "money", "value": 3000 }
+    { "type": "money", "value": 5000 },
+    { "type": "satisfaction", "value": 10 }
   ],
   "status": "available",
   "progress": 0,
-  "autoAccept": false,
+  "autoAccept": true,
   "isRepeatable": false
 }
 ```
