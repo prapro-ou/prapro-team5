@@ -90,17 +90,17 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     set({ state: createInitialState() });
   },
 
-  // 特定の勢力の支持率を取得
+  // 特定の派閥の支持率を取得
   getFactionSupport: (factionType: FactionType) => {
     return get().state.factionSupports.find(support => support.type === factionType);
   },
 
-  // 全勢力の支持率を取得
+  // 全派閥の支持率を取得
   getAllFactionSupports: () => {
     return get().state.factionSupports;
   },
 
-  // 特定の勢力の支持率を更新
+  // 特定の派閥の支持率を更新
   updateFactionSupport: (factionType: FactionType, newRating: number) => {
     const currentState = get().state;
     const factionSupport = currentState.factionSupports.find(support => support.type === factionType);
@@ -127,7 +127,7 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     }
   },
 
-  // 全勢力の支持率を一括更新
+  // 全派閥の支持率を一括更新
   updateAllFactionSupports: (newRatings: Record<FactionType, number>) => {
     const currentState = get().state;
     
@@ -152,7 +152,7 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     });
   },
 
-  // 全勢力の支持率を計算
+  // 全派閥の支持率を計算
   calculateSupportRatings: (cityState: CityStateForSupport): Record<FactionType, number> => {
     const results: Record<FactionType, number> = {} as Record<FactionType, number>;
     
@@ -164,7 +164,7 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     return results;
   },
 
-  // 特定の勢力の支持率を計算
+  // 特定の派閥の支持率を計算
   calculateFactionSupport: (factionType: FactionType, cityState: CityStateForSupport): SupportCalculationResult => {
     const factionInfo = FACTION_DATA[factionType];
     const priorities = factionInfo.priorities;
@@ -207,7 +207,7 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     return getSupportLevel(rating);
   },
 
-  // 特定の勢力のアクティブな効果を取得
+  // 特定の派閥のアクティブな効果を取得
   getActiveEffects: (factionType: FactionType) => {
     const factionSupport = get().getFactionSupport(factionType);
     if (!factionSupport) return {};
@@ -219,7 +219,7 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     return activeEffect ? activeEffect.effects : {};
   },
 
-  // 全勢力のアクティブな効果を取得
+  // 全派閥のアクティブな効果を取得
   getAllActiveEffects: () => {
     const allEffects: Record<FactionType, SupportLevelEffect['effects']> = {} as Record<FactionType, SupportLevelEffect['effects']>;
     

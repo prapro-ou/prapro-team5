@@ -143,7 +143,7 @@ export type MissionCategory =
   | 'collection';      // コレクション系
 
 
-// 勢力タイプ
+// 派閥タイプ
 export type FactionType = 
   | 'central_government'  // 中央政府
   | 'citizens'            // 市民

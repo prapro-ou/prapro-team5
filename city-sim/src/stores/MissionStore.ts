@@ -9,6 +9,7 @@ import type {
 } from '../types/mission';
 import { useGameStore } from './GameStore';
 import { useFacilityStore } from './FacilityStore';
+import { useSupportStore } from './SupportStore';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // ミッションストアのインターフェース
@@ -97,15 +98,19 @@ class ConditionEngine {
           break;
           
         case 'support_rating':
-          if (condition.target && gameState.supportSystem?.factionSupports) {
-            const faction = gameState.supportSystem.factionSupports.find(
-              (f: any) => f.type === condition.target
-            );
-            actualValue = faction ? faction.currentRating : 0;
-            message = `${condition.target}支持率: ${actualValue}/${condition.value}`;
+          if (condition.target) {
+            try {
+              const supportStore = useSupportStore.getState();
+              const factionSupport = supportStore.getFactionSupport(condition.target as any);
+              actualValue = factionSupport ? factionSupport.currentRating : 0;
+              message = `${condition.target}支持率: ${actualValue}/${condition.value}`;
+            } catch (error) {
+              actualValue = 0;
+              message = `派閥支持率の取得エラー: ${error}`;
+            }
           } else {
             actualValue = 0;
-            message = '派閥支持率の取得に失敗しました';
+            message = '派閥支持率の取得には対象派閥の指定が必要です';
           }
           break;
           
@@ -203,13 +208,33 @@ class EffectEngine {
           break;
           
         case 'faction_support':
-          if (effect.target && gameState.supportSystem?.factionSupports) {
-            // TODO: 派閥支持率の更新実装
-            success = true;
-            message = `${effect.target}支持率を更新しました`;
-          } else {
+          if (effect.target) {
+            try {
+              const supportStore = useSupportStore.getState();
+              const currentSupport = supportStore.getFactionSupport(effect.target as any);
+              
+              if (currentSupport) {
+                previousValue = currentSupport.currentRating;
+                newValue = Math.max(0, Math.min(100, previousValue + effect.value));
+                
+                // 派閥支持率を更新
+                supportStore.updateFactionSupport(effect.target as any, newValue);
+                
+                success = true;
+                message = `${effect.target}支持率: ${previousValue} → ${newValue} (${effect.value >= 0 ? '+' : ''}${effect.value})`;
+              }
+              else {
+                success = false;
+                message = `派閥「${effect.target}」が見つかりません`;
+              }
+            } catch (error) {
+              success = false;
+              message = `派閥支持率の更新エラー: ${error}`;
+            }
+          }
+          else {
             success = false;
-            message = '派閥支持率の更新に失敗しました';
+            message = '派閥支持率の更新には対象派閥の指定が必要です';
           }
           break;
           
@@ -288,6 +313,42 @@ const sampleMissions: Mission[] = [
     ],
     effects: [
       { type: 'satisfaction', value: 10 }
+    ],
+    status: 'available',
+    progress: 0,
+    isRepeatable: false
+  },
+  {
+    id: 'mission_citizen_support',
+    name: '市民の支持を得よう',
+    description: '市民の支持率を60%以上にしましょう',
+    type: 'mission',
+    category: 'social',
+    priority: 4,
+    conditions: [
+      { type: 'support_rating', op: '>=', value: 60, target: 'citizens' }
+    ],
+    effects: [
+      { type: 'money', value: 3000 },
+      { type: 'faction_support', target: 'citizens', value: 5 }
+    ],
+    status: 'available',
+    progress: 0,
+    isRepeatable: false
+  },
+  {
+    id: 'mission_government_favor',
+    name: '政府からの依頼',
+    description: '商業施設を3つ建設して、経済を活性化することを求められています',
+    type: 'mission',
+    category: 'infrastructure',
+    priority: 5,
+    conditions: [
+      { type: 'facility_type_count', op: '>=', value: 3, target: 'commercial' }
+    ],
+    effects: [
+      { type: 'faction_support', target: 'central_government', value: 15 },
+      { type: 'money', value: 5000 }
     ],
     status: 'available',
     progress: 0,

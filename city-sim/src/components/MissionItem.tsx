@@ -103,6 +103,8 @@ export function MissionItem({ mission }: MissionItemProps) {
                   ? `所持金${condition.value}円以上`
                   : condition.type === 'satisfaction'
                   ? `満足度${condition.value}以上`
+                  : condition.type === 'support_rating' && condition.target
+                  ? `${condition.target}支持率${condition.value}%以上`
                   : `${condition.type}: ${condition.op} ${condition.value}`
                 }
               </div>
@@ -117,12 +119,14 @@ export function MissionItem({ mission }: MissionItemProps) {
             {mission.effects?.map((effect, index) => (
               <div key={index} className="text-xs text-gray-600">
                 {effect.type === 'money'
-                  ? `資金 +${effect.value}円`
+                  ? `資金 ${effect.value >= 0 ? '+' : ''}${effect.value}円`
                   : effect.type === 'population'
-                  ? `人口 +${effect.value}人`
+                  ? `人口 ${effect.value >= 0 ? '+' : ''}${effect.value}人`
                   : effect.type === 'satisfaction'
-                  ? `満足度 +${effect.value}`
-                  : `${effect.type}: +${effect.value}`
+                  ? `満足度 ${effect.value >= 0 ? '+' : ''}${effect.value}`
+                  : effect.type === 'faction_support'
+                  ? `${effect.target}支持率 ${effect.value >= 0 ? '+' : ''}${effect.value}`
+                  : `${effect.type}: ${effect.value >= 0 ? '+' : ''}${effect.value}`
                 }
               </div>
             ))}

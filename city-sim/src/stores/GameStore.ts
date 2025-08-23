@@ -303,7 +303,7 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   const currentMonth = stats.date.month - 1;
   const newAccumulation = { ...stats.monthlyAccumulation };
   
-  // 各勢力の支持率を累積
+  // 各派閥の支持率を累積
   Object.entries(newSupportRatings).forEach(([factionType, rating]) => {
     if (!newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings]) {
       newAccumulation.monthlySupportRatings[factionType as keyof typeof newAccumulation.monthlySupportRatings] = new Array(12).fill(50);
