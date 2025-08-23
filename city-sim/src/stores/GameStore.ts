@@ -8,7 +8,7 @@ import { calculateProduction, calculateConsumptionAndRevenue } from './EconomySt
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
-import { buildFacilityTypeLists, countNearbyAllTypesWithLists } from '../utils/areaEffect';
+import { buildSpatialIndex, countNearbyAllTypesWithIndex } from '../utils/areaEffect';
 import { executeMonthlyWorkforceAllocation } from './EconomyStore';
 import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
@@ -98,8 +98,11 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
 const adjustPopulationByGrowth: MonthlyTask = (get) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
-  const residentials = facilities.filter(f => f.type === 'residential');
-  const lists = buildFacilityTypeLists(facilities);
+  // isActive のみを対象にする
+  const activeFacilities = facilities.filter(f => f.isActive);
+  const residentials = activeFacilities.filter(f => f.type === 'residential');
+  // 近傍探索の高速化: 空間インデックスを構築（アクティブ施設のみ）
+  const spatialIndex = buildSpatialIndex(activeFacilities);
   let totalIncrease = 0;
   let growthrate = 0;
   let random = Math.random()*0.2 + 0.9;
@@ -111,7 +114,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
     for (const res of residentials) {
       const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
 
-  counts = countNearbyAllTypesWithLists(res, lists);
+  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
       conditionFactor += counts[0]*0.3; // 商業施設による加点
       conditionFactor -= counts[1]*0.1; // 工業施設による減点
@@ -128,7 +131,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
     for (const res of residentials) {
       const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
 
-  counts = countNearbyAllTypesWithLists(res, lists);
+  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
       conditionFactor += counts[0]*0.25; // 商業施設による加点
       conditionFactor -= counts[1]*0.13; // 工業施設による減点
@@ -145,7 +148,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
     for (const res of residentials) {
       const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
 
-  counts = countNearbyAllTypesWithLists(res, lists);
+  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
       conditionFactor += counts[0]*0.10; // 商業施設による加点
       conditionFactor -= counts[1]*0.13; // 工業施設による減点
@@ -159,16 +162,6 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
 
   } 
   console.log(`Population Growth: +${totalIncrease} (Growth Rate: ${growthrate}, Random Factor: ${random}`);
-
-  for (const res of residentials) {
-    // 道路接続されていない住宅施設からの人口増加は停止
-    if (!res.isActive) {
-      continue;
-    }
-    
-    const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
-    totalIncrease += Math.floor(basePop * growthrate * random); // 条件係数を後で追加
-  }
 
   get().addPopulation(totalIncrease);
 };
