@@ -11,6 +11,8 @@ import { useGameStore } from './GameStore';
 import { useFacilityStore } from './FacilityStore';
 import { useSupportStore } from './SupportStore';
 import { useInfrastructureStore } from './InfrastructureStore';
+import { useProductStore } from './ProductStore';
+import { calculateTotalTaxRevenue, getCurrentWorkforceAllocations, calculateMonthlyBalance } from './EconomyStore';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 // ミッションストアのインターフェース
@@ -219,6 +221,116 @@ class ConditionEngine {
           } else {
             actualValue = 0;
             message = 'インフラ供給率の取得には対象（water/electricity）の指定が必要です';
+          }
+          break;
+          
+        case 'tax_revenue':
+          try {
+            actualValue = calculateTotalTaxRevenue(gameState, facilities);
+            message = `税収: ${actualValue}/${condition.value}`;
+          } catch (error) {
+            actualValue = 0;
+            message = `税収の取得エラー: ${error}`;
+          }
+          break;
+          
+        case 'monthly_income':
+          try {
+            const monthlyBalance = calculateMonthlyBalance(gameState, facilities);
+            actualValue = monthlyBalance.income;
+            message = `月次収入: ${actualValue}/${condition.value}`;
+          } catch (error) {
+            actualValue = 0;
+            message = `月次収入の取得エラー: ${error}`;
+          }
+          break;
+          
+        case 'monthly_expense':
+          try {
+            const monthlyBalance = calculateMonthlyBalance(gameState, facilities);
+            actualValue = monthlyBalance.expense;
+            message = `月次支出: ${actualValue}/${condition.value}`;
+          } catch (error) {
+            actualValue = 0;
+            message = `月次支出の取得エラー: ${error}`;
+          }
+          break;
+          
+        case 'product_demand':
+          if (condition.target !== undefined && typeof condition.target === 'string') {
+            try {
+              const productStore = useProductStore.getState();
+              const demand = productStore.calculateProductDemand(facilities);
+              const productIndex = parseInt(condition.target);
+              if (productIndex >= 0 && productIndex < 4) {
+                actualValue = demand[productIndex];
+                const productNames = ['原材料', '中間製品', '最終製品', 'サービス'];
+                message = `${productNames[productIndex]}需要: ${actualValue}/${condition.value}`;
+              } else {
+                actualValue = 0;
+                message = `無効な製品インデックス: ${condition.target}`;
+              }
+            } catch (error) {
+              actualValue = 0;
+              message = `製品需要の取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = '製品需要の取得には製品インデックス（0:原材料, 1:中間製品, 2:最終製品, 3:サービス）の指定が必要です';
+          }
+          break;
+          
+        case 'product_production':
+          if (condition.target !== undefined && typeof condition.target === 'string') {
+            try {
+              const productStore = useProductStore.getState();
+              const production = productStore.calculateProductProduction(facilities);
+              const productIndex = parseInt(condition.target);
+              if (productIndex >= 0 && productIndex < 4) {
+                actualValue = production[productIndex];
+                const productNames = ['原材料', '中間製品', '最終製品', 'サービス'];
+                message = `${productNames[productIndex]}生産: ${actualValue}/${condition.value}`;
+              } else {
+                actualValue = 0;
+                message = `無効な製品インデックス: ${condition.target}`;
+              }
+            } catch (error) {
+              actualValue = 0;
+              message = `製品生産の取得エラー: ${error}`;
+            }
+          } else {
+            actualValue = 0;
+            message = '製品生産の取得には製品インデックス（0:原材料, 1:中間製品, 2:最終製品, 3:サービス）の指定が必要です';
+          }
+          break;
+          
+        case 'product_efficiency':
+          try {
+            const productStore = useProductStore.getState();
+            const status = productStore.getProductSupplyDemandStatus(facilities);
+            actualValue = Math.round(status.efficiency * 100); // パーセント表示
+            message = `製品効率: ${actualValue}%/${condition.value}%`;
+          } catch (error) {
+            actualValue = 0;
+            message = `製品効率の取得エラー: ${error}`;
+          }
+          break;
+          
+        case 'workforce_efficiency':
+          try {
+            const workforceAllocations = getCurrentWorkforceAllocations(gameState);
+            if (workforceAllocations.length > 0) {
+              const averageEfficiency = workforceAllocations.reduce((sum, allocation) => 
+                sum + allocation.efficiency, 0) / workforceAllocations.length;
+              actualValue = Math.round(averageEfficiency * 100); // パーセント表示
+              message = `労働力効率: ${actualValue}%/${condition.value}%`;
+            } else {
+              actualValue = 0;
+              message = '労働力配分がありません';
+            }
+          } catch (error) {
+            actualValue = 0;
+            message = `労働力効率の取得エラー: ${error}`;
           }
           break;
           
@@ -520,6 +632,165 @@ const sampleMissions: Mission[] = [
       { type: 'money', value: 8000 },
       { type: 'satisfaction', value: 15 },
       { type: 'faction_support', target: 'citizens', value: 10 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: true
+  },
+  {
+    id: 'mission_tax_revenue_boost',
+    name: '税収1000円達成',
+    description: '月次税収を1000円以上にして、財政を安定させましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 9,
+    conditions: [
+      { type: 'tax_revenue', op: '>=', value: 1000 }
+    ],
+    effects: [
+      { type: 'money', value: 5000 },
+      { type: 'faction_support', target: 'central_government', value: 8 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_balanced_budget',
+    name: '収支の黒字化',
+    description: '月次収入を月次支出より多くして、財政を安定させましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 10,
+    conditions: [
+      { type: 'monthly_income', op: '>', value: 500 },
+      { type: 'monthly_expense', op: '<', value: 400 }
+    ],
+    effects: [
+      { type: 'money', value: 3000 },
+      { type: 'satisfaction', value: 10 },
+      { type: 'faction_support', target: 'citizens', value: 8 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_workforce_optimization',
+    name: '労働力の最適化',
+    description: '労働力効率を75%以上にして、経済を活性化しましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 11,
+    conditions: [
+      { type: 'workforce_efficiency', op: '>=', value: 75 }
+    ],
+    effects: [
+      { type: 'money', value: 5000 },
+      { type: 'satisfaction', value: 15 },
+      { type: 'faction_support', target: 'chamber_of_commerce', value: 10 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: true
+  },
+  {
+    id: 'mission_cost_control',
+    name: 'コスト管理の達成',
+    description: '月次支出を300以下に抑えて、効率的な運営を実現しましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 12,
+    conditions: [
+      { type: 'monthly_expense', op: '<=', value: 300 }
+    ],
+    effects: [
+      { type: 'money', value: 4000 },
+      { type: 'faction_support', target: 'central_government', value: 12 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_raw_material_production',
+    name: '原材料の確保',
+    description: '原材料の生産を10以上にして、産業の基盤を整えましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 13,
+    conditions: [
+      { type: 'product_production', op: '>=', value: 10, target: '0' }  // 原材料（インデックス0）
+    ],
+    effects: [
+      { type: 'money', value: 3000 },
+      { type: 'satisfaction', value: 5 },
+      { type: 'faction_support', target: 'citizens', value: 8 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_final_product_chain',
+    name: '製品供給チェーンの確立',
+    description: '最終製品の生産を15以上にして、住民の需要を満たしましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 14,
+    conditions: [
+      { type: 'product_production', op: '>=', value: 15, target: '2' }  // 最終製品（インデックス2）
+    ],
+    effects: [
+      { type: 'money', value: 6000 },
+      { type: 'satisfaction', value: 15 },
+      { type: 'faction_support', target: 'chamber_of_commerce', value: 12 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: false
+  },
+  {
+    id: 'mission_service_economy',
+    name: 'サービス経済の発展',
+    description: 'サービス生産を25以上にして、現代的な経済を構築しましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 15,
+    conditions: [
+      { type: 'product_production', op: '>=', value: 25, target: '3' }  // サービス（インデックス3）
+    ],
+    effects: [
+      { type: 'money', value: 8000 },
+      { type: 'satisfaction', value: 20 },
+      { type: 'faction_support', target: 'chamber_of_commerce', value: 15 }
+    ],
+    status: 'available',
+    progress: 0,
+    autoAccept: false,  // 手動受注
+    isRepeatable: true
+  },
+  {
+    id: 'mission_production_efficiency',
+    name: '生産効率の最適化',
+    description: '製品効率を90%以上にして、需給バランスを取りましょう',
+    type: 'mission',
+    category: 'economic',
+    priority: 16,
+    conditions: [
+      { type: 'product_efficiency', op: '>=', value: 90 }
+    ],
+    effects: [
+      { type: 'money', value: 10000 },
+      { type: 'satisfaction', value: 25 },
+      { type: 'faction_support', target: 'chamber_of_commerce', value: 20 }
     ],
     status: 'available',
     progress: 0,

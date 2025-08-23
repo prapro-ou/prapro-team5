@@ -124,6 +124,20 @@ export function MissionItem({ mission }: MissionItemProps) {
                   ? `${condition.target === 'water' ? '水道' : '電力'}バランス${condition.value}以上`
                   : condition.type === 'infrastructure_ratio' && condition.target
                   ? `${condition.target === 'water' ? '水道' : '電力'}供給率${condition.value}%以上`
+                  : condition.type === 'tax_revenue'
+                  ? `税収${condition.value}円以上`
+                  : condition.type === 'workforce_efficiency'
+                  ? `労働力効率${condition.value}%以上`
+                  : condition.type === 'monthly_income'
+                  ? `月次収入${condition.value}円${condition.op === '>' ? '超' : '以上'}`
+                  : condition.type === 'monthly_expense'
+                  ? `月次支出${condition.value}円${condition.op === '<' ? '未満' : condition.op === '<=' ? '以下' : '以上'}`
+                  : condition.type === 'product_demand' && condition.target
+                  ? `${['原材料', '中間製品', '最終製品', 'サービス'][parseInt(condition.target)]}需要${condition.value}以上`
+                  : condition.type === 'product_production' && condition.target
+                  ? `${['原材料', '中間製品', '最終製品', 'サービス'][parseInt(condition.target)]}生産${condition.value}以上`
+                  : condition.type === 'product_efficiency'
+                  ? `製品効率${condition.value}%以上`
                   : `${condition.type}: ${condition.op} ${condition.value}`
                 }
               </div>

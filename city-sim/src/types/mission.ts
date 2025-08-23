@@ -50,6 +50,13 @@ export type ConditionType =
   | 'infrastructure_supply'  // インフラ供給量
   | 'infrastructure_demand'  // インフラ需要量
   | 'infrastructure_ratio'   // インフラ供給率（供給/需要）
+  | 'tax_revenue'         // 税収
+  | 'workforce_efficiency' // 労働力効率
+  | 'monthly_income'      // 月次収入
+  | 'monthly_expense'     // 月次支出
+  | 'product_demand'      // 製品需要（原材料・中間・最終・サービス）
+  | 'product_production'  // 製品生産（原材料・中間・最終・サービス）
+  | 'product_efficiency'  // 製品効率（供給/需要比率）
   | 'area_effect'         // エリア効果
   | 'road_connection'     // 道路接続状況
   | 'compound'            // 複合条件
