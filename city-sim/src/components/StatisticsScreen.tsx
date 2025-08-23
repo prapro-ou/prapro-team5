@@ -1,4 +1,4 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy } from 'react-icons/tb';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge } from 'react-icons/tb';
 import { useState } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
@@ -11,7 +11,7 @@ interface StatisticsPanelProps {
   onClose: () => void;
 }
 
-type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'support';
+type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'support' | 'secretary';
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -28,6 +28,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'support', name: '支持・派閥', icon: TbFlag },
+    { id: 'secretary', name: '秘書', icon: TbIdBadge}
   ];
 
   // 基本タブのコンテンツ
@@ -701,6 +702,29 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     );
   };
 
+  // 秘書タブのコンテンツ
+  const renderSecretaryTab = () => (
+    <div className="space-y-6">
+      {/* 秘書情報カード */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
+          <TbIdBadge className="text-blue-400" />
+          秘書情報
+        </h3>
+        <div className="text-center text-gray-400">
+          <p className="mb-2">秘書機能は現在開発中です</p>
+          <p className="text-sm">この機能では以下を提供予定です：</p>
+          <ul className="text-sm mt-2 space-y-1">
+            <li>• 現在の開発状況のアドバイス</li>
+            <li>• 都市運営のヒント</li>
+            <li>• 問題点の早期発見</li>
+            <li>• 最適化提案</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
@@ -714,6 +738,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         return renderInfrastructureTab();
       case 'support':
         return renderSupportTab();
+      case 'secretary':
+        return renderSecretaryTab();
       default:
         return renderBasicTab();
     }
