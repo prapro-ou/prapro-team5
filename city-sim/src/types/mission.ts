@@ -17,6 +17,7 @@ export interface Mission extends BaseMission {
   effects: Effect[];             // 効果・報酬
   status: MissionStatus;         // 現在の状態
   progress: number;              // 進捗率（0-100）
+  autoAccept: boolean;           // 自動受注フラグ（true: 自動, false: 手動）
   startDate?: GameDate;          // 開始日時
   deadline?: GameDate;           // 期限日時
   isRepeatable: boolean;         // 繰り返し可能フラグ
