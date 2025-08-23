@@ -2,13 +2,13 @@ import type { Character, LayerType, ExpressionType, LayerState } from '../types/
 
 // レイヤーの重ね順（z-index）
 export const LAYER_Z_INDEX: Record<LayerType, number> = {
-  kemomimi: 1,    // ケモミミ（最前面）
-  hair: 2,        // 髪
-  face: 3,        // 顔パーツ
-  body: 4,        // 身体（ベース）
+  kemomimi: 7,    // ケモミミ（最前面）
+  hair: 6,        // 髪
+  face: 5,        // 顔パーツ
   ribbon: 5,      // リボン
-  jacket: 6,      // ジャケット
-  tail: 7         // しっぽ（最背面）
+  jacket: 5,      // ジャケット
+  body: 4,        // 身体（ベース）
+  tail: 1         // しっぽ（最背面）
 };
 
 // デフォルトのレイヤー表示状態
@@ -41,7 +41,7 @@ export const SAMPLE_CHARACTERS: Character[] = [
     id: 'secretary_0',
     name: '秘書ちゃん',
     description: 'あなたの個人秘書兼都市開発アドバイザー。',
-    baseImage: '/images/characters/secretary_01/base.png',
+    baseImage: 'images/characters/secretary_0/body.png',
     expressions: ['normal', 'happy', 'serious', 'worried'],
     hasJacket: true
   }
