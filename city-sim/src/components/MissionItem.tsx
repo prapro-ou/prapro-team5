@@ -82,9 +82,6 @@ export function MissionItem({ mission }: MissionItemProps) {
           <span className="px-2 py-1 text-xs font-medium rounded-full text-gray-600 bg-gray-100">
             {mission.autoAccept ? '自動' : '手動'}
           </span>
-          <span className="text-xs text-gray-500">
-            優先度: {mission.priority}
-          </span>
         </div>
       </div>
 
