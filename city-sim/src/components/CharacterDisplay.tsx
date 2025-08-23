@@ -19,7 +19,7 @@ interface CharacterDisplayProps {
   displayState: CharacterDisplayState;
   callbacks: CharacterSelectionCallbacks;
   className?: string;
-  size?: 'small' | 'medium' | 'large' | 'custom';
+  size?: 'tiny' | 'xs' | 'small' | 'medium' | 'large' | 'xl' | 'huge' | 'custom';
   customSize?: { width: number; height: number };
 }
 
@@ -53,11 +53,19 @@ export function CharacterDisplay({
     }
     
     switch (size) {
+      case 'tiny':
+        return { width: 64, height: 64 };
+      case 'xs':
+        return { width: 96, height: 96 };
       case 'small':
         return { width: 128, height: 128 };
       case 'medium':
-        return { width: 256, height: 256 };
+        return { width: 192, height: 192 };
       case 'large':
+        return { width: 256, height: 256 };
+      case 'xl':
+        return { width: 384, height: 384 };
+      case 'huge':
         return { width: 512, height: 512 };
       default:
         return CHARACTER_DISPLAY_SIZE;
