@@ -1,0 +1,276 @@
+import { create } from 'zustand';
+import type { 
+  Character, 
+  CharacterDisplayState, 
+  ExpressionType, 
+  LayerType, 
+  LayerState 
+} from '../types/character';
+import { 
+  SAMPLE_CHARACTERS, 
+  DEFAULT_LAYER_STATES, 
+  DEFAULT_EXPRESSION 
+} from '../constants/characterConstants';
+
+// アドバイスの種類
+export type AdviceType = 
+  | 'economy'        // 経済関連
+  | 'infrastructure' // インフラ関連
+  | 'population'     // 人口関連
+  | 'satisfaction'   // 満足度関連
+  | 'mission'        // ミッション関連
+  | 'general';       // 一般的なアドバイス
+
+// アドバイスの優先度
+export type AdvicePriority = 'low' | 'medium' | 'high' | 'urgent';
+
+// アドバイス情報
+export interface Advice {
+  id: string;
+  type: AdviceType;
+  priority: AdvicePriority;
+  title: string;
+  message: string;
+  suggestion?: string;        // 具体的な提案
+  timestamp: number;          // 生成時刻
+  isRead: boolean;            // 既読フラグ
+  isDismissed: boolean;       // 却下フラグ
+}
+
+// 秘書ストアのインターフェース
+interface SecretaryStore {
+  // キャラクター管理
+  selectedCharacter: Character;
+  characterDisplayState: CharacterDisplayState;
+  
+  // アドバイス管理
+  advices: Advice[];
+  unreadAdviceCount: number;
+  
+  // UI状態
+  isSecretaryPanelOpen: boolean;
+  isAdvicePanelOpen: boolean;
+  
+  // キャラクター操作
+  changeExpression: (expression: ExpressionType) => void;
+  toggleLayer: (layerType: LayerType) => void;
+  changeCharacter: (characterId: string) => void;
+  
+  // アドバイス操作
+  addAdvice: (advice: Omit<Advice, 'id' | 'timestamp' | 'isRead' | 'isDismissed'>) => void;
+  markAdviceAsRead: (adviceId: string) => void;
+  dismissAdvice: (adviceId: string) => void;
+  clearAllAdvices: () => void;
+  
+  // UI操作
+  openSecretaryPanel: () => void;
+  closeSecretaryPanel: () => void;
+  openAdvicePanel: () => void;
+  closeAdvicePanel: () => void;
+  
+  // アドバイス生成
+  generateAdvices: () => void;
+  
+  // セーブ・ロード
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: () => void;
+}
+
+// アドバイス生成ロジック
+const generateAdvice = (
+  type: AdviceType, 
+  priority: AdvicePriority, 
+  title: string, 
+  message: string, 
+  suggestion?: string
+): Advice => ({
+  id: `advice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type,
+  priority,
+  title,
+  message,
+  suggestion,
+  timestamp: Date.now(),
+  isRead: false,
+  isDismissed: false
+});
+
+// デフォルトのアドバイス
+const generateDefaultAdvices = (): Advice[] => [
+  generateAdvice(
+    'general',
+    'medium',
+    '秘書について',
+    '私はいつでもここにいます。都市運営について何でもお聞きください！',
+    'ここでは都市開発にかんするアドバイスを受けることができます。'
+  ),
+  generateAdvice(
+    'economy',
+    'low',
+    '経済状況の監視',
+    '現在の経済状況を定期的にチェックすることをお勧めします。',
+    '統計画面の経済タブで収支状況を確認してください。'
+  )
+];
+
+export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
+  // 初期状態
+  selectedCharacter: SAMPLE_CHARACTERS[0],
+  characterDisplayState: {
+    characterId: SAMPLE_CHARACTERS[0].id,
+    expression: DEFAULT_EXPRESSION,
+    layerStates: DEFAULT_LAYER_STATES
+  },
+  
+  advices: generateDefaultAdvices(),
+  unreadAdviceCount: 2,
+  
+  isSecretaryPanelOpen: false,
+  isAdvicePanelOpen: false,
+  
+  // キャラクター操作
+  changeExpression: (expression: ExpressionType) => {
+    set((state) => ({
+      characterDisplayState: {
+        ...state.characterDisplayState,
+        expression
+      }
+    }));
+  },
+  
+  toggleLayer: (layerType: LayerType) => {
+    set((state) => {
+      const currentState = state.characterDisplayState.layerStates[layerType];
+      const newState: LayerState = currentState === 'on' ? 'off' : 'on';
+      
+      return {
+        characterDisplayState: {
+          ...state.characterDisplayState,
+          layerStates: {
+            ...state.characterDisplayState.layerStates,
+            [layerType]: newState
+          }
+        }
+      };
+    });
+  },
+  
+  changeCharacter: (characterId: string) => {
+    const character = SAMPLE_CHARACTERS.find(c => c.id === characterId);
+    if (character) {
+      set({
+        selectedCharacter: character,
+        characterDisplayState: {
+          characterId: character.id,
+          expression: DEFAULT_EXPRESSION,
+          layerStates: DEFAULT_LAYER_STATES
+        }
+      });
+    }
+  },
+  
+  // アドバイス操作
+  addAdvice: (adviceData) => {
+    const newAdvice = generateAdvice(
+      adviceData.type,
+      adviceData.priority,
+      adviceData.title,
+      adviceData.message,
+      adviceData.suggestion
+    );
+    
+    set((state) => ({
+      advices: [newAdvice, ...state.advices],
+      unreadAdviceCount: state.unreadAdviceCount + 1
+    }));
+  },
+  
+  markAdviceAsRead: (adviceId: string) => {
+    set((state) => {
+      const updatedAdvices = state.advices.map(advice =>
+        advice.id === adviceId ? { ...advice, isRead: true } : advice
+      );
+      
+      const unreadCount = updatedAdvices.filter(advice => !advice.isRead).length;
+      
+      return {
+        advices: updatedAdvices,
+        unreadAdviceCount: unreadCount
+      };
+    });
+  },
+  
+  dismissAdvice: (adviceId: string) => {
+    set((state) => {
+      const updatedAdvices = state.advices.map(advice =>
+        advice.id === adviceId ? { ...advice, isDismissed: true } : advice
+      );
+      
+      return { advices: updatedAdvices };
+    });
+  },
+  
+  clearAllAdvices: () => {
+    set({
+      advices: [],
+      unreadAdviceCount: 0
+    });
+  },
+  
+  // UI操作
+  openSecretaryPanel: () => set({ isSecretaryPanelOpen: true }),
+  closeSecretaryPanel: () => set({ isSecretaryPanelOpen: false }),
+  openAdvicePanel: () => set({ isAdvicePanelOpen: true }),
+  closeAdvicePanel: () => set({ isAdvicePanelOpen: false }),
+  
+  // アドバイス生成
+  generateAdvices: () => {
+    // 現在はデフォルトアドバイスのみ
+    // 将来的にはゲーム状態を分析して動的に生成
+    console.log('Generating advices based on current game state...');
+  },
+  
+  // セーブ・ロード
+  saveState: () => {
+    const state = get();
+    return {
+      selectedCharacterId: state.selectedCharacter.id,
+      characterDisplayState: state.characterDisplayState,
+      advices: state.advices,
+      unreadAdviceCount: state.unreadAdviceCount
+    };
+  },
+  
+  loadState: (savedState: any) => {
+    if (savedState) {
+      const character = SAMPLE_CHARACTERS.find(c => c.id === savedState.selectedCharacterId) || SAMPLE_CHARACTERS[0];
+      
+      set({
+        selectedCharacter: character,
+        characterDisplayState: savedState.characterDisplayState || {
+          characterId: character.id,
+          expression: DEFAULT_EXPRESSION,
+          layerStates: DEFAULT_LAYER_STATES
+        },
+        advices: savedState.advices || [],
+        unreadAdviceCount: savedState.unreadAdviceCount || 0
+      });
+    }
+  },
+  
+  resetToInitial: () => {
+    set({
+      selectedCharacter: SAMPLE_CHARACTERS[0],
+      characterDisplayState: {
+        characterId: SAMPLE_CHARACTERS[0].id,
+        expression: DEFAULT_EXPRESSION,
+        layerStates: DEFAULT_LAYER_STATES
+      },
+      advices: generateDefaultAdvices(),
+      unreadAdviceCount: 2,
+      isSecretaryPanelOpen: false,
+      isAdvicePanelOpen: false
+    });
+  }
+}));
