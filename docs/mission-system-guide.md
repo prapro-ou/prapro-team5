@@ -239,6 +239,33 @@ city-sim/public/data/missions.json
 { "type": "faction_support", "target": "chamber_of_commerce", "value": 8 }
 ```
 
+#### 施設アンロック関連
+
+```json
+// 市役所をアンロック
+{ "type": "facility_unlock", "target": "city_hall", "value": 1 }
+
+// 警察署をアンロック
+{ "type": "facility_unlock", "target": "police", "value": 1 }
+
+// 発電所をアンロック
+{ "type": "facility_unlock", "target": "electric_plant", "value": 1 }
+
+// 浄水所をアンロック
+{ "type": "facility_unlock", "target": "water_plant", "value": 1 }
+```
+
+### アンロック可能な施設タイプ
+
+| 施設タイプ | 日本語名 | 説明 |
+|-----------|---------|------|
+| `city_hall` | 市役所 | 税収の拠点となる重要施設 |
+| `police` | 警察署 | 治安向上・満足度増加施設 |
+| `electric_plant` | 発電所 | 電力供給施設 |
+| `water_plant` | 浄水所 | 水道供給施設 |
+
+**注意**: `residential`、`commercial`、`industrial`、`road`、`park`は初期からアンロック済みです。
+
 ## ミッション例
 
 ### 開発系ミッション
@@ -258,6 +285,30 @@ city-sim/public/data/missions.json
   "effects": [
     { "type": "money", "value": 15000 },
     { "type": "satisfaction", "value": 20 }
+  ],
+  "status": "available",
+  "progress": 0,
+  "autoAccept": false,
+  "isRepeatable": false
+}
+```
+
+### 施設アンロックミッション
+
+```json
+{
+  "id": "mission_unlock_city_hall",
+  "name": "市役所の建設許可",
+  "description": "人口300人を達成して市役所の建設許可を得ましょう",
+  "type": "mission",
+  "category": "development",
+  "priority": 17,
+  "conditions": [
+    { "type": "population", "op": ">=", "value": 300 }
+  ],
+  "effects": [
+    { "type": "facility_unlock", "target": "city_hall", "value": 1 },
+    { "type": "money", "value": 3000 }
   ],
   "status": "available",
   "progress": 0,

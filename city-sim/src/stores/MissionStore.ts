@@ -460,6 +460,30 @@ class EffectEngine {
           }
           break;
           
+        case 'facility_unlock':
+          if (effect.target) {
+            try {
+              const facilityStore = useFacilityStore.getState();
+              // 施設をアンロック
+              if (facilityStore.unlockFacility) {
+                facilityStore.unlockFacility(effect.target as any);
+                success = true;
+                message = `施設「${effect.target}」がアンロックされました`;
+              } 
+              else {
+                success = false;
+                message = 'アンロック機能が利用できません';
+              }
+            } catch (error) {
+              success = false;
+              message = `施設アンロックエラー: ${error}`;
+            }
+          } else {
+            success = false;
+            message = '施設アンロックには対象施設の指定が必要です';
+          }
+          break;
+          
         default:
           success = false;
           message = `未対応の効果タイプ: ${effect.type}`;

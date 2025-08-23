@@ -10,12 +10,17 @@ import { isFacilityConnectedToValidRoadNetwork, clearConnectionCache } from '../
 interface FacilityStore {
   facilities: Facility[];
   selectedFacilityType: FacilityType | null;
+  unlockedFacilities: Set<FacilityType>;
 
   // アクション
   setSelectedFacilityType: (type: FacilityType | null) => void;
   addFacility: (facility: Facility) => void;
   removeFacility: (id: string) => void;
   clearFacilities: () => void;
+  
+  // アンロック機能
+  unlockFacility: (facilityType: FacilityType) => void;
+  isFacilityUnlocked: (facilityType: FacilityType) => boolean;
 
   // ヘルパー
   getFacilityAt: (position: Position) => Facility | null;
@@ -36,6 +41,7 @@ interface FacilityStore {
 export const useFacilityStore = create<FacilityStore>((set, get) => ({
   facilities: [],
   selectedFacilityType: null,
+  unlockedFacilities: new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park']), // 初期アンロック施設
 
   setSelectedFacilityType: (type) => {
     set({ selectedFacilityType: type });
@@ -59,6 +65,20 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   
   clearFacilities: () => {
     set({ facilities: [] });
+  },
+  
+  // アンロック機能
+  unlockFacility: (facilityType: FacilityType) => {
+    set(state => {
+      const newUnlocked = new Set(state.unlockedFacilities);
+      newUnlocked.add(facilityType);
+      return { unlockedFacilities: newUnlocked };
+    });
+    console.log(`施設「${facilityType}」がアンロックされました`);
+  },
+  
+  isFacilityUnlocked: (facilityType: FacilityType) => {
+    return get().unlockedFacilities.has(facilityType);
   },  
 
   getFacilityAt: (position) => {
@@ -193,7 +213,8 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     const state = get();
     return {
       facilities: state.facilities,
-      selectedFacilityType: state.selectedFacilityType
+      selectedFacilityType: state.selectedFacilityType,
+      unlockedFacilities: Array.from(state.unlockedFacilities) // Setは保存できないので配列に変換
     };
   },
 
@@ -207,7 +228,10 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       
       set({
         facilities: facilitiesWithDefaults,
-        selectedFacilityType: savedState.selectedFacilityType || null
+        selectedFacilityType: savedState.selectedFacilityType || null,
+        unlockedFacilities: savedState.unlockedFacilities 
+          ? new Set(savedState.unlockedFacilities) 
+          : new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park'])
       });
     }
   },
@@ -215,7 +239,8 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   resetToInitial: () => {
     set({
       facilities: [],
-      selectedFacilityType: null
+      selectedFacilityType: null,
+      unlockedFacilities: new Set<FacilityType>(['residential', 'commercial', 'industrial', 'road', 'park'])
     });
   }
 }));
