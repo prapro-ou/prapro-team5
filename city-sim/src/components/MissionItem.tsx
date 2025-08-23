@@ -8,7 +8,7 @@ interface MissionItemProps {
 }
 
 export function MissionItem({ mission }: MissionItemProps) {
-  const { completeMission } = useMissionStore();
+  const { completeMission, acceptMission } = useMissionStore();
 
   // 状態に応じたスタイル
   const getStatusStyle = () => {
@@ -60,6 +60,14 @@ export function MissionItem({ mission }: MissionItemProps) {
     }
   };
 
+  // ミッション受注処理
+  const handleAccept = () => {
+    if (mission.status === 'available' && !mission.autoAccept) {
+      playCoinSound();
+      acceptMission(mission.id);
+    }
+  };
+
   return (
     <div className={`p-4 rounded-lg ${getStatusStyle()} transition-all duration-200 hover:shadow-md`}>
       {/* ヘッダー */}
@@ -75,6 +83,9 @@ export function MissionItem({ mission }: MissionItemProps) {
         <div className="flex items-center gap-2">
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusTextColor()} bg-white`}>
             {getStatusText()}
+          </span>
+          <span className="px-2 py-1 text-xs font-medium rounded-full text-gray-600 bg-gray-100">
+            {mission.autoAccept ? '自動' : '手動'}
           </span>
           <span className="text-xs text-gray-500">
             優先度: {mission.priority}
@@ -135,7 +146,7 @@ export function MissionItem({ mission }: MissionItemProps) {
       </div>
 
       {/* 操作ボタン */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         {mission.status === 'in_progress' && (
           <button
             onClick={handleComplete}
@@ -144,7 +155,15 @@ export function MissionItem({ mission }: MissionItemProps) {
             完了
           </button>
         )}
-        {mission.status === 'available' && (
+        {mission.status === 'available' && !mission.autoAccept && (
+          <button
+            onClick={handleAccept}
+            className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded hover:bg-blue-600 transition-colors"
+          >
+            受注
+          </button>
+        )}
+        {mission.status === 'available' && mission.autoAccept && (
           <span className="px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded cursor-not-allowed">
             条件未達成
           </span>
