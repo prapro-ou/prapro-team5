@@ -13,7 +13,7 @@ interface MissionLoadResult {
 }
 
 // ミッション読み込み
-export async function loadMissionsFromJSON(filePath: string = '/data/missions.json'): Promise<MissionLoadResult> {
+export async function loadMissionsFromJSON(filePath: string = 'data/missions.json'): Promise<MissionLoadResult> {
   try {
     console.log(`ミッションデータを読み込み中: ${filePath}`);
     
