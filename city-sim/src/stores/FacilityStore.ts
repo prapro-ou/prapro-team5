@@ -7,6 +7,7 @@ import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { isFacilityConnectedToValidRoadNetwork, clearConnectionCache } from '../utils/roadConnectivity';
 import { FacilityUnlockManager } from '../utils/facilityUnlockManager';
+import { playDeleatSound } from '../components/SoundSettings';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -62,6 +63,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     }));
     // 施設が削除されたらキャッシュをクリア
     clearConnectionCache();
+    playDeleatSound && playDeleatSound(); // 削除SE
   },
   
   clearFacilities: () => {

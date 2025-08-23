@@ -8,6 +8,7 @@ interface SoundState {
   isBgmPlaying: boolean;
   isSfxMuted: boolean;
   isSNSMuted: boolean;
+  bgmType: 'bgm' | 'bgm3';
   setBgmVolume: (v: number) => void;
   setSfxVolume: (v: number) => void;
   setSNSVolume: (v: number) => void;
@@ -15,6 +16,7 @@ interface SoundState {
   setIsBgmPlaying: (p: boolean) => void;
   setSfxMuted: (m: boolean) => void;
   setSNSMuted: (m: boolean) => void;
+  setBgmType: (t: 'bgm' | 'bgm3') => void;
 }
 
 // localStorageから初期値取得
@@ -34,9 +36,14 @@ export const useSoundStore = create<SoundState>((set) => ({
   isBgmPlaying: getLS('citysim_isBgmPlaying', false),
   isSfxMuted: getLS('citysim_isSfxMuted', true),
   isSNSMuted: getLS('citysim_isSNSMuted', true),
+  bgmType: getLS('citysim_bgmType', 'bgm'),
   setBgmVolume: (v) => {
     set({ bgmVolume: v });
     localStorage.setItem('citysim_bgmVolume', String(v));
+  },
+  setBgmType: (t) => {
+    set({ bgmType: t });
+    localStorage.setItem('citysim_bgmType', t);
   },
   setSfxVolume: (v) => {
     set({ sfxVolume: v });

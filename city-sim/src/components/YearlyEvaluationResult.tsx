@@ -2,6 +2,7 @@ import { TbStar, TbCash, TbChartBar} from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
 import { useTimeControlStore } from '../stores/TimeControlStore';
 import { useState, useEffect } from 'react';
+import { playBgm2Sound, stopBgm2Sound } from './SoundSettings';
 
 interface YearlyEvaluationResultProps {
   onClose: () => void;
@@ -19,6 +20,11 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
   if (!stats.yearlyEvaluation) {
     return null;
   }
+
+  // 年末評価開始時にbgm2を鳴らす
+  useEffect(() => {
+    playBgm2Sound();
+  }, []);
 
   const evaluation = stats.yearlyEvaluation;
 
@@ -101,6 +107,7 @@ export function YearlyEvaluationResult({ onClose }: YearlyEvaluationResultProps)
   const gradeInfo = getGradeInfo(evaluation.grade);
 
   const handleContinue = () => {
+    stopBgm2Sound(); // BGM2を停止
     resume(); // 時間を再開
     onClose(); // 画面を閉じる
   };

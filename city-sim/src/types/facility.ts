@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police";
+export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -94,6 +94,7 @@ export interface Facility {
 // 施設のマスターデータ
 // cost, maintenanceCost, description は仮の値
 export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
+
   residential: {
     type: 'residential',
     name: '住宅区画',
@@ -113,6 +114,24 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
+  large_residential: {
+    type: 'large_residential',
+    name: '大型住宅区画',
+    size: 3,
+    cost: 400,
+    maintenanceCost: 80,
+    description: '大きめの住宅区画。',
+    category: 'residential',
+    imgPaths: ['images/buildings/residential2.png'], // 画像は仮
+    imgSizes: [{ width: 96, height: 120 }],
+    satisfaction: 0,
+    baseAssetValue: 300,
+    infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [0, 0, 0, 0],
+    basePopulation: 400,
+    effectRadius: 13,
+  },
   commercial: {
     type: 'commercial', 
     name: '商業区画',
@@ -121,8 +140,8 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 50,
     description: '商業地',
     category: 'commercial',
-    imgPaths: ['images/buildings/commercial.png'],
-    imgSizes: [{ width: 96, height: 68 }],
+    imgPaths: ['images/buildings/convenience_store.png'],
+    imgSizes: [{ width: 110, height: 59 }],
     satisfaction: 7,
     attractiveness: 80,
     workforceRequired: {
@@ -139,6 +158,29 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
+large_commercial: {
+    type: 'large_commercial',
+    name: '大型商業施設',
+    size: 7,
+    cost: 500,
+    maintenanceCost: 120,
+    description: '大規模な商業施設',
+    category: 'commercial',
+    imgPaths: ['images/buildings/commercial.png'], 
+    imgSizes: [{ width: 224, height: 135 }],
+    satisfaction: 15,
+    attractiveness: 200,
+    workforceRequired: {
+      min: 10,
+      max: 50,
+      baseRevenue: 500,
+      baseConsumption: 20
+    },
+    baseAssetValue: 500,
+    infrastructureDemand: { water: 300, electricity: 300 },
+    effectRadius: 18,
+  },
+
   industrial: {
     type: 'industrial',
     name: '工業区画',
@@ -200,9 +242,11 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 100,
     description: '税収の拠点となる重要な施設．街に一つしか建設できない．',
     category: 'government',
+    imgPaths: ['images/buildings/city_hall.png'],
+    imgSizes: [{ width: 160, height: 99 }],
     satisfaction: 10, // 設置すると満足度が少し上がる
     effectRadius: 21, // 21マス範囲に効果
-    unlockCondition: 'mission',
+    unlockCondition: 'initial',
     initiallyUnlocked: true
   },
   // 公園のデータを追加
@@ -213,11 +257,11 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     cost: 300,
     maintenanceCost: 20,
     description: '周囲の満足度を向上させる',
-    category: 'government',
-    imgPaths: ['images/buildings/residential.png'],
-    imgSizes: [{ width: 96, height: 79 }],
-    satisfaction: 15,
-    effectRadius: 15,
+    category: 'government', // 公共カテゴリに変更
+    imgPaths: ['images/buildings/park.png'],
+    imgSizes: [{ width: 96, height: 56 }],
+    satisfaction: 5,
+    effectRadius: 13 //13マス範囲に効果
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
@@ -231,10 +275,23 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     description: '治安を向上させ、周囲の満足度を上げる施設',
     category: 'government',
     imgPaths: ['images/buildings/police.png'],
-    imgSizes: [{ width: 96, height: 79 }],
+    imgSizes: [{ width: 160, height: 99 }],
     satisfaction: 12,
     effectRadius: 25,
-    unlockCondition: 'mission',
+  },
+  hospital: {
+    type: 'hospital',
+    name: '病院',
+    size: 5,
+    cost: 800,
+    maintenanceCost: 40,
+    description: '健康を守り、周囲の満足度を上げる施設',
+    category: 'government',
+    imgPaths: ['images/buildings/hospital.png'], 
+    imgSizes: [{ width: 160, height: 108 }],
+    satisfaction: 12,
+    effectRadius: 25,
+    unlockCondition: 'initial',
     initiallyUnlocked: true
   },
   electric_plant: {
@@ -245,11 +302,13 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     maintenanceCost: 80,
     description: '電力を供給する',
     category: 'infrastructure',
-    satisfaction: -8,
-    attractiveness: 60,
-    infrastructureSupply: { water: 0, electricity: 300 },
-    effectRadius: 15,
-    unlockCondition: 'mission',
+    imgPaths: ['images/buildings/electric_plant.png'], 
+    imgSizes: [{ width: 96, height: 70 }],
+    satisfaction: 0,
+    attractiveness: 100,
+    infrastructureSupply: { water: 0, electricity: 5000 },
+    effectRadius: 11,
+    unlockCondition: 'initial',
     initiallyUnlocked: true
   },
   water_plant: {
@@ -264,7 +323,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     attractiveness: 70,
     infrastructureSupply: { water: 400, electricity: 0 },
     effectRadius: 15,
-    unlockCondition: 'mission',
+    unlockCondition: 'initial',
     initiallyUnlocked: true
   }
 }
