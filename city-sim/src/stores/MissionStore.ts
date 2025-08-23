@@ -24,6 +24,9 @@ interface MissionStore {
   updateMission: (id: string, updates: Partial<Mission>) => void;
   removeMission: (id: string) => void;
   
+  // ミッション受注
+  acceptMission: (id: string) => void;
+  
   // 条件チェック
   checkMissionConditions: () => void;
   updateMissionProgress: (id: string) => void;
@@ -282,6 +285,7 @@ const sampleMissions: Mission[] = [
     ],
     status: 'available',
     progress: 0,
+    autoAccept: true,  // 自動受注
     isRepeatable: false
   },
   {
@@ -299,6 +303,7 @@ const sampleMissions: Mission[] = [
     ],
     status: 'available',
     progress: 0,
+    autoAccept: true,  // 自動受注
     isRepeatable: false
   },
   {
@@ -316,6 +321,7 @@ const sampleMissions: Mission[] = [
     ],
     status: 'available',
     progress: 0,
+    autoAccept: false,  // 手動受注
     isRepeatable: false
   },
   {
@@ -334,6 +340,7 @@ const sampleMissions: Mission[] = [
     ],
     status: 'available',
     progress: 0,
+    autoAccept: false,  // 手動受注
     isRepeatable: false
   },
   {
@@ -352,6 +359,7 @@ const sampleMissions: Mission[] = [
     ],
     status: 'available',
     progress: 0,
+    autoAccept: false,  // 手動受注
     isRepeatable: false
   }
 ];
@@ -392,6 +400,27 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
     }));
   },
   
+  // ミッション受注
+  acceptMission: (id: string) => {
+    set(state => {
+      const mission = state.missions.find(m => m.id === id);
+      if (!mission || mission.status !== 'available') {
+        console.warn(`ミッション「${id}」は受注できません。状態: ${mission?.status}`);
+        return state;
+      }
+      
+      const updatedMissions = state.missions.map(m =>
+        m.id === id ? { ...m, status: 'in_progress' as MissionStatus } : m
+      );
+      
+      return {
+        missions: updatedMissions,
+        activeMissions: [...state.activeMissions, { ...mission, status: 'in_progress' as MissionStatus }],
+        completedMissions: state.completedMissions
+      };
+    });
+  },
+  
   // 条件チェック
   checkMissionConditions: () => {
     const gameState = useGameStore.getState().stats;
@@ -414,9 +443,9 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
           ? Math.round((conditionResults.filter(r => r.result).length / conditionResults.length) * 100)
           : 0;
         
-        // 状態を更新
+        // 状態を更新（自動受注のみ自動でin_progressに変更）
         let newStatus: MissionStatus = mission.status;
-        if (allConditionsMet && mission.status === 'available') {
+        if (allConditionsMet && mission.status === 'available' && mission.autoAccept) {
           newStatus = 'in_progress';
         }
         
