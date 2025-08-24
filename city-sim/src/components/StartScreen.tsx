@@ -130,17 +130,8 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
 
   // 新規ゲーム開始アニメーション
   const handleNewGameClick = () => {
-    setOverlayVisible(true);
-    setTimeout(() => {
-      setOverlayActive(true);
-    }, 50);
-
-    setTimeout(() => {
-      setIsTransitioning(true);
-      setTimeout(() => {
-        onStart();
-      }, 800);
-    }, 3000); // アニメーション時間
+    // 既存のアニメーションを無効化し、直接オープニングシーケンスを開始
+    onStart();
   };
 
   // 続きから開始

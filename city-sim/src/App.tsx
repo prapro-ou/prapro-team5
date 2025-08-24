@@ -5,6 +5,7 @@ import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
+import OpeningSequence from './components/OpeningSequence'
 import RewardPanel from './components/RewardPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
@@ -76,6 +77,9 @@ function App() {
 
   // スタート画面の表示状態
   const [showStartScreen, setShowStartScreen] = useState(true);
+  
+  // オープニングシーケンスの表示状態
+  const [showOpeningSequence, setShowOpeningSequence] = useState(false);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -281,6 +285,25 @@ function App() {
     }
   }, [levelUpMessage, setLevelUpMessage]);
 
+  // オープニングシーケンス
+  if (showOpeningSequence) {
+    return (
+      <OpeningSequence 
+        onComplete={() => {
+          // ゲーム状態を初期化
+          useGameStore.getState().resetToInitial();
+          useFacilityStore.getState().resetToInitial();
+          useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          useInfrastructureStore.getState().resetToInitial();
+          useRewardStore.getState().resetToInitial();
+          useMissionStore.getState().resetToInitial();
+          
+          setShowOpeningSequence(false);
+        }}
+      />
+    );
+  }
+
   // スタート画面
   if (showStartScreen) {
     return (
@@ -289,6 +312,7 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
+            setShowOpeningSequence(true);
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
