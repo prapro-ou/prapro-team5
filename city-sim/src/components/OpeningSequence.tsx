@@ -50,7 +50,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
     // フェーズ1: ブラックアウト
     const blackoutTimer = setTimeout(() => {
       setCurrentPhase('prologue');
-    }, 3000);
+    }, 2000);
 
     return () => clearTimeout(blackoutTimer);
   }, []);
@@ -80,7 +80,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       // プロローグ終了
       const prologueTimer = setTimeout(() => {
         setCurrentPhase('appointment');
-      }, 12500);
+      }, 13500);
 
       return () => {
         clearTimeout(text1Timer);
@@ -99,7 +99,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       
       const appointmentTimer = setTimeout(() => {
         setCurrentPhase('logo');
-      }, 5000);
+      }, 6000);
 
       return () => clearTimeout(appointmentTimer);
     }
@@ -113,7 +113,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       
       const logoTimer = setTimeout(() => {
         setCurrentPhase('transition');
-      }, 4000);
+      }, 5000);
 
       return () => clearTimeout(logoTimer);
     }
