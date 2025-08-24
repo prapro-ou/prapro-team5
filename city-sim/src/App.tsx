@@ -14,7 +14,7 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 import SNSicon from './assets/SNSicon.png';
@@ -403,7 +403,7 @@ function App() {
         </div>
       </div>
 
-      {/* 施設削除モード切替ボタン（左下パネル切り替えボタンのすぐ上） */}
+      {/* 施設削除モード切替ボタン */}
       <button
         onClick={() => {
           playPanelSound();
@@ -411,9 +411,9 @@ function App() {
         }}
         className={`fixed bottom-20 left-4 bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[950] ${deleteMode ? 'ring-4 ring-red-400' : ''}`}
       >
-        {deleteMode ? '削除モード中（施設をクリックで削除）' : '施設削除'}
+        <TbBulldozer/>
       </button>
-      {/* パネル切り替えボタン */}
+      {/* 建設モード切り替えボタン */}
       <button 
         onClick={togglePanel}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
