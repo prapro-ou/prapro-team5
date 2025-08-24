@@ -59,7 +59,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       };
       
       // 動的アドバイスを生成
-      generateAdvices(gameState);
+      generateAdvices(gameState, null, { getInfrastructureShortage });
       
       // 季節に応じた会話メッセージを生成
       const seasonalMessages = getSeasonalMessages(stats.date.month);
@@ -68,7 +68,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         // 季節メッセージからランダムに1つ選択
         const randomSeasonalMessage = seasonalMessages[Math.floor(Math.random() * seasonalMessages.length)];
         addConversationMessage(randomSeasonalMessage.type, randomSeasonalMessage.content);
-      } else {
+      } 
+      else {
         // 季節メッセージがない場合のデフォルトメッセージ
         const defaultMessages = [
           'お疲れ様です。今日も都市建設を頑張りましょう！',
@@ -97,8 +98,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     };
     
     // 月が変わるたびに動的アドバイスを生成
-    generateAdvices(gameState);
-  }, [stats.date.month, generateAdvices, facilities, stats.population, stats.satisfaction, stats.money, stats.monthlyBalance]);
+    generateAdvices(gameState, null, { getInfrastructureShortage });
+  }, [stats.date.month, generateAdvices, facilities, stats.population, stats.satisfaction, stats.money, stats.monthlyBalance, getInfrastructureShortage]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },

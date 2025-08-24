@@ -123,11 +123,14 @@ const generateAdvice = (
 });
 
 // 動的アドバイス生成ロジック
-export const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructureState: any): Advice[] => {
+const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructureState: any): Advice[] => {
   const advices: Advice[] = [];
   
+  // ゲーム状態の取得（StatisticsScreenからのデータ構造に合わせる）
+  const stats = gameState?.stats || gameState;
+  
   // 経済状況の分析
-  if (gameState.stats.monthlyBalance.balance < 0) {
+  if (stats?.monthlyBalance?.balance < 0) {
     advices.push(generateAdvice(
       'economy',
       'high',
@@ -137,7 +140,7 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
     ));
   }
   
-  if (gameState.stats.money < 10000) {
+  if (stats?.money < 10000) {
     advices.push(generateAdvice(
       'economy',
       'urgent',
@@ -148,7 +151,7 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
   }
   
   // 人口・満足度の分析
-  if (gameState.stats.population < 100) {
+  if (stats?.population < 100) {
     advices.push(generateAdvice(
       'population',
       'medium',
@@ -185,9 +188,9 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
   }
   
   // 労働状況の分析
-  const workforce = gameState.stats.workforceAllocations || [];
+  const workforce = stats?.workforceAllocations || [];
   const totalWorkforce = workforce.reduce((sum: number, w: any) => sum + w.assignedWorkforce, 0);
-  const potentialWorkforce = Math.floor(gameState.stats.population * 0.6);
+  const potentialWorkforce = Math.floor((stats?.population || 0) * 0.6);
   
   if (totalWorkforce < potentialWorkforce * 0.8) {
     advices.push(generateAdvice(
@@ -200,7 +203,7 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
   }
   
   // ゲーム進行に応じたチュートリアルアドバイス
-  const totalWeeks = gameState.stats.date.totalWeeks;
+  const totalWeeks = stats?.date?.totalWeeks || 0;
   
   if (totalWeeks === 1) {
     advices.push(generateAdvice(
@@ -233,7 +236,7 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
   }
   
   // 初回建設時のアドバイス
-  if (gameState.stats.facilities && gameState.stats.facilities.length === 1) {
+  if (stats?.facilities && stats.facilities.length === 1) {
     advices.push(generateAdvice(
       'general',
       'low',
@@ -244,7 +247,7 @@ export const generateDynamicAdvices = (gameState: any, _economyState: any, infra
   }
   
   // ミッション関連
-  if (gameState.stats.date.month === 11 && gameState.stats.date.week === 1) {
+  if (stats?.date?.month === 11 && stats?.date?.week === 1) {
     advices.push(generateAdvice(
       'mission',
       'high',
@@ -555,11 +558,17 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   closeAdvicePanel: () => set({ isAdvicePanelOpen: false }),
   
   // アドバイス生成
-  generateAdvices: (gameState?: any, _economyState?: any, _infrastructureState?: any) => {
-    // ゲーム状態に基づいてアドバイスを生成
+  generateAdvices: (gameState?: any, economyState?: any, infrastructureState?: any) => {
+    // 動的アドバイスを生成
+    const dynamicAdvices = generateDynamicAdvices(gameState, economyState, infrastructureState);
+    
+    // 動的アドバイスを追加
+    dynamicAdvices.forEach(advice => get().addAdvice(advice));
+    
+    // 基本的なアドバイスも生成
     const advices: Omit<Advice, 'id' | 'timestamp' | 'isRead' | 'isDismissed'>[] = [];
     
-    if (gameState?.population < 1000) {
+    if (gameState?.stats?.population < 1000) {
       advices.push({
         type: 'population',
         priority: 'medium',
@@ -569,7 +578,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       });
     }
     
-    if (gameState?.satisfaction < 50) {
+    if (gameState?.stats?.satisfaction < 50) {
       advices.push({
         type: 'satisfaction',
         priority: 'high',
