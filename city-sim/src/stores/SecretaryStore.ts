@@ -24,6 +24,9 @@ export type AdviceType =
 // アドバイスの優先度
 export type AdvicePriority = 'low' | 'medium' | 'high' | 'urgent';
 
+// 会話メッセージの種類
+export type ConversationType = 'greeting' | 'situation' | 'encouragement' | 'general';
+
 // アドバイス情報
 export interface Advice {
   id: string;
@@ -37,6 +40,14 @@ export interface Advice {
   isDismissed: boolean;       // 却下フラグ
 }
 
+// 会話メッセージ情報
+export interface ConversationMessage {
+  id: string;
+  type: ConversationType;
+  content: string;
+  timestamp: number;
+}
+
 // 秘書ストアのインターフェース
 interface SecretaryStore {
   // キャラクター管理
@@ -47,6 +58,10 @@ interface SecretaryStore {
   advices: Advice[];
   unreadAdviceCount: number;
   lastAdviceGenerationWeek: number;
+  
+  // 会話管理
+  conversationMessages: ConversationMessage[];
+  lastConversationWeek: number;
   
   // UI状態
   isSecretaryPanelOpen: boolean;
@@ -62,6 +77,11 @@ interface SecretaryStore {
   markAdviceAsRead: (adviceId: string) => void;
   dismissAdvice: (adviceId: string) => void;
   clearAllAdvices: () => void;
+  
+  // 会話操作
+  addConversationMessage: (type: ConversationType, content: string) => void;
+  clearOldConversations: () => void;
+  generateConversations: (gameState?: any) => void;
   
   // UI操作
   openSecretaryPanel: () => void;
@@ -233,6 +253,86 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
   return advices;
 };
 
+// 季節に応じた会話メッセージを取得
+const getSeasonalMessages = (month: number): Array<{ type: ConversationType; content: string }> => {
+  switch (month) {
+    case 1:
+      return [
+        { type: 'greeting', content: '新年あけましておめでとうございます！今年も都市建設を頑張りましょう！' },
+        { type: 'situation', content: '寒い季節ですが、都市の建設は順調ですか？' },
+        { type: 'encouragement', content: '新しい年の始まりに、都市の未来を描いてみませんか？' }
+      ];
+    case 2:
+      return [
+        { type: 'greeting', content: 'まだ寒い日が続きますね。体調管理に気をつけましょう。' },
+        { type: 'situation', content: '冬の間の都市運営はいかがですか？' },
+        { type: 'encouragement', content: '春に向けて、都市の準備を進めていきましょう！' }
+      ];
+    case 3:
+      return [
+        { type: 'greeting', content: '春の訪れを感じる季節になりましたね！' },
+        { type: 'situation', content: '春の都市は活気づいていますか？' },
+        { type: 'encouragement', content: '新しい季節の始まりに、都市の発展計画を立ててみましょう！' }
+      ];
+    case 4:
+      return [
+        { type: 'greeting', content: '桜の季節ですね。都市も春らしく彩られています。' },
+        { type: 'situation', content: '春の都市建設は順調に進んでいますか？' },
+        { type: 'encouragement', content: '春の暖かさと共に、都市も成長していきましょう！' }
+      ];
+    case 5:
+      return [
+        { type: 'greeting', content: '新緑の季節ですね。都市も緑に包まれています。' },
+        { type: 'situation', content: '5月の都市運営はいかがですか？' },
+        { type: 'encouragement', content: '緑豊かな都市を作っていきましょう！' }
+      ];
+    case 6:
+      return [
+        { type: 'greeting', content: '梅雨の季節になりましたね。都市の排水対策は大丈夫ですか？' },
+        { type: 'situation', content: '雨の多い季節の都市管理は大変ですね。' },
+        { type: 'encouragement', content: '梅雨明けに向けて、都市の準備を整えましょう！' }
+      ];
+    case 7:
+      return [
+        { type: 'greeting', content: '夏本番ですね！暑い季節の都市運営お疲れ様です。' },
+        { type: 'situation', content: '夏の都市は活気づいていますか？' },
+        { type: 'encouragement', content: '夏の暑さに負けず、都市建設を頑張りましょう！' }
+      ];
+    case 8:
+      return [
+        { type: 'greeting', content: '夏休みの季節ですね。都市も賑やかになりそうです。' },
+        { type: 'situation', content: '8月の都市運営はいかがですか？' },
+        { type: 'encouragement', content: '夏の思い出と共に、都市も発展していきましょう！' }
+      ];
+    case 9:
+      return [
+        { type: 'greeting', content: '秋の気配を感じる季節になりましたね。' },
+        { type: 'situation', content: '秋の都市は落ち着いた雰囲気ですか？' },
+        { type: 'encouragement', content: '秋の涼しさと共に、都市の計画を見直してみましょう！' }
+      ];
+    case 10:
+      return [
+        { type: 'greeting', content: '紅葉の季節ですね。都市も秋らしく彩られています。' },
+        { type: 'situation', content: '10月の都市運営はいかがですか？' },
+        { type: 'encouragement', content: '秋の美しさと共に、都市も成熟していきましょう！' }
+      ];
+    case 11:
+      return [
+        { type: 'greeting', content: '冬の足音が聞こえる季節になりましたね。' },
+        { type: 'situation', content: '冬に向けて都市の準備は整っていますか？' },
+        { type: 'encouragement', content: '年末評価に向けて、都市の総仕上げを頑張りましょう！' }
+      ];
+    case 12:
+      return [
+        { type: 'greeting', content: '一年の締めくくりの季節ですね。お疲れ様でした！' },
+        { type: 'situation', content: '年末の都市運営はいかがですか？' },
+        { type: 'encouragement', content: '今年の成果を振り返り、来年への準備を整えましょう！' }
+      ];
+    default:
+      return [];
+  }
+};
+
 // デフォルトのアドバイス
 const generateDefaultAdvices = (): Advice[] => [
   generateAdvice(
@@ -241,13 +341,6 @@ const generateDefaultAdvices = (): Advice[] => [
     '秘書について',
     '私はいつでもここにいます。都市運営について何でもお聞きください！',
     'ここでは都市開発についてのアドバイスを受けることができます。'
-  ),
-  generateAdvice(
-    'general',
-    'low',
-    'ゲームの基本操作',
-    'マウスでグリッドをクリックして施設を建設できます。',
-    '施設の種類は左側のパネルから選択してください。'
   ),
   generateAdvice(
     'general',
@@ -319,6 +412,10 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   advices: generateDefaultAdvices(),
   unreadAdviceCount: 12,
   lastAdviceGenerationWeek: 0,
+  
+  // 会話管理
+  conversationMessages: [],
+  lastConversationWeek: 0,
   
   isSecretaryPanelOpen: false,
   isAdvicePanelOpen: false,
@@ -412,6 +509,53 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
     });
   },
   
+  // 会話操作
+  addConversationMessage: (type: ConversationType, content: string) => {
+    const newMessage: ConversationMessage = {
+      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      content,
+      timestamp: Date.now()
+    };
+    
+    set((state) => ({
+      conversationMessages: [newMessage, ...state.conversationMessages]
+    }));
+  },
+  
+  clearOldConversations: () => {
+    set((state) => ({
+      conversationMessages: state.conversationMessages.slice(0, 10) // 最新10件のみ保持
+    }));
+  },
+  
+  generateConversations: (gameState?: any) => {
+    if (!gameState) return;
+    
+    const currentWeek = gameState.stats.date.totalWeeks;
+    const currentMonth = gameState.stats.date.month;
+    const lastWeek = get().lastConversationWeek || 0;
+    
+    if (currentWeek > lastWeek) {
+      // 季節に応じた会話メッセージを生成
+      const seasonalMessages = getSeasonalMessages(currentMonth);
+      
+      // 基本メッセージと季節メッセージを組み合わせ
+      const allMessages = [
+        ...seasonalMessages,
+        { type: 'greeting' as ConversationType, content: 'お疲れ様です。今日も都市建設を頑張りましょう！' },
+        { type: 'situation' as ConversationType, content: '都市の調子はどうですか？何かお困りのことは？' },
+        { type: 'encouragement' as ConversationType, content: 'この都市をさらに発展させていきましょう！' }
+      ];
+      
+      // ランダムに1つ選択
+      const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
+      get().addConversationMessage(randomMessage.type, randomMessage.content);
+      
+      set({ lastConversationWeek: currentWeek });
+    }
+  },
+  
   // UI操作
   openSecretaryPanel: () => set({ isSecretaryPanelOpen: true }),
   closeSecretaryPanel: () => set({ isSecretaryPanelOpen: false }),
@@ -463,7 +607,9 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       characterDisplayState: state.characterDisplayState,
       advices: state.advices,
       unreadAdviceCount: state.unreadAdviceCount,
-      lastAdviceGenerationWeek: state.lastAdviceGenerationWeek
+      lastAdviceGenerationWeek: state.lastAdviceGenerationWeek,
+      conversationMessages: state.conversationMessages,
+      lastConversationWeek: state.lastConversationWeek
     };
   },
   
@@ -480,7 +626,9 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
         },
         advices: savedState.advices || [],
         unreadAdviceCount: savedState.unreadAdviceCount || 0,
-        lastAdviceGenerationWeek: savedState.lastAdviceGenerationWeek || 0
+        lastAdviceGenerationWeek: savedState.lastAdviceGenerationWeek || 0,
+        conversationMessages: savedState.conversationMessages || [],
+        lastConversationWeek: savedState.lastConversationWeek || 0
       });
     }
   },
@@ -496,6 +644,8 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       advices: generateDefaultAdvices(),
       unreadAdviceCount: 12,
       lastAdviceGenerationWeek: 0,
+      conversationMessages: [],
+      lastConversationWeek: 0,
       isSecretaryPanelOpen: false,
       isAdvicePanelOpen: false
     });
