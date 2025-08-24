@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { useSoundStore } from '../stores/SoundStore';
 // 効果音グローバル関数をexport
 export let playBuildSound = () => {};
