@@ -118,7 +118,7 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
       'economy',
       'urgent',
       '資金不足の危機',
-      '資金が10,000円を下回っています。',
+      '資金が10,000を下回っています。',
       '緊急の収入源確保や支出削減が必要です。'
     ));
   }
@@ -175,13 +175,57 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
     ));
   }
   
+  // ゲーム進行に応じたチュートリアルアドバイス
+  const totalWeeks = gameState.stats.date.totalWeeks;
+  
+  if (totalWeeks === 1) {
+    advices.push(generateAdvice(
+      'general',
+      'low',
+      '最初の一歩',
+      '都市建設の第一歩を踏み出しました！',
+      'まずは道路と住宅から始めて、小さな街を作ってみましょう。'
+    ));
+  }
+  
+  if (totalWeeks === 4) {
+    advices.push(generateAdvice(
+      'general',
+      'low',
+      '一ヶ月経過',
+      '都市建設を始めて1ヶ月が経ちました。',
+      '統計画面で現在の状況を確認し、次のステップを計画しましょう。'
+    ));
+  }
+  
+  if (totalWeeks === 8) {
+    advices.push(generateAdvice(
+      'general',
+      'low',
+      '2ヶ月の節目',
+      '都市建設を始めて2ヶ月が経ちました。',
+      'インフラの整備状況を見直し、より効率的な都市計画を検討してください。'
+    ));
+  }
+  
+  // 初回建設時のアドバイス
+  if (gameState.stats.facilities && gameState.stats.facilities.length === 1) {
+    advices.push(generateAdvice(
+      'general',
+      'low',
+      '初回建設完了',
+      '最初の施設の建設が完了しました！',
+      '施設は道路に接続されていることを確認し、必要に応じて道路を延長してください。'
+    ));
+  }
+  
   // ミッション関連
-  if (gameState.stats.date.month === 12 && gameState.stats.date.week === 4) {
+  if (gameState.stats.date.month === 11 && gameState.stats.date.week === 1) {
     advices.push(generateAdvice(
       'mission',
       'high',
       '年末評価の準備',
-      '今週は年末評価の週です。',
+      '来月は年末評価です。',
       '都市の総合的な状況を確認し、評価に備えてください。'
     ));
   }
@@ -199,11 +243,67 @@ const generateDefaultAdvices = (): Advice[] => [
     'ここでは都市開発についてのアドバイスを受けることができます。'
   ),
   generateAdvice(
+    'general',
+    'low',
+    'ゲームの基本操作',
+    'マウスでグリッドをクリックして施設を建設できます。',
+    '施設の種類は左側のパネルから選択してください。'
+  ),
+  generateAdvice(
+    'general',
+    'low',
+    '施設の配置のコツ',
+    '施設は道路に接続する必要があります。',
+    '道路を先に建設してから施設を配置すると効率的です。'
+  ),
+  generateAdvice(
     'economy',
     'low',
     '経済状況の監視',
     '現在の経済状況を定期的にチェックすることをお勧めします。',
     '統計画面の経済タブで収支状況を確認してください。'
+  ),
+  generateAdvice(
+    'economy',
+    'low',
+    '初期資金の使い方',
+    '初期資金は限られています。',
+    'まずは基本的なインフラ（道路、住宅）から始めることをお勧めします。'
+  ),
+  generateAdvice(
+    'infrastructure',
+    'low',
+    'インフラの重要性',
+    '上水道と電気は都市の発展に不可欠です。',
+    '人口が増える前に、十分なインフラ容量を確保してください。'
+  ),
+  generateAdvice(
+    'population',
+    'low',
+    '人口増加の仕組み',
+    '住宅施設を建設すると人口が増加します。',
+    'ただし、インフラや雇用が追いつかないと人口流出の原因になります。'
+  ),
+  generateAdvice(
+    'satisfaction',
+    'low',
+    '市民の満足度',
+    '公園や商業施設は市民の満足度を向上させます。',
+    '満足度が高いと人口増加や税収向上につながります。'
+  ),
+  generateAdvice(
+    'mission',
+    'low',
+    'ミッションについて',
+    'ミッションを達成すると報酬がもらえます。',
+    '左側のミッションパネルで現在のミッションを確認してください。'
+  ),
+  generateAdvice(
+    'general',
+    'low',
+    '時間の進行',
+    '時間は自動的に進行しますが、一時停止も可能です。',
+    '右上の時間コントロールで速度を調整できます。'
   )
 ];
 
@@ -217,7 +317,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   },
   
   advices: generateDefaultAdvices(),
-  unreadAdviceCount: 2,
+  unreadAdviceCount: 12,
   lastAdviceGenerationWeek: 0,
   
   isSecretaryPanelOpen: false,
@@ -394,7 +494,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
         layerStates: DEFAULT_LAYER_STATES
       },
       advices: generateDefaultAdvices(),
-      unreadAdviceCount: 2,
+      unreadAdviceCount: 12,
       lastAdviceGenerationWeek: 0,
       isSecretaryPanelOpen: false,
       isAdvicePanelOpen: false
