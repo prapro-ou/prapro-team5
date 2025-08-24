@@ -72,7 +72,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       
       const logoTimer = setTimeout(() => {
         setCurrentPhase('transition');
-      }, 2000);
+      }, 4000);
 
       return () => clearTimeout(logoTimer);
     }
