@@ -28,6 +28,7 @@ import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
 import { startHappinessDecayTask } from './stores/HappinessDecayTask';
+import { useSecretaryStore } from './stores/SecretaryStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -102,10 +103,19 @@ function App() {
   // 報酬パネル表示状態のみAppで管理
   const [showRewardPanel, setShowRewardPanel] = useState(false);
   const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
+  
+  // 秘書ストア
+  const { updateSeasonalClothing } = useSecretaryStore();
+  
   // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     updateAchievements();
   }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, stats.level, stats.money, updateAchievements]);
+  
+  // 月が変わるたびに季節に応じた服装の更新
+  useEffect(() => {
+    updateSeasonalClothing(stats.date.month);
+  }, [stats.date.month, updateSeasonalClothing]);
 
   // 時間経過を処理するuseEffect
   useEffect(() => {

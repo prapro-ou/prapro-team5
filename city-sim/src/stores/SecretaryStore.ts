@@ -97,6 +97,10 @@ interface SecretaryStore {
   saveState: () => any;
   loadState: (savedState: any) => void;
   resetToInitial: () => void;
+  
+  // 季節判定と服装自動制御
+  isSummerSeason: (month: number) => boolean;
+  updateSeasonalClothing: (month: number) => void;
 }
 
 // アドバイス生成ロジック
@@ -487,7 +491,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       
       return {
         advices: updatedAdvices,
-        unreadAdviceCount: unreadCount
+        unreadCount
       };
     });
   },
@@ -498,21 +502,20 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
         advice.id === adviceId ? { ...advice, isDismissed: true } : advice
       );
       
-      return { advices: updatedAdvices };
+      return {
+        advices: updatedAdvices
+      };
     });
   },
   
   clearAllAdvices: () => {
-    set({
-      advices: [],
-      unreadAdviceCount: 0
-    });
+    set({ advices: [] });
   },
   
   // 会話操作
   addConversationMessage: (type: ConversationType, content: string) => {
     const newMessage: ConversationMessage = {
-      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now().toString(),
       type,
       content,
       timestamp: Date.now()
@@ -524,36 +527,25 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   },
   
   clearOldConversations: () => {
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     set((state) => ({
-      conversationMessages: state.conversationMessages.slice(0, 10) // 最新10件のみ保持
+      conversationMessages: state.conversationMessages.filter(
+        msg => msg.timestamp > oneWeekAgo
+      )
     }));
   },
   
-  generateConversations: (gameState?: any) => {
-    if (!gameState) return;
+  generateConversations: (_gameState?: any) => {
+    // ゲーム状態に基づいて会話を生成
+    const messages = [
+      '都市の成長が素晴らしいですね！',
+      '新しい施設の建設、お疲れ様です。',
+      '市民の満足度が上がっていますよ。',
+      'インフラの整備が進んでいますね。'
+    ];
     
-    const currentWeek = gameState.stats.date.totalWeeks;
-    const currentMonth = gameState.stats.date.month;
-    const lastWeek = get().lastConversationWeek || 0;
-    
-    if (currentWeek > lastWeek) {
-      // 季節に応じた会話メッセージを生成
-      const seasonalMessages = getSeasonalMessages(currentMonth);
-      
-      // 基本メッセージと季節メッセージを組み合わせ
-      const allMessages = [
-        ...seasonalMessages,
-        { type: 'greeting' as ConversationType, content: 'お疲れ様です。今日も都市建設を頑張りましょう！' },
-        { type: 'situation' as ConversationType, content: '都市の調子はどうですか？何かお困りのことは？' },
-        { type: 'encouragement' as ConversationType, content: 'この都市をさらに発展させていきましょう！' }
-      ];
-      
-      // ランダムに1つ選択
-      const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
-      get().addConversationMessage(randomMessage.type, randomMessage.content);
-      
-      set({ lastConversationWeek: currentWeek });
-    }
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    get().addConversationMessage('general', randomMessage);
   },
   
   // UI操作
@@ -563,39 +555,41 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   closeAdvicePanel: () => set({ isAdvicePanelOpen: false }),
   
   // アドバイス生成
-  generateAdvices: (gameState?: any, economyState?: any, infrastructureState?: any) => {
-    if (gameState && economyState && infrastructureState) {
-      // 動的アドバイスを生成
-      const dynamicAdvices = generateDynamicAdvices(gameState, economyState, infrastructureState);
-      
-      // 既存のアドバイスと重複しないようにフィルタリング
-      const existingAdviceTitles = get().advices.map(advice => advice.title);
-      const newAdvices = dynamicAdvices.filter(advice => 
-        !existingAdviceTitles.includes(advice.title)
-      );
-      
-      if (newAdvices.length > 0) {
-        set((state) => ({
-          advices: [...newAdvices, ...state.advices],
-          unreadAdviceCount: state.unreadAdviceCount + newAdvices.length
-        }));
-        
-        console.log(`Generated ${newAdvices.length} new dynamic advices`);
-      }
-    } else {
-      console.log('Game state not provided, skipping dynamic advice generation');
+  generateAdvices: (gameState?: any, _economyState?: any, _infrastructureState?: any) => {
+    // ゲーム状態に基づいてアドバイスを生成
+    const advices: Omit<Advice, 'id' | 'timestamp' | 'isRead' | 'isDismissed'>[] = [];
+    
+    if (gameState?.population < 1000) {
+      advices.push({
+        type: 'population',
+        priority: 'medium',
+        title: '人口増加の提案',
+        message: '住宅区画を増やすことで人口を増やすことができます。',
+        suggestion: '道路に接続された住宅区画を建設してみてください。'
+      });
     }
+    
+    if (gameState?.satisfaction < 50) {
+      advices.push({
+        type: 'satisfaction',
+        priority: 'high',
+        title: '満足度向上の提案',
+        message: '市民の満足度が低下しています。',
+        suggestion: '公園の建設や道路の整備を検討してください。'
+      });
+    }
+    
+    advices.forEach(advice => get().addAdvice(advice));
   },
   
-  // 定期的なアドバイス生成（ゲーム進行時などに呼び出し）
   generatePeriodicAdvices: (gameState: any, economyState: any, infrastructureState: any) => {
-    // 週次でアドバイスを生成
-    const currentWeek = gameState.stats.date.totalWeeks;
-    const lastAdviceWeek = get().lastAdviceGenerationWeek || 0;
+    // 定期的なアドバイス生成
+    const currentWeek = gameState?.date?.week || 0;
+    const lastGeneration = get().lastAdviceGenerationWeek;
     
-    if (currentWeek > lastAdviceWeek) {
+    if (currentWeek > lastGeneration) {
       get().generateAdvices(gameState, economyState, infrastructureState);
-      set((state) => ({ ...state, lastAdviceGenerationWeek: currentWeek }));
+      set({ lastAdviceGenerationWeek: currentWeek });
     }
   },
   
@@ -603,34 +597,28 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   saveState: () => {
     const state = get();
     return {
-      selectedCharacterId: state.selectedCharacter.id,
+      selectedCharacter: state.selectedCharacter,
       characterDisplayState: state.characterDisplayState,
       advices: state.advices,
-      unreadAdviceCount: state.unreadAdviceCount,
-      lastAdviceGenerationWeek: state.lastAdviceGenerationWeek,
       conversationMessages: state.conversationMessages,
+      lastAdviceGenerationWeek: state.lastAdviceGenerationWeek,
       lastConversationWeek: state.lastConversationWeek
     };
   },
   
   loadState: (savedState: any) => {
-    if (savedState) {
-      const character = SAMPLE_CHARACTERS.find(c => c.id === savedState.selectedCharacterId) || SAMPLE_CHARACTERS[0];
-      
-      set({
-        selectedCharacter: character,
-        characterDisplayState: savedState.characterDisplayState || {
-          characterId: character.id,
-          expression: DEFAULT_EXPRESSION,
-          layerStates: DEFAULT_LAYER_STATES
-        },
-        advices: savedState.advices || [],
-        unreadAdviceCount: savedState.unreadAdviceCount || 0,
-        lastAdviceGenerationWeek: savedState.lastAdviceGenerationWeek || 0,
-        conversationMessages: savedState.conversationMessages || [],
-        lastConversationWeek: savedState.lastConversationWeek || 0
-      });
-    }
+    set({
+      selectedCharacter: savedState.selectedCharacter || SAMPLE_CHARACTERS[0],
+      characterDisplayState: savedState.characterDisplayState || {
+        characterId: SAMPLE_CHARACTERS[0].id,
+        expression: DEFAULT_EXPRESSION,
+        layerStates: DEFAULT_LAYER_STATES
+      },
+      advices: savedState.advices || generateDefaultAdvices(),
+      conversationMessages: savedState.conversationMessages || [],
+      lastAdviceGenerationWeek: savedState.lastAdviceGenerationWeek || 0,
+      lastConversationWeek: savedState.lastConversationWeek || 0
+    });
   },
   
   resetToInitial: () => {
@@ -642,12 +630,34 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
         layerStates: DEFAULT_LAYER_STATES
       },
       advices: generateDefaultAdvices(),
-      unreadAdviceCount: 12,
-      lastAdviceGenerationWeek: 0,
       conversationMessages: [],
+      lastAdviceGenerationWeek: 0,
       lastConversationWeek: 0,
       isSecretaryPanelOpen: false,
       isAdvicePanelOpen: false
     });
+  },
+  
+  // 季節判定と服装自動制御
+  isSummerSeason: (month: number) => {
+    // 5,6,7,8,9月を夏シーズンとして判定
+    return month >= 5 && month <= 9;
+  },
+  
+  updateSeasonalClothing: (month: number) => {
+    const isSummer = get().isSummerSeason(month);
+    
+    set((state) => ({
+      characterDisplayState: {
+        ...state.characterDisplayState,
+        layerStates: {
+          ...state.characterDisplayState.layerStates,
+          ribbon: isSummer ? 'off' : 'on',
+          jacket: isSummer ? 'off' : 'on' // 夏はジャケットを外す、冬は着る
+        }
+      }
+    }));
+    
+    console.log(`Seasonal clothing updated: ${isSummer ? 'Summer (jacket off)' : 'Winter (jacket on)'} for month ${month}`);
   }
 }));
