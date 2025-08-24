@@ -112,8 +112,8 @@ export const Grid: React.FC<GridProps> = ({
   });
 
   const visibleTiles = React.useMemo(() => {
-    return getVisibleTiles(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-  }, [getVisibleTiles, VIEWPORT_WIDTH, VIEWPORT_HEIGHT]);
+    return getVisibleTiles();
+  }, [getVisibleTiles]);
 
   // マウスイベントフックを使用
   const {
@@ -195,7 +195,7 @@ export const Grid: React.FC<GridProps> = ({
           >
             {/* 施設画像表示 */}
             {isCenter && facility.type !== 'road' && (() => {
-              const { imgPath, imgSize, size } = getFacilityImageData(facility, x, y);
+              const { imgPath, imgSize, size } = getFacilityImageData(facility);
               return (
                 <img
                   src={imgPath}
@@ -214,7 +214,7 @@ export const Grid: React.FC<GridProps> = ({
             {/* 道路画像表示 */}
             {isCenter && facility.type === 'road' && (() => {
               const { imgPath, imgSize, transform } = getRoadImageData(facility, x, y);
-              const { size } = getFacilityImageData(facility, x, y);
+              const { size } = getFacilityImageData(facility);
               return (
                 <img
                   src={imgPath}
