@@ -83,12 +83,12 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       // フェーズ4: ゲーム画面への遷移
       const transitionTimer = setTimeout(() => {
         setTransitionOpacity(1);
-      }, 500);
+      }, 1000);
 
       const completeTimer = setTimeout(() => {
         setCurrentPhase('complete');
         onComplete();
-      }, 2000);
+      }, 4000);
 
       return () => {
         clearTimeout(transitionTimer);
