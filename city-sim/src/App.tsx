@@ -168,24 +168,7 @@ function App() {
   const { generateTerrain } = useTerrainStore();
   
   // ゲーム開始時の地形生成（新規ゲーム時のみ）
-  useEffect(() => {
-    if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
-      const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
-      
-      // 生成された道路をFacilityStoreに登録
-      if (generatedRoads.length > 0) {
-        const { addFacility, createFacility } = useFacilityStore.getState();
-        generatedRoads.forEach(road => {
-          const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
-          roadFacility.variantIndex = road.variantIndex;
-          roadFacility.isConnected = true; // 生成された道路は接続されている
-          addFacility(roadFacility);
-        });
-        
-        console.log(`${generatedRoads.length}個の道路が生成されました`);
-      }
-    }
-  }, [showStartScreen, generateTerrain]);
+  // オープニングシーケンス完了時に実行されるため、ここでは何もしない
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -297,6 +280,18 @@ function App() {
           useInfrastructureStore.getState().resetToInitial();
           useRewardStore.getState().resetToInitial();
           useMissionStore.getState().resetToInitial();
+          
+          const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          
+          if (generatedRoads.length > 0) {
+            const { addFacility, createFacility } = useFacilityStore.getState();
+            generatedRoads.forEach(road => {
+              const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+              roadFacility.variantIndex = road.variantIndex;
+              roadFacility.isConnected = true;
+              addFacility(roadFacility);
+            });
+          }
           
           setShowOpeningSequence(false);
         }}
