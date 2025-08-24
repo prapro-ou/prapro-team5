@@ -39,56 +39,120 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
 
   // 秘書タブがアクティブになったときに会話メッセージを生成するuseEffect
   useEffect(() => {
-    if (activeTab === 'secretary' && conversationMessages.length === 0) {
+    if (activeTab === 'secretary') {
       // 季節に応じた会話メッセージを生成
       const month = stats.date.month;
-      let seasonalMessage = '';
+      const seasonalMessages = [];
       
-      // 季節に応じたメッセージを選択
+      // 季節に応じたメッセージを配列に追加
       switch (month) {
         case 1:
-          seasonalMessage = '新年あけましておめでとうございます！今年も都市建設を頑張りましょう！';
+          seasonalMessages.push(
+            '新年あけましておめでとうございます！今年も都市建設を頑張りましょう！',
+            '新年の抱負は決まりましたか？都市の発展計画を立ててみましょう！',
+            '一年の始まりですね。都市の未来を描いてみませんか？'
+          );
           break;
         case 2:
-          seasonalMessage = 'まだ寒い日が続きますね。体調管理に気をつけましょう。';
+          seasonalMessages.push(
+            'まだ寒い日が続きますね。体調管理に気をつけましょう。',
+            '冬の間の都市運営はいかがですか？',
+            '春に向けて、都市の準備を進めていきましょう！'
+          );
           break;
         case 3:
-          seasonalMessage = '春の訪れを感じる季節になりましたね！';
+          seasonalMessages.push(
+            '春の訪れを感じる季節になりましたね！',
+            '春の都市は活気づいていますか？',
+            '新しい季節の始まりに、都市の発展計画を立ててみましょう！'
+          );
           break;
         case 4:
-          seasonalMessage = '桜の季節ですね。都市も春らしく彩られています。';
+          seasonalMessages.push(
+            '桜の季節ですね。都市も春らしく彩られています。',
+            '春の都市建設は順調に進んでいますか？',
+            '春の暖かさと共に、都市も成長していきましょう！'
+          );
           break;
         case 5:
-          seasonalMessage = '新緑の季節ですね。都市も緑に包まれています。';
+          seasonalMessages.push(
+            '新緑の季節ですね。都市も緑に包まれています。',
+            '5月の都市運営はいかがですか？',
+            '緑豊かな都市を作っていきましょう！'
+          );
           break;
         case 6:
-          seasonalMessage = '梅雨の季節になりましたね。都市の排水対策は大丈夫ですか？';
+          seasonalMessages.push(
+            '梅雨の季節になりましたね。都市の排水対策は大丈夫ですか？',
+            '雨の多い季節の都市管理は大変ですね。',
+            '梅雨明けに向けて、都市の準備を整えましょう！'
+          );
           break;
         case 7:
-          seasonalMessage = '夏本番ですね！暑い季節の都市運営お疲れ様です。';
+          seasonalMessages.push(
+            '夏本番ですね！暑い季節の都市運営お疲れ様です。',
+            '夏の都市は活気づいていますか？',
+            '夏の暑さに負けず、都市建設を頑張りましょう！'
+          );
           break;
         case 8:
-          seasonalMessage = '夏休みの季節ですね。都市も賑やかになりそうです。';
+          seasonalMessages.push(
+            '夏休みの季節ですね。都市も賑やかになりそうです。',
+            '8月の都市運営はいかがですか？',
+            '夏の思い出と共に、都市も発展していきましょう！'
+          );
           break;
         case 9:
-          seasonalMessage = '秋の気配を感じる季節になりましたね。';
+          seasonalMessages.push(
+            '秋の気配を感じる季節になりましたね。',
+            '秋の都市は落ち着いた雰囲気ですか？',
+            '秋の涼しさと共に、都市の計画を見直してみましょう！'
+          );
           break;
         case 10:
-          seasonalMessage = '紅葉の季節ですね。都市も秋らしく彩られています。';
+          seasonalMessages.push(
+            '紅葉の季節ですね。都市も秋らしく彩られています。',
+            '10月の都市運営はいかがですか？',
+            '秋の美しさと共に、都市も成熟していきましょう！'
+          );
           break;
         case 11:
-          seasonalMessage = '冬の足音が聞こえる季節になりましたね。';
+          seasonalMessages.push(
+            '冬の足音が聞こえる季節になりましたね。',
+            '冬に向けて都市の準備は整っていますか？',
+            '年末評価に向けて、都市の総仕上げを頑張りましょう！'
+          );
           break;
         case 12:
-          seasonalMessage = '一年の締めくくりの季節ですね。お疲れ様でした！';
+          seasonalMessages.push(
+            '一年の締めくくりの季節ですね。お疲れ様でした！',
+            '年末の都市運営はいかがですか？',
+            '今年の成果を振り返り、来年への準備を整えましょう！'
+          );
           break;
         default:
-          seasonalMessage = 'お疲れ様です。今日も都市建設を頑張りましょう！';
+          seasonalMessages.push('お疲れ様です。今日も都市建設を頑張りましょう！');
       }
       
-      addConversationMessage('greeting', seasonalMessage);
+      // デフォルトメッセージも追加
+      const defaultMessages = [
+        'お疲れ様です。今日も都市建設を頑張りましょう！',
+        '都市の調子はどうですか？何かお困りのことは？',
+        'この都市をさらに発展させていきましょう！',
+        '都市建設について何でもお聞きください！',
+        '今日も一日頑張りましょう！',
+        '都市の未来を一緒に作っていきましょう！'
+      ];
+      
+      // 季節メッセージとデフォルトメッセージを組み合わせ
+      const allMessages = [...seasonalMessages, ...defaultMessages];
+      
+      // ランダムに1つ選択
+      const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
+      
+      addConversationMessage('greeting', randomMessage);
     }
-  }, [activeTab, conversationMessages.length, addConversationMessage, stats.date.month]);
+  }, [activeTab, addConversationMessage, stats.date.month]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
