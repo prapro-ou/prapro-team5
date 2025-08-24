@@ -236,10 +236,9 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         }
       }
 
-      setImageCache(loadedImages);
-      setImagesLoaded(true);
+      setImageCache(prev => ({ ...prev, ...loadedImages }));
     } catch (error) {
-      console.error('画像ロード中にエラーが発生:', error);
+      console.error('施設画像ロード中にエラーが発生:', error);
     }
   }, [loadImage]);
 
@@ -261,6 +260,51 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     setImageCache(prev => ({ ...prev, ...loadedImages }));
   }, [loadImage]);
 
+  // 秘書画像のプリロード
+  const preloadSecretaryImages = useCallback(async () => {
+    const secretaryImagePaths = [
+      'images/characters/secretary_0/body.png',
+      'images/characters/secretary_0/hair.png',
+      'images/characters/secretary_0/face_normal.png',
+      'images/characters/secretary_0/face_happy.png',
+      'images/characters/secretary_0/face_serious.png',
+      'images/characters/secretary_0/face_worried.png',
+      'images/characters/secretary_0/jacket.png',
+      'images/characters/secretary_0/ribbon.png',
+      'images/characters/secretary_0/kemomimi.png',
+      'images/characters/secretary_0/tail.png'
+    ];
+    
+    const loadedImages: ImageCache = {};
+    
+    for (const path of secretaryImagePaths) {
+      try {
+        const img = await loadImage(path);
+        loadedImages[path] = img;
+      } catch (error) {
+        console.warn(`秘書画像のロードに失敗: ${path}`, error);
+      }
+    }
+    
+    setImageCache(prev => ({ ...prev, ...loadedImages }));
+  }, [loadImage]);
+
+  // 全画像の一括プリロード
+  const preloadAllImages = useCallback(async () => {
+    try {
+      // 施設・地形・秘書画像を並列でプリロード
+      await Promise.all([
+        preloadFacilityImages(),
+        preloadTerrainImages(),
+        preloadSecretaryImages()
+      ]);
+
+      setImagesLoaded(true);
+    } catch (error) {
+      console.error('画像ロード中にエラーが発生:', error);
+    }
+  }, [preloadFacilityImages, preloadTerrainImages, preloadSecretaryImages]);
+
   // 地形の初期化
   useEffect(() => {
     if (terrainMap.size === 0) {
@@ -270,9 +314,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
   // コンポーネントマウント時に画像をロード
   useEffect(() => {
-    preloadFacilityImages();
-    preloadTerrainImages();
-  }, [preloadFacilityImages, preloadTerrainImages]);
+    preloadAllImages();
+  }, [preloadAllImages]);
 
   // Canvas描画関数
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D) => {
