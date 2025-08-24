@@ -5,6 +5,7 @@ import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
+import OpeningSequence from './components/OpeningSequence'
 import RewardPanel from './components/RewardPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
@@ -29,6 +30,8 @@ import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
 import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
+import { useSupportStore } from './stores/SupportStore';
+import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -76,6 +79,12 @@ function App() {
 
   // スタート画面の表示状態
   const [showStartScreen, setShowStartScreen] = useState(true);
+  
+  // オープニングシーケンスの表示状態
+  const [showOpeningSequence, setShowOpeningSequence] = useState(false);
+  
+  // 強制初期化完了フラグ
+  const [isInitializationComplete, setIsInitializationComplete] = useState(false);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -109,17 +118,20 @@ function App() {
   
   // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
+    if (!isInitializationComplete) return;
     updateAchievements();
-  }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, stats.level, stats.money, updateAchievements]);
+  }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, stats.level, stats.money, updateAchievements, isInitializationComplete]);
   
   // 月が変わるたびに季節に応じた服装の更新
   useEffect(() => {
+    if (!isInitializationComplete) return;
     updateSeasonalClothing(stats.date.month);
-  }, [stats.date.month, updateSeasonalClothing]);
+  }, [stats.date.month, updateSeasonalClothing, isInitializationComplete]);
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
-    if (showStartScreen) return; // スタート画面中はタイマーを動かさない
+    if (!isInitializationComplete) return;
+    if (showStartScreen || showOpeningSequence) return; // スタート画面またはオープニング中はタイマーを動かさない
     if (isPaused) return; // 一時停止中はタイマーを動かさない
 
     const interval = getCurrentInterval();
@@ -131,57 +143,37 @@ function App() {
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
-  }, [advanceTime, showStartScreen, isPaused, getCurrentInterval]);
+  }, [advanceTime, showStartScreen, showOpeningSequence, isPaused, getCurrentInterval, isInitializationComplete]);
 
   // 統計画面の状態を監視して時間制御をチェック
   useEffect(() => {
-    if (!showStartScreen) {
+    if (!isInitializationComplete) return;
+    if (!showStartScreen && !showOpeningSequence) {
       checkModalState();
     }
-  }, [isStatisticsOpen, showStartScreen, checkModalState]);
+  }, [isStatisticsOpen, showStartScreen, showOpeningSequence, checkModalState, isInitializationComplete]);
 
   // インフラ計算
   useEffect(() => {
+    if (!isInitializationComplete) return;
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(facilities);
-  }, [facilities]);
+  }, [facilities, isInitializationComplete]);
 
   // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
-    if (!showStartScreen && facilities.length > 0) {
-      const { updateRoadConnectivity } = useFacilityStore.getState();
-      updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
-    }
-  }, [facilities.length, showStartScreen]); // facilities.lengthのみを監視
+    if (!isInitializationComplete) return;
+    if (!showStartScreen || !showOpeningSequence || facilities.length === 0) return;
+    const { updateRoadConnectivity } = useFacilityStore.getState();
+    updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
+  }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
    useEffect(() => {
-     if (!showStartScreen) {
+     if (!isInitializationComplete || !showStartScreen || !showOpeningSequence) return;
      startHappinessDecayTask();
-     console.log("HappinessDecayTask started");
-    }
-   }, [showStartScreen, facilities.length]);
+   }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
   // 地形生成
   const { generateTerrain } = useTerrainStore();
-  
-  // ゲーム開始時の地形生成（新規ゲーム時のみ）
-  useEffect(() => {
-    if (!showStartScreen && !localStorage.getItem('city-sim-loaded')) {
-      const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
-      
-      // 生成された道路をFacilityStoreに登録
-      if (generatedRoads.length > 0) {
-        const { addFacility, createFacility } = useFacilityStore.getState();
-        generatedRoads.forEach(road => {
-          const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
-          roadFacility.variantIndex = road.variantIndex;
-          roadFacility.isConnected = true; // 生成された道路は接続されている
-          addFacility(roadFacility);
-        });
-        
-        console.log(`${generatedRoads.length}個の道路が生成されました`);
-      }
-    }
-  }, [showStartScreen, generateTerrain]);
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -215,12 +207,7 @@ function App() {
       if (placedFacility && placedFacility.isConnected) {
         if (typeof facilityData.basePopulation === 'number') {
           addPopulation(facilityData.basePopulation);
-          console.log(`住宅が道路に接続されました。人口が${facilityData.basePopulation}人増加しました。`);
-        } else {
-          console.warn('basePopulation is undefined for this facility type.');
         }
-      } else {
-        console.log('住宅が道路に接続されていません。人口は増加しません。');
       }
     }
     // 施設を設置した後に満足度を再計算する
@@ -281,6 +268,89 @@ function App() {
     }
   }, [levelUpMessage, setLevelUpMessage]);
 
+  // オープニングシーケンス
+  if (showOpeningSequence) {
+    return (
+      <OpeningSequence 
+                onComplete={() => {
+          // 初期化完了フラグを一時的に無効化
+          setIsInitializationComplete(false);
+          
+          // ゲーム状態を初期化（SaveLoadRegistryの影響を回避するため強制初期化）
+          // 副作用はクソ，何もわからん
+          useGameStore.setState({
+            stats: {
+              level: 1,
+              money: 10000,
+              population: 0,
+              satisfaction: 50,
+              workforceAllocations: [],
+              date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
+              monthlyBalance: { income: 0, expense: 0, balance: 0 },
+              yearlyEvaluation: null,
+              yearlyStats: null,
+              previousYearStats: null,
+              previousYearEvaluation: null,
+              monthlyAccumulation: {
+                year: 2024,
+                monthlyTaxRevenue: new Array(12).fill(0),
+                monthlyMaintenanceCost: new Array(12).fill(0),
+                monthlyPopulation: new Array(12).fill(0),
+                monthlySatisfaction: new Array(12).fill(50),
+                monthlySupportRatings: {
+                  central_government: new Array(12).fill(50),
+                  citizens: new Array(12).fill(50),
+                  chamber_of_commerce: new Array(12).fill(50)
+                }
+              },
+              supportSystem: {
+                factionSupports: [
+                  { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
+                  { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
+                  { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+                ],
+                monthlyHistory: [],
+                yearlyHistory: [],
+                lastCalculationDate: { year: 2024, month: 1 }
+              }
+            },
+            levelUpMessage: null
+          });
+          
+          // 他のストアをリセット
+          useFacilityStore.getState().resetToInitial();
+          useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          useInfrastructureStore.getState().resetToInitial();
+          useRewardStore.getState().resetToInitial();
+          useMissionStore.getState().resetToInitial();
+          useTimeControlStore.getState().resetToInitial();
+          useSecretaryStore.getState().resetToInitial();
+          useSupportStore.getState().resetToInitial();
+          useYearlyEvaluationStore.getState().resetToInitial();
+
+          const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          if (generatedRoads.length > 0) {
+            const { addFacility, createFacility } = useFacilityStore.getState();
+            generatedRoads.forEach(road => {
+              const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+              roadFacility.variantIndex = road.variantIndex;
+              roadFacility.isConnected = true;
+              addFacility(roadFacility);
+            });
+          }
+          
+          // オープニング状態を変更
+          setShowOpeningSequence(false);
+          
+          // 初期化完了フラグを有効化
+          setTimeout(() => {
+            setIsInitializationComplete(true);
+          }, 100);
+        }}
+      />
+    );
+  }
+
   // スタート画面
   if (showStartScreen) {
     return (
@@ -289,6 +359,7 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
+            setShowOpeningSequence(true);
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
@@ -452,20 +523,28 @@ function App() {
           onClose={closeSettings} 
           onShowCredits={switchToCredits}
           isGameStarted={!showStartScreen}
-          onReturnToTitle={() => {
-            // 現在のゲーム状態をリセット
-            // 各ストアを初期状態に戻す
-            useGameStore.getState().resetToInitial();
-            useFacilityStore.getState().resetToInitial();
-            useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
-            useInfrastructureStore.getState().resetToInitial();
-            useRewardStore.getState().resetToInitial();
-            useMissionStore.getState().resetToInitial();
-            
-            // 設定パネルを閉じて、スタート画面を表示
-            closeSettings();
-            setShowStartScreen(true);
-          }}
+                      onReturnToTitle={() => {
+              // 初期化完了フラグを一時的に無効化
+              setIsInitializationComplete(false);
+              
+              // 現在のゲーム状態をリセット
+              // 各ストアを初期状態に戻す
+              useGameStore.getState().resetToInitial();
+              useFacilityStore.getState().resetToInitial();
+              useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              useInfrastructureStore.getState().resetToInitial();
+              useRewardStore.getState().resetToInitial();
+              useMissionStore.getState().resetToInitial();
+              
+              // 設定パネルを閉じて、スタート画面を表示
+              closeSettings();
+              setShowStartScreen(true);
+              
+              // 初期化完了フラグを有効化
+              setTimeout(() => {
+                setIsInitializationComplete(true);
+              }, 100);
+            }}
         />
       </div>
       
