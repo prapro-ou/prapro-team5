@@ -23,43 +23,43 @@ const creditsData = [
 export const CreditsPanel: React.FC<CreditsPanelProps> = ({ onClose }) => {
   return (
     // 画面全体を覆う背景レイヤー
-    <div className="fixed inset-0 bg-black/60 z-[3000] flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 z-[3000] flex items-center justify-center p-4" onClick={onClose}>
       {/* パネル本体 */}
       <div 
-        className="bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md relative border border-gray-600 text-white"
+        className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm max-h-[80vh] relative border border-gray-600 text-white overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()} // パネル内クリックで閉じないようにする
       >
         {/* 閉じるボタン */}
         <button 
           onClick={onClose} 
-          className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
+          className="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors z-10"
         >
-          <TbX size={24} />
+          <TbX size={20} />
         </button>
 
         {/* タイトル */}
-        <h2 className="text-3xl font-bold mb-8 text-center">クレジット</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center flex-shrink-0">クレジット</h2>
 
-        {/* スタッフリスト */}
-        <div className="space-y-6 text-center">
+        {/* スタッフリスト - スクロール可能 */}
+        <div className="space-y-2 text-center overflow-y-auto flex-1 pr-2">
           {creditsData.map((credit, index) => (
-            <div key={index}>
-              <p className="text-lg text-gray-400">{credit.role}</p>
+            <div key={index} className="py-1">
+              <p className="text-sm text-gray-400">{credit.role}</p>
               {credit.role === 'BGM' ? (
                 <>
                   <div className="mb-1">
                     {Array.isArray(credit.bgmNames)
                       ? credit.bgmNames.map((name, i) => (
-                          <div key={i} className="text-xl font-semibold text-white">{name}</div>
+                          <div key={i} className="text-lg font-semibold text-white">{name}</div>
                         ))
-                      : <span className="text-xl font-semibold text-white">{credit.bgmNames}</span>
+                      : <span className="text-lg font-semibold text-white">{credit.bgmNames}</span>
                     }
                   </div>
                   <a 
                     href={credit.authorUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lg text-blue-400 hover:text-blue-300 underline transition-colors"
+                    className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors"
                   >
                     {credit.author}
                   </a>
@@ -69,12 +69,12 @@ export const CreditsPanel: React.FC<CreditsPanelProps> = ({ onClose }) => {
                   href={credit.authorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-2xl font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
+                  className="text-lg font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
                 >
                   {credit.name}
                 </a>
               ) : (
-                <p className="text-2xl font-semibold">{credit.name}</p>
+                <p className="text-lg font-semibold">{credit.name}</p>
               )}
             </div>
           ))}

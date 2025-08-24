@@ -14,10 +14,9 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer, TbMessageCircle } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
-import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -29,6 +28,7 @@ import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
 import { startHappinessDecayTask } from './stores/HappinessDecayTask';
+import { useSecretaryStore } from './stores/SecretaryStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -38,10 +38,9 @@ const SNSFeedButton = () => {
     <>
       <button
         onClick={() => setShowSNS(v => !v)}
-        className="fixed bottom-4 right-4 rounded-lg shadow-lg z-[1500]"
-        style={{ background: 'transparent', padding: 0, border: 'none' }}
+        className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[1500]"
       >
-  <img src={SNSicon} alt="SNS" style={{ width: 256, height: 128 }} />
+        <TbMessageCircle size={24} />
       </button>
       {showSNS && (
         <div className="fixed bottom-20 right-4 z-[1500]">
@@ -104,10 +103,19 @@ function App() {
   // 報酬パネル表示状態のみAppで管理
   const [showRewardPanel, setShowRewardPanel] = useState(false);
   const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
+  
+  // 秘書ストア
+  const { updateSeasonalClothing } = useSecretaryStore();
+  
   // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     updateAchievements();
   }, [stats.population, facilities, stats.date.week, stats.date.month, stats.date.year, stats.level, stats.money, updateAchievements]);
+  
+  // 月が変わるたびに季節に応じた服装の更新
+  useEffect(() => {
+    updateSeasonalClothing(stats.date.month);
+  }, [stats.date.month, updateSeasonalClothing]);
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
@@ -399,11 +407,12 @@ function App() {
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
             money={stats.money}
+            deleteMode={deleteMode}
           />
         </div>
       </div>
 
-      {/* 施設削除モード切替ボタン（左下パネル切り替えボタンのすぐ上） */}
+      {/* 施設削除モード切替ボタン */}
       <button
         onClick={() => {
           playPanelSound();
@@ -411,9 +420,9 @@ function App() {
         }}
         className={`fixed bottom-20 left-4 bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[950] ${deleteMode ? 'ring-4 ring-red-400' : ''}`}
       >
-        {deleteMode ? '削除モード中（施設をクリックで削除）' : '施設削除'}
+        <TbBulldozer/>
       </button>
-      {/* パネル切り替えボタン */}
+      {/* 建設モード切り替えボタン */}
       <button 
         onClick={togglePanel}
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"

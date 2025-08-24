@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import { useSoundStore } from '../stores/SoundStore';
 // 効果音グローバル関数をexport
 export let playBuildSound = () => {};
@@ -206,39 +206,48 @@ export function BGMPlayer() {
       {/* 音量バー3段縦並び */}
       <div className="flex flex-col gap-6">
         {/* BGM設定 */}
-        <div className="flex flex-row items-center gap-4">
-          <label htmlFor="bgm-volume-slider" className="text-white font-semibold w-24">BGM 音量</label>
-          <TbVolume className="text-white" />
-          <input
-            id="bgm-volume-slider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={bgmVolume}
-            onChange={handleBgmVolumeChange}
-            className="w-32 h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer"
-          />
-          <div className="flex flex-col items-center gap-1">
-            <select
-              value={bgmType}
-              onChange={e => setBgmType(e.target.value as 'bgm' | 'bgm3')}
-              className="bg-gray-600 text-white rounded px-2 py-1"
-              style={{ minWidth: '72px' }}
-            >
-              <option value="bgm">BGM1</option>
-              <option value="bgm3">BGM2</option>
-            </select>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-4">
+            <label htmlFor="bgm-volume-slider" className="text-white font-semibold w-24">BGM 音量</label>
+            <TbVolume className="text-white" />
+            <input
+              id="bgm-volume-slider"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={bgmVolume}
+              onChange={handleBgmVolumeChange}
+              className="w-32 h-2 bg-gray-500 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+          
+          <div className="flex items-center gap-4.5 ml-28">
+            <div className="flex items-center gap-2">
+              <span className="text-white text-sm">BGM選択:</span>
+              <select
+                value={bgmType}
+                onChange={e => setBgmType(e.target.value as 'bgm' | 'bgm3')}
+                className="bg-gray-600 text-white rounded px-3 py-2 border border-gray-500 focus:border-blue-400 focus:outline-none"
+                style={{ minWidth: '80px' }}
+              >
+                <option value="bgm">BGM1</option>
+                <option value="bgm3">BGM2</option>
+              </select>
+            </div>
+            
             <button
               onClick={toggleBgmPlay}
-              className="bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-lg transition-colors mt-1"
+              className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg shadow-lg transition-colors flex items-center justify-center"
+              style={{ minWidth: '40px', minHeight: '40px' }}
             >
-              {isBgmPlaying ? <TbMusic /> : <TbMusicOff />}
+              {isBgmPlaying ? <TbMusic size={20} /> : <TbMusicOff size={20} />}
             </button>
           </div>
         </div>
+        
         {/* SE設定 */}
-        <div className="flex flex-row items-center gap-4">
+        <div className="flex items-center gap-4">
           <label htmlFor="sfx-volume-slider" className="text-white font-semibold w-24">SE 音量</label>
           <TbVolume className="text-white" />
           <input
@@ -253,13 +262,15 @@ export function BGMPlayer() {
           />
           <button
             onClick={toggleSfxMute}
-            className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg transition-colors flex items-center justify-center"
+            style={{ minWidth: '40px', minHeight: '40px' }}
           >
-            {isSfxMuted ? <TbVolumeOff /> : <TbVolume />}
+            {isSfxMuted ? <TbVolumeOff size={20} /> : <TbVolume size={20} />}
           </button>
         </div>
+        
         {/* SNS通知音 */}
-        <div className="flex flex-row items-center gap-4">
+        <div className="flex items-center gap-4">
           <label className="text-white font-semibold w-24">SNS通知音</label>
           <TbBell className="text-white" />
           <input
@@ -273,9 +284,10 @@ export function BGMPlayer() {
           />
           <button
             onClick={() => setSNSMuted(!isSNSMuted)}
-            className={`bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition-colors`}
+            className={`bg-pink-600 hover:bg-pink-700 text-white p-2 rounded-lg shadow-lg transition-colors flex items-center justify-center`}
+            style={{ minWidth: '40px', minHeight: '40px' }}
           >
-            {isSNSMuted ? <TbBellOff /> : <TbBell />}
+            {isSNSMuted ? <TbBellOff size={20} /> : <TbBell size={20} />}
           </button>
         </div>
       </div>
