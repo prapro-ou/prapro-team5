@@ -125,7 +125,7 @@ function App() {
 
   // 時間経過を処理するuseEffect
   useEffect(() => {
-    if (showStartScreen) return; // スタート画面中はタイマーを動かさない
+    if (showStartScreen || showOpeningSequence) return; // スタート画面またはオープニング中はタイマーを動かさない
     if (isPaused) return; // 一時停止中はタイマーを動かさない
 
     const interval = getCurrentInterval();
@@ -137,14 +137,14 @@ function App() {
 
     // コンポーネントが不要になった際にタイマーを解除する（クリーンアップ）
     return () => clearInterval(timerId);
-  }, [advanceTime, showStartScreen, isPaused, getCurrentInterval]);
+  }, [advanceTime, showStartScreen, showOpeningSequence, isPaused, getCurrentInterval]);
 
   // 統計画面の状態を監視して時間制御をチェック
   useEffect(() => {
-    if (!showStartScreen) {
+    if (!showStartScreen && !showOpeningSequence) {
       checkModalState();
     }
-  }, [isStatisticsOpen, showStartScreen, checkModalState]);
+  }, [isStatisticsOpen, showStartScreen, showOpeningSequence, checkModalState]);
 
   // インフラ計算
   useEffect(() => {
@@ -154,18 +154,18 @@ function App() {
 
   // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
-    if (!showStartScreen && facilities.length > 0) {
+    if (!showStartScreen && !showOpeningSequence && facilities.length > 0) {
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
     }
-  }, [facilities.length, showStartScreen]); // facilities.lengthのみを監視
+  }, [facilities.length, showStartScreen, showOpeningSequence]);
 
    useEffect(() => {
-     if (!showStartScreen) {
+     if (!showStartScreen && !showOpeningSequence) {
      startHappinessDecayTask();
      console.log("HappinessDecayTask started");
     }
-   }, [showStartScreen, facilities.length]);
+   }, [showStartScreen, showOpeningSequence, facilities.length]);
   // 地形生成
   const { generateTerrain } = useTerrainStore();
   
