@@ -46,7 +46,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
     // フェーズ1: ブラックアウト
     const blackoutTimer = setTimeout(() => {
       setCurrentPhase('appointment');
-    }, 5000);
+    }, 3000);
 
     return () => clearTimeout(blackoutTimer);
   }, []);
@@ -56,12 +56,11 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       // フェーズ2: 任命書表示
       setAppointmentVisible(true);
       
-      // デバッグ用: 任命書から次に遷移しないようにコメントアウト
-      // const appointmentTimer = setTimeout(() => {
-      //   setCurrentPhase('logo');
-      // }, 10000);
+      const appointmentTimer = setTimeout(() => {
+        setCurrentPhase('logo');
+      }, 5000);
 
-      // return () => clearTimeout(appointmentTimer);
+      return () => clearTimeout(appointmentTimer);
     }
   }, [currentPhase]);
 
