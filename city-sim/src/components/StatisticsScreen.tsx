@@ -787,20 +787,15 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       <div className="fixed -bottom-1 right-28 shadow-lg z-50 pointer-events-none">
         {/* 会話メッセージボックス */}
         <div className="fixed bottom-90 right-1.5 p-3 bg-blue-900 rounded-lg border border-blue-600 shadow-lg w-64">
-          <div className="flex items-start gap-2">
-            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-              <TbIdBadge className="text-white text-xs" />
+          <div className="flex-1">
+            <div className="text-xs text-blue-200 mb-1">
+              秘書からのメッセージ
             </div>
-            <div className="flex-1">
-              <div className="text-xs text-blue-200 mb-1">
-                秘書からのメッセージ
-              </div>
-              <div className="text-white text-sm leading-relaxed">
-                {advices.filter(advice => !advice.isDismissed).length > 0 
-                  ? advices.filter(advice => !advice.isDismissed)[0]?.message 
-                  : '都市建設について何でもお聞きください！'
-                }
-              </div>
+            <div className="text-white text-sm leading-relaxed">
+              {advices.filter(advice => !advice.isDismissed).length > 0 
+                ? advices.filter(advice => !advice.isDismissed)[0]?.message 
+                : '都市建設について何でもお聞きください！'
+              }
             </div>
           </div>
         </div>
