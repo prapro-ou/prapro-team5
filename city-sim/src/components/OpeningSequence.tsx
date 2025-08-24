@@ -109,7 +109,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       {/* 任命書 */}
       <div 
         className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ${
-          appointmentVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+          appointmentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'
         }`}
       >
         <div className="bg-gradient-to-br from-white to-gray-50 shadow-2xl p-5 max-w-4xl mx-2 border-2 border-gray-200">
