@@ -25,7 +25,7 @@ const INITIAL_TAX_RATES: TaxRates = {
 };
 
 // EconomyStoreの作成
-export const useEconomyStore = create<EconomyStore>((set, get) => ({
+export const useEconomyStore = create<EconomyStore>((set) => ({
   taxRates: INITIAL_TAX_RATES,
   
   setTaxRates: (rates: Partial<TaxRates>) => {
@@ -71,7 +71,9 @@ export function getCurrentWorkforceAllocations(stats: GameStats): WorkforceAlloc
         type: allocation.facilityType as any, // 型安全性のため
         position: allocation.position,
         occupiedTiles: [], // 簡易的な実装
-        variantIndex: 0
+        variantIndex: 0,
+        isConnected: true, // デフォルト値
+        isActive: true      // デフォルト値
       } as Facility,
       assignedWorkforce: allocation.assignedWorkforce,
       efficiency: allocation.efficiency
