@@ -8,6 +8,7 @@ import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { useSupportStore } from '../stores/SupportStore';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
+import { getSeasonalMessages } from '../stores/SecretaryStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -44,19 +45,25 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       // 季節に応じたジャケットの更新
       updateSeasonalClothing(stats.date.month);
       
-      // 会話メッセージを生成
-      const allMessages = [
-        'お疲れ様です。今日も都市建設を頑張りましょう！',
-        '都市の調子はどうですか？何かお困りのことは？',
-        'この都市をさらに発展させていきましょう！',
-        '季節の変化を感じますね。',
-        '新しい月の始まりです。'
-      ];
+      // 季節に応じた会話メッセージを生成
+      const seasonalMessages = getSeasonalMessages(stats.date.month);
       
-      // ランダムに1つ選択
-      const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
-      
-      addConversationMessage('greeting', randomMessage);
+      if (seasonalMessages.length > 0) {
+        // 季節メッセージからランダムに1つ選択
+        const randomSeasonalMessage = seasonalMessages[Math.floor(Math.random() * seasonalMessages.length)];
+        addConversationMessage(randomSeasonalMessage.type, randomSeasonalMessage.content);
+      } else {
+        // 季節メッセージがない場合のデフォルトメッセージ
+        const defaultMessages = [
+          'お疲れ様です。今日も都市建設を頑張りましょう！',
+          '都市の調子はどうですか？何かお困りのことは？',
+          'この都市をさらに発展させていきましょう！',
+          '都市建設について何でもお聞きください！'
+        ];
+        
+        const randomMessage = defaultMessages[Math.floor(Math.random() * defaultMessages.length)];
+        addConversationMessage('general', randomMessage);
+      }
     }
   }, [activeTab, addConversationMessage, stats.date.month, updateSeasonalClothing]);
 

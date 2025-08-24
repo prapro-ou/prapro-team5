@@ -258,7 +258,7 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
 };
 
 // 季節に応じた会話メッセージを取得
-const getSeasonalMessages = (month: number): Array<{ type: ConversationType; content: string }> => {
+export const getSeasonalMessages = (month: number): Array<{ type: ConversationType; content: string }> => {
   switch (month) {
     case 1:
       return [
