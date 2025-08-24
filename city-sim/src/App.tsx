@@ -30,6 +30,8 @@ import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
 import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
+import { useSupportStore } from './stores/SupportStore';
+import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
 
 // SNSフィード表示用ボタンコンポーネント
 
@@ -280,6 +282,10 @@ function App() {
           useInfrastructureStore.getState().resetToInitial();
           useRewardStore.getState().resetToInitial();
           useMissionStore.getState().resetToInitial();
+          useTimeControlStore.getState().resetToInitial();
+          useSecretaryStore.getState().resetToInitial();
+          useSupportStore.getState().resetToInitial();
+          useYearlyEvaluationStore.getState().resetToInitial();
           
           const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           
