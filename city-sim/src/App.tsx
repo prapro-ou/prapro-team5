@@ -14,10 +14,9 @@ import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer, TbMessageCircle } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
-import SNSicon from './assets/SNSicon.png';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -38,10 +37,9 @@ const SNSFeedButton = () => {
     <>
       <button
         onClick={() => setShowSNS(v => !v)}
-        className="fixed bottom-4 right-4 rounded-lg shadow-lg z-[1500]"
-        style={{ background: 'transparent', padding: 0, border: 'none' }}
+        className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[1500]"
       >
-  <img src={SNSicon} alt="SNS" style={{ width: 256, height: 128 }} />
+        <TbMessageCircle size={24} />
       </button>
       {showSNS && (
         <div className="fixed bottom-20 right-4 z-[1500]">
