@@ -40,7 +40,7 @@ const TERRAIN_CONSTANTS = {
   MOUNTAIN: {
     WATER_DISTANCE_MIN: 20,            // 山岳生成の最小水辺距離
     HEIGHT_THRESHOLD: 0.65,            // 山岳生成の高さ閾値
-    BASE_CHANCE: 0.9,                  // 山岳生成の基本確率
+    BASE_CHANCE: 0.3,                  // 山岳生成の基本確率
     HEIGHT_MULTIPLIER: 3,              // 高さによる確率倍率
     CONTINUITY_THRESHOLD: 0.3,       // 山岳の連続性閾値
     SECONDARY_HEIGHT: 0.53,            // 二次的な山岳生成の高さ閾値
