@@ -36,7 +36,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     markAdviceAsRead,
     dismissAdvice,
     addConversationMessage,
-    updateSeasonalClothing
+    updateSeasonalClothing,
+    generateAdvices
   } = useSecretaryStore();
 
   // 秘書タブがアクティブになった時に会話を生成
@@ -44,6 +45,21 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     if (activeTab === 'secretary') {
       // 季節に応じたジャケットの更新
       updateSeasonalClothing(stats.date.month);
+      
+      // 動的アドバイスの生成
+      const gameState = {
+        stats: {
+          population: stats.population,
+          satisfaction: stats.satisfaction,
+          money: stats.money,
+          monthlyBalance: stats.monthlyBalance,
+          date: stats.date,
+          facilities: facilities
+        }
+      };
+      
+      // 動的アドバイスを生成
+      generateAdvices(gameState);
       
       // 季節に応じた会話メッセージを生成
       const seasonalMessages = getSeasonalMessages(stats.date.month);
@@ -65,7 +81,24 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         addConversationMessage('general', randomMessage);
       }
     }
-  }, [activeTab, addConversationMessage, stats.date.month, updateSeasonalClothing]);
+  }, [activeTab, addConversationMessage, stats.date.month, updateSeasonalClothing, generateAdvices, facilities]);
+
+  // 月が変わるたびに動的アドバイスを生成
+  useEffect(() => {
+    const gameState = {
+      stats: {
+        population: stats.population,
+        satisfaction: stats.satisfaction,
+        money: stats.money,
+        monthlyBalance: stats.monthlyBalance,
+        date: stats.date,
+        facilities: facilities
+      }
+    };
+    
+    // 月が変わるたびに動的アドバイスを生成
+    generateAdvices(gameState);
+  }, [stats.date.month, generateAdvices, facilities, stats.population, stats.satisfaction, stats.money, stats.monthlyBalance]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },

@@ -123,7 +123,7 @@ const generateAdvice = (
 });
 
 // 動的アドバイス生成ロジック
-const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructureState: any): Advice[] => {
+export const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructureState: any): Advice[] => {
   const advices: Advice[] = [];
   
   // 経済状況の分析
