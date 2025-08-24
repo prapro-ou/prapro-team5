@@ -719,7 +719,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const renderSecretaryTab = () => (
     <div className="relative">
       {/* アドバイスセクション */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg mr-56 overflow-y-auto" style={{ height: 'calc(100vh - 8.8rem)' }}>
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg mr-60 overflow-y-auto" style={{ height: 'calc(100vh - 9em)' }}>
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
           <TbBulb className="text-yellow-400" />
           都市開発アドバイス
@@ -783,9 +783,28 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           )}
         </div>
       </div>
-      
       {/* 秘書キャラクター*/}
-      <div className="fixed -bottom-1 right-30 shadow-lg z-50 pointer-events-none">
+      <div className="fixed -bottom-1 right-28 shadow-lg z-50 pointer-events-none">
+        {/* 会話メッセージボックス */}
+        <div className="fixed bottom-90 right-1.5 p-3 bg-blue-900 rounded-lg border border-blue-600 shadow-lg w-64">
+          <div className="flex items-start gap-2">
+            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+              <TbIdBadge className="text-white text-xs" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-blue-200 mb-1">
+                秘書からのメッセージ
+              </div>
+              <div className="text-white text-sm leading-relaxed">
+                {advices.filter(advice => !advice.isDismissed).length > 0 
+                  ? advices.filter(advice => !advice.isDismissed)[0]?.message 
+                  : '都市建設について何でもお聞きください！'
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="w-48">
           <CharacterDisplay
             character={selectedCharacter}
