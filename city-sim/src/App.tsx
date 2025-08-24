@@ -327,6 +327,17 @@ function App() {
           useSecretaryStore.getState().resetToInitial();
           useSupportStore.getState().resetToInitial();
           useYearlyEvaluationStore.getState().resetToInitial();
+
+          const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          if (generatedRoads.length > 0) {
+            const { addFacility, createFacility } = useFacilityStore.getState();
+            generatedRoads.forEach(road => {
+              const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+              roadFacility.variantIndex = road.variantIndex;
+              roadFacility.isConnected = true;
+              addFacility(roadFacility);
+            });
+          }
           
           // オープニング状態を変更
           setShowOpeningSequence(false);
@@ -334,18 +345,6 @@ function App() {
           // 初期化完了フラグを有効化
           setTimeout(() => {
             setIsInitializationComplete(true);
-            
-            // 初期化完了後に地形生成と道路追加
-            const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
-            if (generatedRoads.length > 0) {
-              const { addFacility, createFacility } = useFacilityStore.getState();
-              generatedRoads.forEach(road => {
-                const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
-                roadFacility.variantIndex = road.variantIndex;
-                roadFacility.isConnected = true;
-                addFacility(roadFacility);
-              });
-            }
           }, 100);
         }}
       />
