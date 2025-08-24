@@ -42,9 +42,9 @@ interface SaveSlot {
 const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) => {
   const [logoVisible, setLogoVisible] = useState(false);
   const [buttonsVisible, setButtonsVisible] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [overlayVisible, setOverlayVisible] = useState(false);
-  const [overlayActive, setOverlayActive] = useState(false);
+  const [isTransitioning, _setIsTransitioning] = useState(false);
+  const [overlayVisible, _setOverlayVisible] = useState(false);
+  const [overlayActive, _setOverlayActive] = useState(false);
   const [hasSaveData, setHasSaveData] = useState(false);
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
