@@ -46,6 +46,7 @@ interface SecretaryStore {
   // アドバイス管理
   advices: Advice[];
   unreadAdviceCount: number;
+  lastAdviceGenerationWeek: number;
   
   // UI状態
   isSecretaryPanelOpen: boolean;
@@ -69,7 +70,8 @@ interface SecretaryStore {
   closeAdvicePanel: () => void;
   
   // アドバイス生成
-  generateAdvices: () => void;
+  generateAdvices: (gameState?: any, economyState?: any, infrastructureState?: any) => void;
+  generatePeriodicAdvices: (gameState: any, economyState: any, infrastructureState: any) => void;
   
   // セーブ・ロード
   saveState: () => any;
@@ -96,6 +98,97 @@ const generateAdvice = (
   isDismissed: false
 });
 
+// 動的アドバイス生成ロジック
+const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructureState: any): Advice[] => {
+  const advices: Advice[] = [];
+  
+  // 経済状況の分析
+  if (gameState.stats.monthlyBalance.balance < 0) {
+    advices.push(generateAdvice(
+      'economy',
+      'high',
+      '財政危機の警告',
+      '月次収支が赤字になっています。',
+      '税率の見直しや施設の維持費削減を検討してください。'
+    ));
+  }
+  
+  if (gameState.stats.money < 10000) {
+    advices.push(generateAdvice(
+      'economy',
+      'urgent',
+      '資金不足の危機',
+      '資金が10,000円を下回っています。',
+      '緊急の収入源確保や支出削減が必要です。'
+    ));
+  }
+  
+  // 人口・満足度の分析
+  if (gameState.stats.population < 100) {
+    advices.push(generateAdvice(
+      'population',
+      'medium',
+      '人口増加の提案',
+      '人口が少ない状態です。',
+      '住宅施設の建設や市民の満足度向上を検討してください。'
+    ));
+  }
+  
+  // インフラ状況の分析
+  if (infrastructureState) {
+    const waterShortage = infrastructureState.getInfrastructureShortage?.()?.water || 0;
+    const electricityShortage = infrastructureState.getInfrastructureShortage?.()?.electricity || 0;
+    
+    if (waterShortage > 0) {
+      advices.push(generateAdvice(
+        'infrastructure',
+        'high',
+        '上水道不足の警告',
+        '上水道の供給が需要を下回っています。',
+        '上水道施設の増設や節水対策を検討してください。'
+      ));
+    }
+    
+    if (electricityShortage > 0) {
+      advices.push(generateAdvice(
+        'infrastructure',
+        'high',
+        '電力不足の警告',
+        '電力の供給が需要を下回っています。',
+        '発電所の増設や節電対策を検討してください。'
+      ));
+    }
+  }
+  
+  // 労働状況の分析
+  const workforce = gameState.stats.workforceAllocations || [];
+  const totalWorkforce = workforce.reduce((sum: number, w: any) => sum + w.assignedWorkforce, 0);
+  const potentialWorkforce = Math.floor(gameState.stats.population * 0.6);
+  
+  if (totalWorkforce < potentialWorkforce * 0.8) {
+    advices.push(generateAdvice(
+      'economy',
+      'medium',
+      '雇用機会の創出',
+      '多くの市民が求職中です。',
+      '商業・工業施設の建設で雇用を創出してください。'
+    ));
+  }
+  
+  // ミッション関連
+  if (gameState.stats.date.month === 12 && gameState.stats.date.week === 4) {
+    advices.push(generateAdvice(
+      'mission',
+      'high',
+      '年末評価の準備',
+      '今週は年末評価の週です。',
+      '都市の総合的な状況を確認し、評価に備えてください。'
+    ));
+  }
+  
+  return advices;
+};
+
 // デフォルトのアドバイス
 const generateDefaultAdvices = (): Advice[] => [
   generateAdvice(
@@ -103,7 +196,7 @@ const generateDefaultAdvices = (): Advice[] => [
     'medium',
     '秘書について',
     '私はいつでもここにいます。都市運営について何でもお聞きください！',
-    'ここでは都市開発にかんするアドバイスを受けることができます。'
+    'ここでは都市開発についてのアドバイスを受けることができます。'
   ),
   generateAdvice(
     'economy',
@@ -125,6 +218,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   
   advices: generateDefaultAdvices(),
   unreadAdviceCount: 2,
+  lastAdviceGenerationWeek: 0,
   
   isSecretaryPanelOpen: false,
   isAdvicePanelOpen: false,
@@ -225,10 +319,40 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   closeAdvicePanel: () => set({ isAdvicePanelOpen: false }),
   
   // アドバイス生成
-  generateAdvices: () => {
-    // 現在はデフォルトアドバイスのみ
-    // 将来的にはゲーム状態を分析して動的に生成
-    console.log('Generating advices based on current game state...');
+  generateAdvices: (gameState?: any, economyState?: any, infrastructureState?: any) => {
+    if (gameState && economyState && infrastructureState) {
+      // 動的アドバイスを生成
+      const dynamicAdvices = generateDynamicAdvices(gameState, economyState, infrastructureState);
+      
+      // 既存のアドバイスと重複しないようにフィルタリング
+      const existingAdviceTitles = get().advices.map(advice => advice.title);
+      const newAdvices = dynamicAdvices.filter(advice => 
+        !existingAdviceTitles.includes(advice.title)
+      );
+      
+      if (newAdvices.length > 0) {
+        set((state) => ({
+          advices: [...newAdvices, ...state.advices],
+          unreadAdviceCount: state.unreadAdviceCount + newAdvices.length
+        }));
+        
+        console.log(`Generated ${newAdvices.length} new dynamic advices`);
+      }
+    } else {
+      console.log('Game state not provided, skipping dynamic advice generation');
+    }
+  },
+  
+  // 定期的なアドバイス生成（ゲーム進行時などに呼び出し）
+  generatePeriodicAdvices: (gameState: any, economyState: any, infrastructureState: any) => {
+    // 週次でアドバイスを生成
+    const currentWeek = gameState.stats.date.totalWeeks;
+    const lastAdviceWeek = get().lastAdviceGenerationWeek || 0;
+    
+    if (currentWeek > lastAdviceWeek) {
+      get().generateAdvices(gameState, economyState, infrastructureState);
+      set((state) => ({ ...state, lastAdviceGenerationWeek: currentWeek }));
+    }
   },
   
   // セーブ・ロード
@@ -238,7 +362,8 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       selectedCharacterId: state.selectedCharacter.id,
       characterDisplayState: state.characterDisplayState,
       advices: state.advices,
-      unreadAdviceCount: state.unreadAdviceCount
+      unreadAdviceCount: state.unreadAdviceCount,
+      lastAdviceGenerationWeek: state.lastAdviceGenerationWeek
     };
   },
   
@@ -254,7 +379,8 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
           layerStates: DEFAULT_LAYER_STATES
         },
         advices: savedState.advices || [],
-        unreadAdviceCount: savedState.unreadAdviceCount || 0
+        unreadAdviceCount: savedState.unreadAdviceCount || 0,
+        lastAdviceGenerationWeek: savedState.lastAdviceGenerationWeek || 0
       });
     }
   },
@@ -269,6 +395,7 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
       },
       advices: generateDefaultAdvices(),
       unreadAdviceCount: 2,
+      lastAdviceGenerationWeek: 0,
       isSecretaryPanelOpen: false,
       isAdvicePanelOpen: false
     });
