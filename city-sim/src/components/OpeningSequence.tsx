@@ -146,9 +146,9 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
       >
         <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
           <img 
-            src="/logo.svg" 
-            alt="City Simulator" 
-            className="w-80 h-32 object-contain p-4"
+            src="logo.svg" 
+            alt="logo" 
+            className="w-[600px] h-[200px] object-contain p-10"
           />
         </div>
       </div>
