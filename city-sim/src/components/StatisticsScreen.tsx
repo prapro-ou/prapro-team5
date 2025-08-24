@@ -1,5 +1,5 @@
 import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge, TbBulb, TbX } from 'react-icons/tb';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
@@ -29,11 +29,66 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     selectedCharacter,
     characterDisplayState,
     advices,
+    conversationMessages,
     changeExpression,
     toggleLayer,
     markAdviceAsRead,
-    dismissAdvice
+    dismissAdvice,
+    addConversationMessage
   } = useSecretaryStore();
+
+  // 秘書タブがアクティブになったときに会話メッセージを生成するuseEffect
+  useEffect(() => {
+    if (activeTab === 'secretary' && conversationMessages.length === 0) {
+      // 季節に応じた会話メッセージを生成
+      const month = stats.date.month;
+      let seasonalMessage = '';
+      
+      // 季節に応じたメッセージを選択
+      switch (month) {
+        case 1:
+          seasonalMessage = '新年あけましておめでとうございます！今年も都市建設を頑張りましょう！';
+          break;
+        case 2:
+          seasonalMessage = 'まだ寒い日が続きますね。体調管理に気をつけましょう。';
+          break;
+        case 3:
+          seasonalMessage = '春の訪れを感じる季節になりましたね！';
+          break;
+        case 4:
+          seasonalMessage = '桜の季節ですね。都市も春らしく彩られています。';
+          break;
+        case 5:
+          seasonalMessage = '新緑の季節ですね。都市も緑に包まれています。';
+          break;
+        case 6:
+          seasonalMessage = '梅雨の季節になりましたね。都市の排水対策は大丈夫ですか？';
+          break;
+        case 7:
+          seasonalMessage = '夏本番ですね！暑い季節の都市運営お疲れ様です。';
+          break;
+        case 8:
+          seasonalMessage = '夏休みの季節ですね。都市も賑やかになりそうです。';
+          break;
+        case 9:
+          seasonalMessage = '秋の気配を感じる季節になりましたね。';
+          break;
+        case 10:
+          seasonalMessage = '紅葉の季節ですね。都市も秋らしく彩られています。';
+          break;
+        case 11:
+          seasonalMessage = '冬の足音が聞こえる季節になりましたね。';
+          break;
+        case 12:
+          seasonalMessage = '一年の締めくくりの季節ですね。お疲れ様でした！';
+          break;
+        default:
+          seasonalMessage = 'お疲れ様です。今日も都市建設を頑張りましょう！';
+      }
+      
+      addConversationMessage('greeting', seasonalMessage);
+    }
+  }, [activeTab, conversationMessages.length, addConversationMessage, stats.date.month]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -792,8 +847,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
               秘書からのメッセージ
             </div>
             <div className="text-white text-sm leading-relaxed">
-              {advices.filter(advice => !advice.isDismissed).length > 0 
-                ? advices.filter(advice => !advice.isDismissed)[0]?.message 
+              {conversationMessages.length > 0 && conversationMessages[0]?.content 
+                ? conversationMessages[0].content 
                 : '都市建設について何でもお聞きください！'
               }
             </div>
