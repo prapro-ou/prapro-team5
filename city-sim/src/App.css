@@ -39,3 +39,27 @@
 .read-the-docs {
   color: #888;
 }
+
+.app-background {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; /* コンテンツが縦に並ぶように */
+  justify-content: center;
+  align-items: center;
+  color: white; /* テキストの色を見やすくするため */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* テキストに影をつけて見やすく */
+
+  /* グラデーションの指定 */
+  /* 岡山市の晴れた空と瀬戸内海のイメージ */
+  /*background-image: linear-gradient(to bottom, #87CEEB, #ADD8E6, #B0E0E6); /* スカイブルーからパウダーブルー、ライトスチールブルーへ */
+  /* あるいは、夕焼けのイメージ */
+  background-image: linear-gradient(to bottom, #FFD700, #FFA07A, #FF6347);
+}
+
+/* アプリのコンテンツが背景の上に重なるように調整が必要な場合 */
+.app-content {
+  /* 必要に応じてスタイルを追加 */
+  padding: 20px;
+  max-width: 800px;
+  text-align: center;
+}
