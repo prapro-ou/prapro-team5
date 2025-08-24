@@ -451,11 +451,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   // デバッグ用：地形情報表示
   return (
     <div className={`relative overflow-hidden border-2 transition-colors duration-300 ${deleteMode ? 'border-red-500' : 'border-blue-500'}`}>
-      {process.env.NODE_ENV === 'development' && (
+      {/* デバッグ用：地形情報表示（非表示） */}
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
           Terrain: {terrainMap.size} tiles
         </div>
-      )}
+      )} */}
       
       {/* カメラ情報表示（デバッグ用） */}
       {/* <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs z-[1000]">
