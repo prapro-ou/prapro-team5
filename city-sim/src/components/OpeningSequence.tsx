@@ -37,7 +37,11 @@ const getJapaneseEra = (date: Date): string => {
 };
 
 const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
-  const [currentPhase, setCurrentPhase] = useState<'blackout' | 'appointment' | 'logo' | 'transition' | 'complete'>('blackout');
+  const [currentPhase, setCurrentPhase] = useState<'blackout' | 'prologue' | 'appointment' | 'logo' | 'transition' | 'complete'>('blackout');
+  const [prologueVisible, setPrologueVisible] = useState(false);
+  const [prologueText1, setPrologueText1] = useState(false);
+  const [prologueText2, setPrologueText2] = useState(false);
+  const [prologueText3, setPrologueText3] = useState(false);
   const [appointmentVisible, setAppointmentVisible] = useState(false);
   const [logoVisible, setLogoVisible] = useState(false);
   const [transitionOpacity, setTransitionOpacity] = useState(0);
@@ -45,15 +49,52 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
   useEffect(() => {
     // フェーズ1: ブラックアウト
     const blackoutTimer = setTimeout(() => {
-      setCurrentPhase('appointment');
+      setCurrentPhase('prologue');
     }, 3000);
 
     return () => clearTimeout(blackoutTimer);
   }, []);
 
   useEffect(() => {
+    if (currentPhase === 'prologue') {
+      // フェーズ2: プロローグ表示
+      setPrologueVisible(true);
+      
+      // 1段落目を表示
+      const text1Timer = setTimeout(() => {
+        setPrologueText1(true);
+      }, 500);
+      
+      // 1段落目を消して2段落目を表示
+      const text2Timer = setTimeout(() => {
+        setPrologueText1(false);
+        setPrologueText2(true);
+      }, 4500);
+      
+      // 2段落目を消して3段落目を表示
+      const text3Timer = setTimeout(() => {
+        setPrologueText2(false);
+        setPrologueText3(true);
+      }, 8500);
+      
+      // プロローグ終了
+      const prologueTimer = setTimeout(() => {
+        setCurrentPhase('appointment');
+      }, 12500);
+
+      return () => {
+        clearTimeout(text1Timer);
+        clearTimeout(text2Timer);
+        clearTimeout(text3Timer);
+        clearTimeout(prologueTimer);
+      };
+    }
+  }, [currentPhase]);
+
+  useEffect(() => {
     if (currentPhase === 'appointment') {
-      // フェーズ2: 任命書表示
+      // フェーズ3: 任命書表示
+      setPrologueVisible(false);
       setAppointmentVisible(true);
       
       const appointmentTimer = setTimeout(() => {
@@ -66,7 +107,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
 
   useEffect(() => {
     if (currentPhase === 'logo') {
-      // フェーズ3: タイトルロゴ表示
+      // フェーズ4: タイトルロゴ表示
       setAppointmentVisible(false);
       setLogoVisible(true);
       
@@ -80,7 +121,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
 
   useEffect(() => {
     if (currentPhase === 'transition') {
-      // フェーズ4: ゲーム画面への遷移
+      // フェーズ5: ゲーム画面への遷移
       const transitionTimer = setTimeout(() => {
         setTransitionOpacity(1);
       }, 1000);
@@ -105,6 +146,53 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
           currentPhase === 'blackout' ? 'opacity-100' : 'opacity-0'
         }`}
       />
+
+      {/* プロローグ */}
+      <div 
+        className={`absolute inset-0 flex items-center justify-center transition-all duration-2000 ${
+          prologueVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <div className="text-center text-white relative w-full h-full">
+          {/* 1段落目 */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ${
+            prologueText1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
+            <div className="text-center">
+              <p className="text-2xl leading-relaxed max-w-2xl mx-auto">
+                少子化、流行病、空洞化...<br />
+                様々な要因によって地方は <br />
+                急速に衰退の一途を辿っている
+              </p>
+            </div>
+          </div>
+          
+          {/* 2段落目 */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ${
+            prologueText2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
+            <div className="text-center">
+              <p className="text-2xl leading-relaxed max-w-2xl mx-auto">
+                事態を重く見た中央政府は <br />
+                起死回生の一手として、<br />
+                国土再生庁を設立した
+              </p>
+            </div>
+          </div>
+          
+          {/* 3段落目 */}
+          <div className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ${
+            prologueText3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}>
+            <div className="text-center">
+              <p className="text-2xl leading-relaxed max-w-2xl mx-auto">
+                あなたの目的は、<br />
+                この新たな計画を成功させること
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 任命書 */}
       <div 
@@ -140,7 +228,7 @@ const OpeningSequence: React.FC<OpeningSequenceProps> = ({ onComplete }) => {
 
       {/* タイトルロゴ */}
       <div 
-        className={`absolute inset-0 flex items-center justify-center transition-all duration-1000 ${
+        className={`absolute inset-0 flex items-center justify-center transition-all duration-2000 ${
           logoVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
         }`}
       >
