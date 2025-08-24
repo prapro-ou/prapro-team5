@@ -399,6 +399,7 @@ function App() {
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
             money={stats.money}
+            deleteMode={deleteMode}
           />
         </div>
       </div>
