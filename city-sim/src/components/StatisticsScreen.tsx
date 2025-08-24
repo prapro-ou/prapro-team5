@@ -1,17 +1,19 @@
-import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy } from 'react-icons/tb';
-import { useState } from 'react';
+import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge, TbBulb, TbX } from 'react-icons/tb';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { useSupportStore } from '../stores/SupportStore';
+import { CharacterDisplay } from './CharacterDisplay';
+import { useSecretaryStore } from '../stores/SecretaryStore';
 
 interface StatisticsPanelProps {
   onClose: () => void;
 }
 
-type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'support';
+type TabType = 'basic' | 'infrastructure' | 'industry' | 'economy' | 'support' | 'secretary';
 
 export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('basic');
@@ -21,6 +23,136 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
   const { getAllFactionSupports, getActiveEffects } = useSupportStore();
+  
+  // 秘書ストア
+  const {
+    selectedCharacter,
+    characterDisplayState,
+    advices,
+    conversationMessages,
+    changeExpression,
+    toggleLayer,
+    markAdviceAsRead,
+    dismissAdvice,
+    addConversationMessage
+  } = useSecretaryStore();
+
+  // 秘書タブがアクティブになったときに会話メッセージを生成するuseEffect
+  useEffect(() => {
+    if (activeTab === 'secretary') {
+      // 季節に応じた会話メッセージを生成
+      const month = stats.date.month;
+      const seasonalMessages = [];
+      
+      // 季節に応じたメッセージを配列に追加
+      switch (month) {
+        case 1:
+          seasonalMessages.push(
+            '新年あけましておめでとうございます！今年も都市建設を頑張りましょう！',
+            '新年の抱負は決まりましたか？都市の発展計画を立ててみましょう！',
+            '一年の始まりですね。都市の未来を描いてみませんか？'
+          );
+          break;
+        case 2:
+          seasonalMessages.push(
+            'まだ寒い日が続きますね。体調管理に気をつけましょう。',
+            '冬の間の都市運営はいかがですか？',
+            '春に向けて、都市の準備を進めていきましょう！'
+          );
+          break;
+        case 3:
+          seasonalMessages.push(
+            '春の訪れを感じる季節になりましたね！',
+            '春の都市は活気づいていますか？',
+            '新しい季節の始まりに、都市の発展計画を立ててみましょう！'
+          );
+          break;
+        case 4:
+          seasonalMessages.push(
+            '桜の季節ですね。都市も春らしく彩られています。',
+            '春の都市建設は順調に進んでいますか？',
+            '春の暖かさと共に、都市も成長していきましょう！'
+          );
+          break;
+        case 5:
+          seasonalMessages.push(
+            '新緑の季節ですね。都市も緑に包まれています。',
+            '5月の都市運営はいかがですか？',
+            '緑豊かな都市を作っていきましょう！'
+          );
+          break;
+        case 6:
+          seasonalMessages.push(
+            '梅雨の季節になりましたね。都市の排水対策は大丈夫ですか？',
+            '雨の多い季節の都市管理は大変ですね。',
+            '梅雨明けに向けて、都市の準備を整えましょう！'
+          );
+          break;
+        case 7:
+          seasonalMessages.push(
+            '夏本番ですね！暑い季節の都市運営お疲れ様です。',
+            '夏の都市は活気づいていますか？',
+            '夏の暑さに負けず、都市建設を頑張りましょう！'
+          );
+          break;
+        case 8:
+          seasonalMessages.push(
+            '夏休みの季節ですね。都市も賑やかになりそうです。',
+            '8月の都市運営はいかがですか？',
+            '夏の思い出と共に、都市も発展していきましょう！'
+          );
+          break;
+        case 9:
+          seasonalMessages.push(
+            '秋の気配を感じる季節になりましたね。',
+            '秋の都市は落ち着いた雰囲気ですか？',
+            '秋の涼しさと共に、都市の計画を見直してみましょう！'
+          );
+          break;
+        case 10:
+          seasonalMessages.push(
+            '紅葉の季節ですね。都市も秋らしく彩られています。',
+            '10月の都市運営はいかがですか？',
+            '秋の美しさと共に、都市も成熟していきましょう！'
+          );
+          break;
+        case 11:
+          seasonalMessages.push(
+            '冬の足音が聞こえる季節になりましたね。',
+            '冬に向けて都市の準備は整っていますか？',
+            '年末評価に向けて、都市の総仕上げを頑張りましょう！'
+          );
+          break;
+        case 12:
+          seasonalMessages.push(
+            '一年の締めくくりの季節ですね。お疲れ様でした！',
+            '年末の都市運営はいかがですか？',
+            '今年の成果を振り返り、来年への準備を整えましょう！'
+          );
+          break;
+        default:
+          seasonalMessages.push('お疲れ様です。今日も都市建設を頑張りましょう！');
+      }
+      
+      // デフォルトメッセージも追加
+      const defaultMessages = [
+        'お疲れ様です。今日も都市建設を頑張りましょう！',
+        '都市の調子はどうですか？何かお困りのことは？',
+        'この都市をさらに発展させていきましょう！',
+        '都市建設について何でもお聞きください！',
+        '今日も一日頑張りましょう！',
+        '都市の未来を一緒に作っていきましょう！'
+      ];
+      
+      // 季節メッセージとデフォルトメッセージを組み合わせ
+      const allMessages = [...seasonalMessages, ...defaultMessages];
+      
+      // ランダムに1つ選択
+      const randomMessage = allMessages[Math.floor(Math.random() * allMessages.length)];
+      
+      addConversationMessage('greeting', randomMessage);
+    }
+  }, [activeTab, addConversationMessage, stats.date.month]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },
@@ -28,6 +160,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     { id: 'industry', name: '産業', icon: TbBuilding },
     { id: 'infrastructure', name: 'インフラ', icon: TbBolt },
     { id: 'support', name: '支持・派閥', icon: TbFlag },
+    { id: 'secretary', name: '秘書', icon: TbIdBadge}
   ];
 
   // 基本タブのコンテンツ
@@ -701,6 +834,110 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     );
   };
 
+  // 秘書タブのコンテンツ
+  const renderSecretaryTab = () => (
+    <div className="relative">
+      {/* アドバイスセクション */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg mr-60 overflow-y-auto" style={{ height: 'calc(100vh - 9em)' }}>
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-200">
+          <TbBulb className="text-yellow-400" />
+          都市開発アドバイス
+        </h3>
+        <div className="space-y-3">
+          {advices.filter(advice => !advice.isDismissed).map((advice) => (
+            <div
+              key={advice.id}
+              className={`bg-gray-700 rounded-lg p-3 border-l-4 ${
+                advice.priority === 'urgent' ? 'border-red-500' :
+                advice.priority === 'high' ? 'border-orange-500' :
+                advice.priority === 'medium' ? 'border-yellow-500' :
+                'border-blue-500'
+              } ${advice.isRead ? 'opacity-75' : ''}`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h5 className="font-semibold text-gray-200 text-sm">{advice.title}</h5>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      advice.priority === 'urgent' ? 'bg-red-600 text-white' :
+                      advice.priority === 'high' ? 'bg-orange-600 text-white' :
+                      advice.priority === 'medium' ? 'bg-yellow-600 text-white' :
+                      'bg-blue-600 text-white'
+                    }`}>
+                      {advice.priority === 'urgent' ? '緊急' :
+                       advice.priority === 'high' ? '高' :
+                       advice.priority === 'medium' ? '中' :
+                       '低'}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 text-s mb-1">{advice.message}</p>
+                  {advice.suggestion && (
+                    <p className="text-blue-300 text-s italic">{advice.suggestion}</p>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-2">
+                  {!advice.isRead && (
+                    <button
+                      onClick={() => markAdviceAsRead(advice.id)}
+                      className="text-blue-400 hover:text-blue-300 text-xs"
+                    >
+                      既読
+                    </button>
+                  )}
+                  <button
+                    onClick={() => dismissAdvice(advice.id)}
+                    className="text-gray-400 hover:text-red-400 text-xs"
+                  >
+                    <TbX size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {advices.filter(advice => !advice.isDismissed).length === 0 && (
+            <div className="text-center text-gray-400 py-4 text-sm">
+              現在のアドバイスはありません
+            </div>
+          )}
+        </div>
+      </div>
+      {/* 秘書キャラクター*/}
+      <div className="fixed -bottom-1 right-28 shadow-lg z-50 pointer-events-none">
+        {/* 会話メッセージボックス */}
+        <div className="fixed bottom-90 right-1.5 p-3 bg-blue-900 rounded-lg border border-blue-600 shadow-lg w-64">
+          <div className="flex-1">
+            <div className="text-xs text-blue-200 mb-1">
+              秘書からのメッセージ
+            </div>
+            <div className="text-white text-sm leading-relaxed">
+              {conversationMessages.length > 0 && conversationMessages[0]?.content 
+                ? conversationMessages[0].content 
+                : '都市建設について何でもお聞きください！'
+              }
+            </div>
+          </div>
+        </div>
+        
+        <div className="w-48">
+          <CharacterDisplay
+            character={selectedCharacter}
+            displayState={characterDisplayState}
+            callbacks={{
+              onExpressionChange: changeExpression,
+              onLayerToggle: toggleLayer,
+              onCharacterChange: () => {
+                console.log('Character change requested');
+              }
+            }}
+            className="text-white"
+            size="xl"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   // タブコンテンツのレンダリング
   const renderTabContent = () => {
     switch (activeTab) {
@@ -714,6 +951,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         return renderInfrastructureTab();
       case 'support':
         return renderSupportTab();
+      case 'secretary':
+        return renderSecretaryTab();
       default:
         return renderBasicTab();
     }
