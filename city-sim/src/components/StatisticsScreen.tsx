@@ -46,7 +46,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       // 季節に応じたジャケットの更新
       updateSeasonalClothing(stats.date.month);
       
-      // 動的アドバイスの生成
+      // 動的アドバイスの生成（初回のみ）
       const gameState = {
         stats: {
           population: stats.population,
@@ -58,8 +58,13 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         }
       };
       
-      // 動的アドバイスを生成
-      generateAdvices(gameState, null, { getInfrastructureShortage });
+      // 動的アドバイスを生成（重複防止のため条件付き）
+      const currentWeek = stats.date.week;
+      const lastAdviceWeek = useSecretaryStore.getState().lastAdviceGenerationWeek;
+      
+      if (currentWeek > lastAdviceWeek) {
+        generateAdvices(gameState, null, { getInfrastructureShortage });
+      }
       
       // 季節に応じた会話メッセージを生成
       const seasonalMessages = getSeasonalMessages(stats.date.month);
@@ -78,11 +83,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           '都市建設について何でもお聞きください！'
         ];
         
-        const randomMessage = defaultMessages[Math.floor(Math.random() * defaultMessages.length)];
+        const randomMessage = defaultMessages[Math.floor(Math.random() * seasonalMessages.length)];
         addConversationMessage('general', randomMessage);
       }
     }
-  }, [activeTab, addConversationMessage, stats.date.month, updateSeasonalClothing, generateAdvices, facilities]);
+  }, [activeTab, addConversationMessage, stats.date.month, updateSeasonalClothing, generateAdvices, facilities, stats.date.week]);
 
   // 月が変わるたびに動的アドバイスを生成
   useEffect(() => {
@@ -97,9 +102,14 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       }
     };
     
-    // 月が変わるたびに動的アドバイスを生成
-    generateAdvices(gameState, null, { getInfrastructureShortage });
-  }, [stats.date.month, generateAdvices, facilities, stats.population, stats.satisfaction, stats.money, stats.monthlyBalance, getInfrastructureShortage]);
+    // 月が変わるたびに動的アドバイスを生成（重複防止のため条件付き）
+    const currentWeek = stats.date.week;
+    const lastAdviceWeek = useSecretaryStore.getState().lastAdviceGenerationWeek;
+    
+    if (currentWeek > lastAdviceWeek) {
+      generateAdvices(gameState, null, { getInfrastructureShortage });
+    }
+  }, [stats.date.month, generateAdvices, facilities, stats.population, stats.satisfaction, stats.money, stats.monthlyBalance, getInfrastructureShortage, stats.date.week]);
 
   const tabs = [
     { id: 'basic', name: '基本', icon: TbUsers },

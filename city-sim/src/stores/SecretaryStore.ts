@@ -202,7 +202,7 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
     ));
   }
   
-  // ゲーム進行に応じたチュートリアルアドバイス
+  // ゲーム進行に応じたチュートリアルアドバイス（重複防止のため条件を厳密化）
   const totalWeeks = stats?.date?.totalWeeks || 0;
   
   if (totalWeeks === 1) {
@@ -235,7 +235,7 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
     ));
   }
   
-  // 初回建設時のアドバイス
+  // 初回建設時のアドバイス（重複防止のため条件を厳密化）
   if (stats?.facilities && stats.facilities.length === 1) {
     advices.push(generateAdvice(
       'general',
@@ -246,7 +246,7 @@ const generateDynamicAdvices = (gameState: any, _economyState: any, infrastructu
     ));
   }
   
-  // ミッション関連
+  // ミッション関連（重複防止のため条件を厳密化）
   if (stats?.date?.month === 11 && stats?.date?.week === 1) {
     advices.push(generateAdvice(
       'mission',
@@ -559,33 +559,68 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
   
   // アドバイス生成
   generateAdvices: (gameState?: any, economyState?: any, infrastructureState?: any) => {
+    const currentAdvices = get().advices;
+    
     // 動的アドバイスを生成
     const dynamicAdvices = generateDynamicAdvices(gameState, economyState, infrastructureState);
     
-    // 動的アドバイスを追加
-    dynamicAdvices.forEach(advice => get().addAdvice(advice));
+    // 重複チェック付きで動的アドバイスを追加
+    dynamicAdvices.forEach(advice => {
+      // 同じタイトルのアドバイスが既に存在するかチェック
+      const isDuplicate = currentAdvices.some(existingAdvice => 
+        existingAdvice.title === advice.title && 
+        existingAdvice.type === advice.type &&
+        !existingAdvice.isDismissed
+      );
+      
+      if (!isDuplicate) {
+        get().addAdvice(advice);
+      }
+    });
     
-    // 基本的なアドバイスも生成
+    // 基本的なアドバイスも生成（重複チェック付き）
     const advices: Omit<Advice, 'id' | 'timestamp' | 'isRead' | 'isDismissed'>[] = [];
     
     if (gameState?.stats?.population < 1000) {
-      advices.push({
-        type: 'population',
-        priority: 'medium',
+      const populationAdvice = {
+        type: 'population' as AdviceType,
+        priority: 'medium' as AdvicePriority,
         title: '人口増加の提案',
         message: '住宅区画を増やすことで人口を増やすことができます。',
         suggestion: '道路に接続された住宅区画を建設してみてください。'
-      });
+      };
+      
+      // 重複チェック
+      const isDuplicate = currentAdvices.some(existingAdvice => 
+        existingAdvice.title === populationAdvice.title && 
+        existingAdvice.type === populationAdvice.type &&
+        !existingAdvice.isDismissed
+      );
+      
+      if (!isDuplicate) {
+        advices.push(populationAdvice);
+      }
     }
     
     if (gameState?.stats?.satisfaction < 50) {
-      advices.push({
-        type: 'satisfaction',
-        priority: 'high',
+      const satisfactionAdvice = {
+        type: 'satisfaction' as AdviceType,
+        priority: 'high' as AdvicePriority,
         title: '満足度向上の提案',
         message: '市民の満足度が低下しています。',
         suggestion: '公園の建設や道路の整備を検討してください。'
-      });
+      };
+      
+      // 重複チェック
+      const isDuplicate = currentAdvices.some(existingAdvice => 
+        existingAdvice.title === satisfactionAdvice.title && 
+        existingAdvice.type === satisfactionAdvice.type &&
+        !existingAdvice.isDismissed
+      );
+      
+      if (!isDuplicate) {
+        advices.push(satisfactionAdvice);
+      }
     }
     
     advices.forEach(advice => get().addAdvice(advice));
@@ -599,6 +634,9 @@ export const useSecretaryStore = create<SecretaryStore>((set, get) => ({
     if (currentWeek > lastGeneration) {
       get().generateAdvices(gameState, economyState, infrastructureState);
       set({ lastAdviceGenerationWeek: currentWeek });
+      console.log(`週次アドバイス生成完了: 第${currentWeek}週`);
+    } else {
+      console.log(`アドバイス生成スキップ: 第${currentWeek}週（前回生成: 第${lastGeneration}週）`);
     }
   },
   
