@@ -677,7 +677,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     // 工業区画の環境悪化効果
     const industrialCount = facilities.filter(f => f.type === 'industrial').length;
-    totalSatisfaction -= industrialCount * 3;
+    totalSatisfaction -= industrialCount * 1;
     
     // 満足度を0-100の範囲に制限
     totalSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
