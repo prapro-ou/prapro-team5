@@ -275,7 +275,7 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
   police: {
     type: 'police',
     name: '警察署',
-    size: 3,
+    size: 5,
     cost: 800,
     maintenanceCost: 40,
     description: '治安を向上させる',
