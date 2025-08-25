@@ -15,7 +15,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
   const stats = get().stats;
   const feedStore = useFeedStore.getState();
   const now = Date.now();
-  let feedAdded = false;
 
   // 警察署不足メッセージ（罵倒系含むランダム）
   // 病院不足メッセージ（罵倒系含むランダム）
@@ -67,7 +66,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
         mood: 'negative'
       });
     });
-    feedAdded = true;
     prevShortage.hospital = true;
   } else {
     // 前回病院不足だったが、今月は解消された場合
@@ -91,7 +89,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
         timestamp: now,
         mood: 'positive'
       });
-      feedAdded = true;
     }
     prevShortage.hospital = false;
   }
@@ -119,8 +116,7 @@ export const citizenFeedTask: MonthlyTask = (get) => {
         mood: 'negative'
       });
     });
-    feedAdded = true;
-    prevShortage.police = true;
+          prevShortage.police = true;
   } else {
     // 前回警察署不足だったが、今月は解消された場合
     if (prevShortage.police) {
@@ -142,7 +138,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
         timestamp: now,
         mood: 'positive'
       });
-      feedAdded = true;
     }
     prevShortage.police = false;
   }
@@ -168,7 +163,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
         timestamp: now,
         mood: "negative"
       });
-      feedAdded = true;
     }
   }
 
@@ -214,8 +208,7 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "negative"
     });
-    feedAdded = true;
-  }
+      }
   // 水道改善メッセージ
   if (prevShortage.water && shortage.water === 0) {
     feedStore.addFeed({
@@ -224,7 +217,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "positive"
     });
-    feedAdded = true;
   }
   // 電気不足メッセージ（ランダム）
   const electricityMessages = [
@@ -240,8 +232,7 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "negative"
     });
-    feedAdded = true;
-  }
+      }
   // 電気改善メッセージ
   if (prevShortage.electricity && shortage.electricity === 0) {
     feedStore.addFeed({
@@ -250,7 +241,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "positive"
     });
-    feedAdded = true;
   }
 
   // 公園サービス範囲外住宅メッセージ（ランダム）
@@ -262,9 +252,8 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "negative"
     });
-    feedAdded = true;
-  }
-    // 公園サービス範囲外住宅メッセージ（ランダム）
+      }
+  // 公園サービス範囲外住宅メッセージ（ランダム）
   // 公園改善メッセージ
   if (prevShortage.park && !isParkShortage) {
     feedStore.addFeed({
@@ -273,7 +262,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "positive"
     });
-    feedAdded = true;
   }
 
   // 満足度メッセージ（ランダム）
@@ -295,7 +283,6 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "negative"
     });
-    feedAdded = true;
   } else if (stats.satisfaction > 80) {
     const msg = happyMessages[Math.floor(Math.random() * happyMessages.length)];
     feedStore.addFeed({
@@ -304,13 +291,13 @@ export const citizenFeedTask: MonthlyTask = (get) => {
       timestamp: now,
       mood: "positive"
     });
-    feedAdded = true;
   }
-  // 住人がいる＆今月何もメッセージが出ていない場合は日常メッセージ（ポジティブ）
+  // 住人がいる場合は毎月日常メッセージを表示
   const dailyMessages = [
     "今日はいい天気だね！☀️",
     "みんなでご飯を食べて幸せ！🍚",
     // どうでもいい系
+    "実践プログラミング100点だった！！！",
     "靴下が片方なくなった…どこいったんだろう🧦",
     "今日の天気、まあまあだったな…☁️",
     "冷蔵庫にプリンがあった！ラッキー🍮",
@@ -332,7 +319,7 @@ export const citizenFeedTask: MonthlyTask = (get) => {
     "スマホの画面が割れた…ショック😢",
     "新しい靴下買おうかな…"
   ];
-  if (stats.population > 0 && !feedAdded) {
+  if (stats.population > 0) {
     const idx = Math.floor(Math.random() * dailyMessages.length);
     const msg = dailyMessages[idx];
     // どうでもいい系はneutral、それ以外はhappy

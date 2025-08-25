@@ -119,7 +119,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     getFacilityImageData,
     getRoadImageData,
     isFacilityCenter,
-    getIsometricPosition
+    getIsometricPosition,
+    calculateZIndex,
+    calculateFacilityZIndex,
+    calculateIsometricZIndex
   } = useFacilityDisplay({
     facilityMap,
     MAP_OFFSET_X,
@@ -366,25 +369,45 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       }
     });
     
-    // 施設画像の描画
-    visibleTiles.forEach(({ x, y }) => {
-      const facility = facilityMap.get(`${x}-${y}`);
-      if (facility && imagesLoaded) {
-        drawFacilityImage({
-          ctx,
-          facility,
-          x,
-          y,
-          mapOffsetX: MAP_OFFSET_X,
-          mapOffsetY: MAP_OFFSET_Y,
-          imageCache,
-          getIsometricPosition,
-          isFacilityCenter,
-          getFacilityImageData,
-          getRoadImageData
+    // 施設画像の描画（Z-index順）
+    if (imagesLoaded) {
+      // 見える範囲の施設をZ-index順にソート
+      const visibleFacilities = Array.from(facilityMap.values())
+        .filter(facility => {
+          // 見える範囲内の施設のみを対象とする
+          return facility.occupiedTiles.some(tile => 
+            visibleTiles.some(vt => vt.x === tile.x && vt.y === tile.y)
+          );
+        })
+        .sort((a, b) => {
+          // Z-index順にソート（手前から奥へ）
+          const zIndexA = calculateFacilityZIndex(a);
+          const zIndexB = calculateFacilityZIndex(b);
+          return zIndexA - zIndexB;
         });
-      }
-    });
+
+      // ソートされた順序で施設画像を描画
+      visibleFacilities.forEach(facility => {
+        // 施設の占有する全タイルで描画処理を行う
+        facility.occupiedTiles.forEach(tile => {
+          if (visibleTiles.some(vt => vt.x === tile.x && vt.y === tile.y)) {
+            drawFacilityImage({
+              ctx,
+              facility,
+              x: tile.x,
+              y: tile.y,
+              mapOffsetX: MAP_OFFSET_X,
+              mapOffsetY: MAP_OFFSET_Y,
+              imageCache,
+              getIsometricPosition,
+              isFacilityCenter,
+              getFacilityImageData,
+              getRoadImageData
+            });
+          }
+        });
+      });
+    }
     
     // 施設効果範囲の描画
     drawFacilityEffects({
@@ -411,7 +434,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData, calculateZIndex, calculateFacilityZIndex, calculateIsometricZIndex]);
 
   // Canvas描画の実行
   useEffect(() => {
