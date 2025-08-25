@@ -7,10 +7,11 @@
 ## プロジェクト概要
 地方都市開発シミュレーションゲームの開発プロジェクト
 
-
-
 ## デモ
 https://prapro-ou.github.io/prapro-team5/
+
+## 初心者向けチュートリアル
+[チュートリアル](./docs/tutorial.md)
 
 ## ドキュメント
 - [プロジェクト仕様書](./docs/specification.md)
