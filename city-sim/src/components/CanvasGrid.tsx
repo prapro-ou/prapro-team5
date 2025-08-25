@@ -121,7 +121,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     isFacilityCenter,
     getIsometricPosition,
     calculateZIndex,
-    calculateFacilityZIndex
+    calculateFacilityZIndex,
+    calculateIsometricZIndex
   } = useFacilityDisplay({
     facilityMap,
     MAP_OFFSET_X,
@@ -433,7 +434,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     });
     
     ctx.restore();
-  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData, calculateZIndex, calculateFacilityZIndex]);
+  }, [camera, visibleTiles, facilityMap, getFacilityColor, getPreviewColorValue, convertCssClassToColor, imagesLoaded, getIsometricPosition, isFacilityCenter, getFacilityImageData, getRoadImageData, facilityEffectTiles, selectedPosition, facilities, isPlacingFacility, dragRange, size, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, MAP_OFFSET_X, MAP_OFFSET_Y, terrainMap, getTerrainAt, imageCache, terrainDrawData, calculateZIndex, calculateFacilityZIndex, calculateIsometricZIndex]);
 
   // Canvas描画の実行
   useEffect(() => {

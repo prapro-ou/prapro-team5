@@ -77,18 +77,31 @@ export const useFacilityDisplay = ({
     return Math.floor(baseZ + offset);
   }, []);
 
+  // アイソメトリックビューZ-index計算
+  const calculateIsometricZIndex = React.useCallback((x: number, y: number, size: number): number => {
+    // アイソメトリックビューでは、左上が手前、右下が奥
+    // 施設の最も手前（左上）のタイルのZ-indexを使用
+    const frontTileX = x;
+    const frontTileY = y;
+    
+    // アイソメトリックビューでの距離計算
+    // (x + y) が小さいほど手前、大きいほど奥
+    const baseZ = (frontTileX + frontTileY) * 100 + frontTileX;
+    
+    // 施設サイズを考慮した調整
+    // 大きい施設ほど手前に表示されるようにする
+    const sizeAdjustment = size * 10;
+    
+    return Math.floor(baseZ - sizeAdjustment);
+  }, []);
+
   // 施設サイズを考慮したZ-index計算
   const calculateFacilityZIndex = React.useCallback((facility: Facility): number => {
     const facilityData = FACILITY_DATA[facility.type];
     const size = facilityData.size;
     
-    // 大きい施設の場合は、最も手前のタイルのZ-indexを使用
-    // これにより、大きい施設が小さい施設の上に正しく表示される
-    const frontTileX = facility.position.x + Math.floor(size / 2);
-    const frontTileY = facility.position.y + Math.floor(size / 2);
-    
-    return calculateZIndex(frontTileX, frontTileY);
-  }, [calculateZIndex]);
+    return calculateIsometricZIndex(facility.position.x, facility.position.y, size);
+  }, [calculateIsometricZIndex]);
 
   // アイソメトリック位置の計算
   const getIsometricPosition = React.useCallback((x: number, y: number) => {
@@ -101,6 +114,7 @@ export const useFacilityDisplay = ({
     isFacilityCenter,
     calculateZIndex,
     calculateFacilityZIndex,
+    calculateIsometricZIndex,
     getIsometricPosition
   };
 };
