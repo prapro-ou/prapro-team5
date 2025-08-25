@@ -77,6 +77,19 @@ export const useFacilityDisplay = ({
     return Math.floor(baseZ + offset);
   }, []);
 
+  // 施設サイズを考慮したZ-index計算
+  const calculateFacilityZIndex = React.useCallback((facility: Facility): number => {
+    const facilityData = FACILITY_DATA[facility.type];
+    const size = facilityData.size;
+    
+    // 大きい施設の場合は、最も手前のタイルのZ-indexを使用
+    // これにより、大きい施設が小さい施設の上に正しく表示される
+    const frontTileX = facility.position.x + Math.floor(size / 2);
+    const frontTileY = facility.position.y + Math.floor(size / 2);
+    
+    return calculateZIndex(frontTileX, frontTileY);
+  }, [calculateZIndex]);
+
   // アイソメトリック位置の計算
   const getIsometricPosition = React.useCallback((x: number, y: number) => {
     return toIsometric(x, y);
@@ -87,6 +100,7 @@ export const useFacilityDisplay = ({
     getRoadImageData,
     isFacilityCenter,
     calculateZIndex,
+    calculateFacilityZIndex,
     getIsometricPosition
   };
 };
