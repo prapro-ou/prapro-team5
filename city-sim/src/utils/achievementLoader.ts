@@ -90,7 +90,8 @@ export async function loadMultipleAchievementFiles(filePaths: string[]): Promise
     
     if (result.success) {
       allAchievements.push(...result.achievements);
-    } else {
+    } 
+    else {
       errors.push(`${filePath}: ${result.error}`);
     }
   }
