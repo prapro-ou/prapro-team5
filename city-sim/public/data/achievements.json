@@ -1,0 +1,177 @@
+{
+  "achievements": [
+    {
+      "id": "pop1000",
+      "name": "人口1000人達成",
+      "description": "人口が1000人に到達すると報酬がもらえます。",
+      "condition": "人口1000人以上",
+      "reward": "¥10,000",
+      "hidden": false,
+      "category": "population",
+      "rarity": "common",
+      "priority": 1,
+      "conditions": [
+        { "type": "population", "op": ">=", "value": 1000 }
+      ],
+      "effects": [
+        { "type": "money", "value": 10000 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "park5",
+      "name": "公園5つ設置",
+      "description": "公園を5つ設置すると特別な報酬がもらえます。",
+      "condition": "公園5つ以上",
+      "reward": "後楽園（まだ実装していません）",
+      "hidden": false,
+      "category": "facility",
+      "rarity": "common",
+      "priority": 2,
+      "conditions": [
+        { "type": "facility_type_count", "op": ">=", "value": 5, "target": "park" }
+      ],
+      "effects": [
+        { "type": "facility_unlock", "target": "amusement_park" }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "level2",
+      "name": "レベル2達成",
+      "description": "都市レベルが2に到達すると報酬がもらえます。",
+      "condition": "レベル2以上",
+      "reward": "¥5,000",
+      "hidden": false,
+      "category": "special",
+      "rarity": "common",
+      "priority": 3,
+      "conditions": [
+        { "type": "level", "op": ">=", "value": 2 }
+      ],
+      "effects": [
+        { "type": "money", "value": 5000 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "level5",
+      "name": "レベル5達成",
+      "description": "都市レベルが5に到達すると報酬がもらえます。",
+      "condition": "レベル5以上",
+      "reward": "¥20,000",
+      "hidden": false,
+      "category": "special",
+      "rarity": "rare",
+      "priority": 4,
+      "conditions": [
+        { "type": "level", "op": ">=", "value": 5 }
+      ],
+      "effects": [
+        { "type": "money", "value": 20000 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "halfYear",
+      "name": "半年間の市長",
+      "description": "都市を半年間運営した記念の報酬です。",
+      "condition": "ゲーム内時間で半年経過（26週）",
+      "reward": "¥25,000 + 称号「経験豊富な市長」",
+      "hidden": true,
+      "category": "time",
+      "rarity": "rare",
+      "priority": 5,
+      "conditions": [
+        { "type": "time_elapsed", "op": ">=", "value": 26 }
+      ],
+      "effects": [
+        { "type": "money", "value": 25000 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "oneYear",
+      "name": "一年間の市長",
+      "description": "都市を一年間運営した記念の報酬です。",
+      "condition": "ゲーム内時間で1年経過（52週）",
+      "reward": "¥50,000 + 称号「ベテラン市長」",
+      "hidden": true,
+      "category": "time",
+      "rarity": "epic",
+      "priority": 6,
+      "conditions": [
+        { "type": "time_elapsed", "op": ">=", "value": 52 }
+      ],
+      "effects": [
+        { "type": "money", "value": 50000 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "commercial10",
+      "name": "商業地区発展",
+      "description": "商業施設の発展により多くの人々が街に移住してきました。",
+      "condition": "商業施設10個建設",
+      "reward": "人口+500人 + ¥15,000",
+      "hidden": true,
+      "category": "economy",
+      "rarity": "rare",
+      "priority": 7,
+      "conditions": [
+        { "type": "facility_type_count", "op": ">=", "value": 10, "target": "commercial" }
+      ],
+      "effects": [
+        { "type": "money", "value": 15000 },
+        { "type": "population", "value": 500 }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "megacity",
+      "name": "メガシティの誕生",
+      "description": "巨大都市を築き上げた偉大な市長！",
+      "condition": "人口5000人達成",
+      "reward": "¥100,000 + 特別建物解放",
+      "hidden": true,
+      "category": "population",
+      "rarity": "legendary",
+      "priority": 8,
+      "conditions": [
+        { "type": "population", "op": ">=", "value": 5000 }
+      ],
+      "effects": [
+        { "type": "money", "value": 100000 },
+        { "type": "facility_unlock", "target": "skyscraper" }
+      ],
+      "achieved": false,
+      "claimed": false
+    },
+    {
+      "id": "richMayor",
+      "name": "裕福な市長",
+      "description": "経済的成功を収めた手腕の持ち主！",
+      "condition": "所持金500,000円達成",
+      "reward": "税収+30% (永続)",
+      "hidden": true,
+      "category": "economy",
+      "rarity": "epic",
+      "priority": 9,
+      "conditions": [
+        { "type": "money", "op": ">=", "value": 500000 }
+      ],
+      "effects": [
+        { "type": "bonus_multiplier", "target": "tax_revenue", "value": 0.3 }
+      ],
+      "achieved": false,
+      "claimed": false
+    }
+  ]
+}
