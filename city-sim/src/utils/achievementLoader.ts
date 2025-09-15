@@ -156,7 +156,7 @@ export function filterAchievementsByStatus(achievements: Achievement[], status: 
 
 // 実績の優先度順ソート
 export function sortAchievementsByPriority(achievements: Achievement[]): Achievement[] {
-  return [...achievements].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  return [...achievements].sort((b, a) => (b.priority || 0) - (a.priority || 0));
 }
 
 // 実績の達成日時順ソート
