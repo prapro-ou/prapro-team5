@@ -6,7 +6,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
 import OpeningSequence from './components/OpeningSequence'
-import RewardPanel from './components/RewardPanel';
+import AchievementPanel from './components/AchievementPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 import MissionPanel from './components/MissionPanel';
@@ -118,9 +118,18 @@ function App() {
   // 実績システムの初期化
   useEffect(() => {
     if (isInitializationComplete) {
+      console.log('実績システムを初期化中...');
       loadAchievementsFromFile();
     }
   }, [isInitializationComplete, loadAchievementsFromFile]);
+  
+  // ゲーム開始時の実績読み込み（
+  useEffect(() => {
+    if (!isInitializationComplete && !showStartScreen && !showOpeningSequence) {
+      console.log('実績読み込み中...');
+      loadAchievementsFromFile();
+    }
+  }, [showStartScreen, showOpeningSequence, loadAchievementsFromFile, isInitializationComplete]);
   
   // 実績達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
@@ -279,8 +288,8 @@ function App() {
     return (
       <OpeningSequence 
                 onComplete={() => {
-          // 初期化完了フラグを一時的に無効化
-          setIsInitializationComplete(false);
+          // 初期化完了フラグを有効化
+          setIsInitializationComplete(true);
           
           // ゲーム状態を初期化（SaveLoadRegistryの影響を回避するため強制初期化）
           // 副作用はクソ，何もわからん
@@ -348,10 +357,7 @@ function App() {
           // オープニング状態を変更
           setShowOpeningSequence(false);
           
-          // 初期化完了フラグを有効化
-          setTimeout(() => {
-            setIsInitializationComplete(true);
-          }, 100);
+          // 初期化完了フラグは既に有効化済み
         }}
       />
     );
@@ -439,17 +445,8 @@ function App() {
       </div>
       {/* 実績パネル */}
       {showAchievementPanel && (
-        <RewardPanel
-          rewards={achievements.map(a => ({
-            id: a.id,
-            title: a.name,
-            description: a.description,
-            condition: a.condition,
-            achieved: a.achieved,
-            claimed: a.claimed,
-            reward: a.reward,
-            hidden: a.hidden
-          }))}
+        <AchievementPanel
+          achievements={achievements}
           onClaim={claimAchievement}
           onClose={() => setShowAchievementPanel(false)}
         />
