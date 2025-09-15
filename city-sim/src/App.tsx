@@ -103,10 +103,10 @@ function App() {
     facilities, 
     selectedFacilityType, 
     setSelectedFacilityType, 
-  addFacility,
-  checkCanPlace,
-  createFacility,
-  removeFacility
+    addFacility,
+    checkCanPlace,
+    createFacility,
+    removeFacility
   } = useFacilityStore();
 
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
@@ -123,13 +123,19 @@ function App() {
     }
   }, [isInitializationComplete, loadAchievementsFromFile]);
   
-  // ゲーム開始時の実績読み込み（
+  // ゲーム開始時の実績読み込み（フォールバック）
   useEffect(() => {
     if (!isInitializationComplete && !showStartScreen && !showOpeningSequence) {
-      console.log('実績読み込み中...');
+      console.log('ゲーム開始時の実績読み込み...');
       loadAchievementsFromFile();
     }
   }, [showStartScreen, showOpeningSequence, loadAchievementsFromFile, isInitializationComplete]);
+  
+  // アプリ起動時の実績読み込み（最終フォールバック）
+  useEffect(() => {
+    console.log('アプリ起動時の実績読み込み...');
+    loadAchievementsFromFile();
+  }, [loadAchievementsFromFile]);
   
   // 実績達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
