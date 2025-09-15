@@ -2,9 +2,7 @@
 import type { 
   Condition, 
   Effect, 
-  GameDate,
-  ConditionCheckResult,
-  EffectApplyResult
+  GameDate
 } from './mission';
 
 // 実績の基本インターフェース
@@ -45,3 +43,31 @@ export type AchievementRarity =
   | 'rare'          // レア
   | 'epic'          // エピック
   | 'legendary';    // レジェンダリー
+
+// 実績ストアのインターフェース
+export interface AchievementStore {
+  achievements: Achievement[];
+  claimAchievement: (id: string) => void;
+  updateAchievements: () => void;
+  hasClaimableAchievements: () => boolean;
+  
+  // セーブ・ロード機能
+  saveState: () => any;
+  loadState: (savedState: any) => void;
+  resetToInitial: () => void;
+  
+  // JSON読み込み機能
+  loadAchievementsFromFile: (filePath?: string) => Promise<void>;
+}
+
+// 実績読み込み結果
+export interface AchievementLoadResult {
+  success: boolean;
+  achievements: Achievement[];
+  error?: string;
+}
+
+// 実績データファイルの型
+export interface AchievementData {
+  achievements: Achievement[];
+}
