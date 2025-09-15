@@ -6,7 +6,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
 import OpeningSequence from './components/OpeningSequence'
-import RewardPanel from './components/RewardPanel';
+import AchievementPanel from './components/AchievementPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 import MissionPanel from './components/MissionPanel';
@@ -24,7 +24,7 @@ import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { useMissionStore } from './stores/MissionStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
-import { useRewardStore } from './stores/RewardStore';
+import { useAchievementStore } from './stores/AchievementStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
@@ -103,20 +103,41 @@ function App() {
     facilities, 
     selectedFacilityType, 
     setSelectedFacilityType, 
-  addFacility,
-  checkCanPlace,
-  createFacility,
-  removeFacility
+    addFacility,
+    checkCanPlace,
+    createFacility,
+    removeFacility
   } = useFacilityStore();
 
-  // 報酬パネル表示状態のみAppで管理
-  const [showRewardPanel, setShowRewardPanel] = useState(false);
-  const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
+  const [showAchievementPanel, setShowAchievementPanel] = useState(false);
+  const { achievements, claimAchievement, updateAchievements, hasClaimableAchievements, loadAchievementsFromFile } = useAchievementStore();
   
   // 秘書ストア
   const { updateSeasonalClothing } = useSecretaryStore();
   
-  // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
+  // 実績システムの初期化
+  useEffect(() => {
+    if (isInitializationComplete) {
+      console.log('実績システムを初期化中...');
+      loadAchievementsFromFile();
+    }
+  }, [isInitializationComplete, loadAchievementsFromFile]);
+  
+  // ゲーム開始時の実績読み込み（フォールバック）
+  useEffect(() => {
+    if (!isInitializationComplete && !showStartScreen && !showOpeningSequence) {
+      console.log('ゲーム開始時の実績読み込み...');
+      loadAchievementsFromFile();
+    }
+  }, [showStartScreen, showOpeningSequence, loadAchievementsFromFile, isInitializationComplete]);
+  
+  // アプリ起動時の実績読み込み（最終フォールバック）
+  useEffect(() => {
+    console.log('アプリ起動時の実績読み込み...');
+    loadAchievementsFromFile();
+  }, [loadAchievementsFromFile]);
+  
+  // 実績達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     if (!isInitializationComplete) return;
     updateAchievements();
@@ -273,8 +294,8 @@ function App() {
     return (
       <OpeningSequence 
                 onComplete={() => {
-          // 初期化完了フラグを一時的に無効化
-          setIsInitializationComplete(false);
+          // 初期化完了フラグを有効化
+          setIsInitializationComplete(true);
           
           // ゲーム状態を初期化（SaveLoadRegistryの影響を回避するため強制初期化）
           // 副作用はクソ，何もわからん
@@ -321,7 +342,7 @@ function App() {
           useFacilityStore.getState().resetToInitial();
           useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
           useInfrastructureStore.getState().resetToInitial();
-          useRewardStore.getState().resetToInitial();
+          useAchievementStore.getState().resetToInitial();
           useMissionStore.getState().resetToInitial();
           useTimeControlStore.getState().resetToInitial();
           useSecretaryStore.getState().resetToInitial();
@@ -342,10 +363,7 @@ function App() {
           // オープニング状態を変更
           setShowOpeningSequence(false);
           
-          // 初期化完了フラグを有効化
-          setTimeout(() => {
-            setIsInitializationComplete(true);
-          }, 100);
+          // 初期化完了フラグは既に有効化済み
         }}
       />
     );
@@ -410,7 +428,7 @@ function App() {
         <div className="relative">
           <button
             onClick={() => {
-              setShowRewardPanel(v => {
+              setShowAchievementPanel(v => {
                 playPanelSound(); // 開閉どちらでも同じ音
                 return !v;
               });
@@ -420,7 +438,7 @@ function App() {
             <TbAward size={24} className="text-yellow-400" />
           </button>
           {/* 受け取り可能な報酬がある場合の通知バッジ */}
-          {hasClaimableRewards() && (
+          {hasClaimableAchievements() && (
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
           )}
         </div>
@@ -431,12 +449,12 @@ function App() {
           <TbSettings size={26} />
         </button>
       </div>
-      {/* 報酬パネル */}
-      {showRewardPanel && (
-        <RewardPanel
-          rewards={rewards}
-          onClaim={claimReward}
-          onClose={() => setShowRewardPanel(false)}
+      {/* 実績パネル */}
+      {showAchievementPanel && (
+        <AchievementPanel
+          achievements={achievements}
+          onClaim={claimAchievement}
+          onClose={() => setShowAchievementPanel(false)}
         />
       )}
       {/* レベルアップ通知 */}
@@ -533,7 +551,7 @@ function App() {
               useFacilityStore.getState().resetToInitial();
               useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
               useInfrastructureStore.getState().resetToInitial();
-              useRewardStore.getState().resetToInitial();
+              useAchievementStore.getState().resetToInitial();
               useMissionStore.getState().resetToInitial();
               
               // 設定パネルを閉じて、スタート画面を表示
