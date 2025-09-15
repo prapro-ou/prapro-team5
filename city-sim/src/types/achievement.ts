@@ -71,3 +71,37 @@ export interface AchievementLoadResult {
 export interface AchievementData {
   achievements: Achievement[];
 }
+
+// レアリティの色設定（UI用）
+export const RARITY_COLORS: Record<AchievementRarity, string> = {
+  common: 'text-gray-600',
+  rare: 'text-blue-600',
+  epic: 'text-purple-600',
+  legendary: 'text-yellow-600'
+};
+
+// レアリティの背景色設定（UI用）
+export const RARITY_BG_COLORS: Record<AchievementRarity, string> = {
+  common: 'bg-gray-100',
+  rare: 'bg-blue-100',
+  epic: 'bg-purple-100',
+  legendary: 'bg-yellow-100'
+};
+
+// カテゴリの表示名
+export const CATEGORY_NAMES: Record<AchievementCategory, string> = {
+  population: '人口',
+  economy: '経済',
+  infrastructure: 'インフラ',
+  time: '時間',
+  facility: '施設',
+  special: '特殊'
+};
+
+// レアリティの表示名
+export const RARITY_NAMES: Record<AchievementRarity, string> = {
+  common: 'コモン',
+  rare: 'レア',
+  epic: 'エピック',
+  legendary: 'レジェンダリー'
+};
