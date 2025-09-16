@@ -2,7 +2,7 @@ import type { SaveData, SaveResult, LoadResult, ValidationResult } from '../type
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import type { TerrainType } from '../types/terrain';
-import type { Reward } from '../components/RewardPanel';
+import type { Achievement } from '../types/achievement';
 import type { InfrastructureStatus } from '../stores/InfrastructureStore';
 import { SAVE_DATA_VERSION } from '../types/save';
 
@@ -16,7 +16,7 @@ export function createSaveData(
 	facilities: Facility[],
 	terrainMap: Map<string, TerrainType>,
 	infrastructureStatus: InfrastructureStatus,
-	rewards: Reward[],
+	rewards: Achievement[],
 	gameSettings: {
 		isPaused: boolean;
 		gameSpeed: number;
