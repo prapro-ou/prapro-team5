@@ -1,5 +1,6 @@
 // import { Grid } from './components/grid'
 import { CanvasGrid } from './components/CanvasGrid'
+import { PixiGrid } from './components/PixiGrid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -79,6 +80,8 @@ function App() {
 
   // スタート画面の表示状態
   const [showStartScreen, setShowStartScreen] = useState(true);
+  // Pixi 使用切替（フェーズ1検証用）
+  const [usePixi, setUsePixi] = useState(true);
   
   // オープニングシーケンスの表示状態
   const [showOpeningSequence, setShowOpeningSequence] = useState(false);
@@ -489,15 +492,21 @@ function App() {
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
         <div className="w-full h-full">
-          <CanvasGrid 
-            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-            onTileClick={handleTileClick}
-            selectedPosition={selectedTile}
-            facilities={facilities}
-            selectedFacilityType={selectedFacilityType}
-            money={stats.money}
-            deleteMode={deleteMode}
-          />
+          {usePixi ? (
+            <PixiGrid
+              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            />
+          ) : (
+            <CanvasGrid 
+              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+              onTileClick={handleTileClick}
+              selectedPosition={selectedTile}
+              facilities={facilities}
+              selectedFacilityType={selectedFacilityType}
+              money={stats.money}
+              deleteMode={deleteMode}
+            />
+          )}
         </div>
       </div>
 
@@ -517,6 +526,13 @@ function App() {
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
+      </button>
+      {/* Pixi/Canvas 切替ボタン（検証用） */}
+      <button
+        onClick={() => setUsePixi(v => !v)}
+        className="fixed bottom-4 right-4 bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
+      >
+        {usePixi ? 'Canvasに切替' : 'Pixiに切替'}
       </button>
 
       {/* 施設建設パネル */}
