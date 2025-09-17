@@ -495,6 +495,7 @@ function App() {
           {usePixi ? (
             <PixiGrid
               size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+              onTileClick={handleTileClick}
             />
           ) : (
             <CanvasGrid 

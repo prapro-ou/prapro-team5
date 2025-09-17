@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics } from 'pixi.js';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
+import { Application, Graphics, Container, Point } from 'pixi.js';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
 
 interface PixiGridProps {
   size: GridSize;
@@ -15,9 +15,12 @@ interface PixiGridProps {
 }
 
 // グリッド描画
-export const PixiGrid: React.FC<PixiGridProps> = ({ size }) => {
+export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
+  const worldRef = useRef<Container | null>(null);
+  const cameraRef = useRef({ x: 0, y: 0, scale: 1 });
+  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -39,8 +42,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size }) => {
       appRef.current = app;
       didInit = true;
 
+      const world = new Container();
+      app.stage.addChild(world);
+      worldRef.current = world;
+
       const g = new Graphics();
-      app.stage.addChild(g);
+      world.addChild(g);
 
       const offsetX = width / 2;
       const offsetY = 120;
@@ -66,14 +73,76 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size }) => {
         }
       }
 
+      // 初期カメラ適用
+      world.position.set(cameraRef.current.x, cameraRef.current.y);
+      world.scale.set(cameraRef.current.scale);
+
+      // ステージにイベント設定（パン用）
+      app.stage.eventMode = 'static';
+      app.stage.hitArea = app.screen;
+      app.stage.cursor = 'grab';
+
+      const onPointerDown = (e: any) => {
+        dragRef.current.dragging = true;
+        dragRef.current.moved = false;
+        dragRef.current.startX = e.global.x;
+        dragRef.current.startY = e.global.y;
+        app.stage.cursor = 'grabbing';
+      };
+      const onPointerMove = (e: any) => {
+        if (!dragRef.current.dragging) return;
+        const dx = e.global.x - dragRef.current.startX;
+        const dy = e.global.y - dragRef.current.startY;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragRef.current.moved = true;
+        dragRef.current.startX = e.global.x;
+        dragRef.current.startY = e.global.y;
+        cameraRef.current.x += dx;
+        cameraRef.current.y += dy;
+        world.position.set(cameraRef.current.x, cameraRef.current.y);
+      };
+      const onPointerUp = (e: any) => {
+        const wasDragging = dragRef.current.dragging;
+        const moved = dragRef.current.moved;
+        dragRef.current.dragging = false;
+        app.stage.cursor = 'grab';
+
+        if (onTileClick && wasDragging && !moved) {
+          const local = world.toLocal(new Point(e.global.x, e.global.y));
+          const isoX = (local.x - offsetX) / cameraRef.current.scale;
+          const isoY = (local.y - offsetY) / cameraRef.current.scale;
+          const tile = fromIsometric(isoX, isoY);
+          if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+            onTileClick({ x: tile.x, y: tile.y });
+          }
+        }
+      };
+      app.stage.on('pointerdown', onPointerDown);
+      app.stage.on('pointermove', onPointerMove);
+      app.stage.on('pointerup', onPointerUp);
+
+      // ホイールでズーム
+      const onWheel = (ev: WheelEvent) => {
+        ev.preventDefault();
+        const delta = ev.deltaY > 0 ? -0.1 : 0.1;
+        const newScale = Math.max(0.5, Math.min(3, cameraRef.current.scale + delta));
+        cameraRef.current.scale = newScale;
+        world.scale.set(newScale);
+      };
+      canvas.addEventListener('wheel', onWheel, { passive: false });
+
       const handleResize = () => {
         const w = Math.min(window.innerWidth, 1280);
         const h = Math.min(window.innerHeight, 720);
         app.renderer.resize(w, h);
       };
       window.addEventListener('resize', handleResize);
+      
       // クリーンアップで外せるように、関数をref経由で保持
       (app as any).__handleResize = handleResize;
+      (app as any).__wheel = onWheel;
+      (app as any).__ptrDown = onPointerDown;
+      (app as any).__ptrMove = onPointerMove;
+      (app as any).__ptrUp = onPointerUp;
     };
 
     init();
@@ -86,6 +155,14 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size }) => {
         try {
           const handler = (app as any).__handleResize as (() => void) | undefined;
           if (handler) window.removeEventListener('resize', handler);
+          const wheel = (app as any).__wheel as ((e: WheelEvent) => void) | undefined;
+          if (wheel) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('wheel', wheel as any);
+          const pd = (app as any).__ptrDown as any;
+          const pm = (app as any).__ptrMove as any;
+          const pu = (app as any).__ptrUp as any;
+          if (pd) app.stage.off('pointerdown', pd);
+          if (pm) app.stage.off('pointermove', pm);
+          if (pu) app.stage.off('pointerup', pu);
           app.destroy(true);
         } 
         catch {
