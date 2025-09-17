@@ -22,6 +22,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
   const cameraRef = useRef({ x: 0, y: 0, scale: 1 });
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false });
   const keysRef = useRef<{ [code: string]: boolean }>({});
+  const hoverRef = useRef<{ x: number; y: number } | null>(null);
+  const lastPointerGlobalRef = useRef<Point | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -49,6 +51,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
 
       const g = new Graphics();
       world.addChild(g);
+      // ホバー表示用レイヤ
+      const hoverG = new Graphics();
+      world.addChild(hoverG);
 
       const offsetX = width / 2;
       const offsetY = 120;
@@ -91,17 +96,50 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
         app.stage.cursor = 'grabbing';
       };
       const onPointerMove = (e: any) => {
-        if (!dragRef.current.dragging) return;
-        const dx = e.global.x - dragRef.current.startX;
-        const dy = e.global.y - dragRef.current.startY;
-        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragRef.current.moved = true;
-        dragRef.current.startX = e.global.x;
-        dragRef.current.startY = e.global.y;
-        cameraRef.current.x += dx;
-        cameraRef.current.y += dy;
-        world.position.set(cameraRef.current.x, cameraRef.current.y);
+        // 最新のグローバル座標を保存（ホイール時のズーム原点に使用）
+        lastPointerGlobalRef.current = new Point(e.global.x, e.global.y);
+        if (dragRef.current.dragging) {
+          const dx = e.global.x - dragRef.current.startX;
+          const dy = e.global.y - dragRef.current.startY;
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragRef.current.moved = true;
+          dragRef.current.startX = e.global.x;
+          dragRef.current.startY = e.global.y;
+          cameraRef.current.x += dx;
+          cameraRef.current.y += dy;
+          world.position.set(cameraRef.current.x, cameraRef.current.y);
+          return;
+        }
+
+        // ホバー更新（ドラッグしていない時）
+        const local = world.toLocal(new Point(e.global.x, e.global.y));
+
+        const isoX = (local.x - offsetX);
+        const isoY = (local.y - offsetY);
+        const tile = fromIsometric(isoX, isoY);
+        if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+          const changed = !hoverRef.current || hoverRef.current.x !== tile.x || hoverRef.current.y !== tile.y;
+          if (changed) {
+            hoverRef.current = { x: tile.x, y: tile.y };
+            // 再描画
+            hoverG.clear();
+            const hIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+            const hIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+            hoverG.moveTo(hIsoX, hIsoY)
+              .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY - ISO_TILE_HEIGHT / 2)
+              .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
+              .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY + ISO_TILE_HEIGHT / 2)
+              .lineTo(hIsoX, hIsoY)
+              .fill({ color: 0xf59e0b, alpha: 0.2 }) // amber-500 薄め
+              .stroke({ color: 0xf59e0b, width: 2 });
+          }
+        }
+        else {
+          hoverRef.current = null;
+          hoverG.clear();
+        }
       };
       const onPointerUp = (e: any) => {
+        lastPointerGlobalRef.current = new Point(e.global.x, e.global.y);
         const wasDragging = dragRef.current.dragging;
         const moved = dragRef.current.moved;
         dragRef.current.dragging = false;
@@ -109,8 +147,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
 
         if (onTileClick && wasDragging && !moved) {
           const local = world.toLocal(new Point(e.global.x, e.global.y));
-          const isoX = (local.x - offsetX) / cameraRef.current.scale;
-          const isoY = (local.y - offsetY) / cameraRef.current.scale;
+
+          const isoX = (local.x - offsetX);
+          const isoY = (local.y - offsetY);
           const tile = fromIsometric(isoX, isoY);
           if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
             onTileClick({ x: tile.x, y: tile.y });
@@ -120,14 +159,23 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       app.stage.on('pointerdown', onPointerDown);
       app.stage.on('pointermove', onPointerMove);
       app.stage.on('pointerup', onPointerUp);
+      app.stage.on('pointerleave', () => { hoverRef.current = null; hoverG.clear(); });
 
       // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
         ev.preventDefault();
-        const rect = (app.renderer.canvas as HTMLCanvasElement).getBoundingClientRect();
-        const screenX = ev.clientX - rect.left;
-        const screenY = ev.clientY - rect.top;
-        const globalPt = new Point(screenX, screenY);
+        // 直近のポインタ位置を優先してグローバル座標とする（Pixiの座標系）
+        let globalPt: Point;
+        if (lastPointerGlobalRef.current) {
+          globalPt = lastPointerGlobalRef.current.clone();
+        }
+        else {
+          const rect = (app.renderer.canvas as HTMLCanvasElement).getBoundingClientRect();
+          const cssX = ev.clientX - rect.left;
+          const cssY = ev.clientY - rect.top;
+          const resolution = (app.renderer as any).resolution ?? 1;
+          globalPt = new Point(cssX * resolution, cssY * resolution);
+        }
 
         // ズーム前にカーソル直下のワールド座標を取得
         const beforeLocal = world.toLocal(globalPt);
@@ -196,6 +244,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       (app as any).__ptrDown = onPointerDown;
       (app as any).__ptrMove = onPointerMove;
       (app as any).__ptrUp = onPointerUp;
+      (app as any).__ptrLeave = () => { hoverRef.current = null; hoverG.clear(); };
       (app as any).__keyDown = onKeyDown;
       (app as any).__keyUp = onKeyUp;
       (app as any).__tickerFn = tickerFn;
@@ -218,9 +267,11 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
           const pd = (app as any).__ptrDown as any;
           const pm = (app as any).__ptrMove as any;
           const pu = (app as any).__ptrUp as any;
+          const pl = (app as any).__ptrLeave as any;
           if (pd) app.stage.off('pointerdown', pd);
           if (pm) app.stage.off('pointermove', pm);
           if (pu) app.stage.off('pointerup', pu);
+          if (pl) app.stage.off('pointerleave', pl);
 
           const kd = (app as any).__keyDown as any;
           const ku = (app as any).__keyUp as any;
