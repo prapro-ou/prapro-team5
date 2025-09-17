@@ -59,7 +59,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         if (size) {
           sprite.anchor.set(0.5, 1.0);
           sprite.x = isoX + ISO_TILE_WIDTH / 2;
-          sprite.y = isoY + (ISO_TILE_HEIGHT / 2);
+          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT;
           sprite.width = size.width;
           sprite.height = size.height;
         }
@@ -118,8 +118,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       const offsetX = width / 2;
       const offsetY = 120;
       offsetsRef.current = { offsetX, offsetY };
-      const maxX = Math.min(size.width, 20);
-      const maxY = Math.min(size.height, 20);
+      const maxX = Math.min(size.width, 120);
+      const maxY = Math.min(size.height, 120);
 
       g.rect(0, 0, width, height).fill({ color: 0x111827 });
 
