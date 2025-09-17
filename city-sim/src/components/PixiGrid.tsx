@@ -21,13 +21,68 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
   const cameraRef = useRef({ x: 0, y: 0, scale: 1 });
-  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false });
+  const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false, button: 0, downX: 0, downY: 0 });
   const keysRef = useRef<{ [code: string]: boolean }>({});
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const lastPointerGlobalRef = useRef<Point | null>(null);
   const facilitiesLayerRef = useRef<Container | null>(null);
   const texturesRef = useRef<Map<string, Texture>>(new Map());
   const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
+  const isInitializedRef = useRef(false);
+  const onTileClickRef = useRef<((position: Position) => void) | undefined>(onTileClick);
+
+  // 施設描画関数
+  const drawFacilities = () => {
+    if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
+    
+    const layer = facilitiesLayerRef.current;
+    layer.removeChildren();
+    const { offsetX, offsetY } = offsetsRef.current;
+    
+    facilities
+      .map(f => {
+        const data = FACILITY_DATA[f.type];
+        const imgPath = data.imgPaths?.[f.variantIndex ?? 0] ?? data.imgPaths?.[0];
+        const texture = imgPath ? texturesRef.current.get(imgPath) : undefined;
+        return { f, data, texture };
+      })
+      .filter(x => !!x.texture)
+      .forEach(({ f, data, texture }) => {
+        if (!texture) return;
+        const center = f.position;
+        const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        const sprite = new Sprite(texture);
+        
+        // 画像サイズが分かる場合は中央寄せ。なければそのまま
+        const size = data.imgSizes?.[0];
+        if (size) {
+          sprite.anchor.set(0.5, 1.0);
+          sprite.x = isoX + ISO_TILE_WIDTH / 2;
+          sprite.y = isoY + (ISO_TILE_HEIGHT / 2);
+          sprite.width = size.width;
+          sprite.height = size.height;
+        }
+        else {
+          sprite.x = isoX;
+          sprite.y = isoY;
+        }
+        
+        // 簡易Z-index
+        sprite.zIndex = isoY;
+        layer.addChild(sprite);
+      });
+  };
+
+  // onTileClickRefを最新の値に更新
+  useEffect(() => {
+    onTileClickRef.current = onTileClick;
+  }, [onTileClick]);
+
+  // 施設描画の更新
+  useEffect(() => {
+    drawFacilities();
+  }, [facilities]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -45,7 +100,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       const width = Math.min(window.innerWidth, 1280);
       const height = Math.min(window.innerHeight, 720);
       await app.init({ canvas, width, height, backgroundAlpha: 1, background: 0x111827 }); // gray-900
-      // init 完了後にのみ参照を保存
+      
       appRef.current = app;
       didInit = true;
 
@@ -55,6 +110,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
       const g = new Graphics();
       world.addChild(g);
+      
       // ホバー表示用レイヤ
       const hoverG = new Graphics();
       world.addChild(hoverG);
@@ -94,15 +150,26 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       app.stage.cursor = 'grab';
 
       const onPointerDown = (e: any) => {
-        dragRef.current.dragging = true;
+        const isSpacePressed = !!(keysRef.current['Space']);
+        const isLeft = e.button === 0;
+        // 左クリックは建設用。パンは右/中ボタン、またはSpace+左で開始
+        const shouldDrag = !isLeft || isSpacePressed;
+        
+        dragRef.current.dragging = shouldDrag;
         dragRef.current.moved = false;
         dragRef.current.startX = e.global.x;
         dragRef.current.startY = e.global.y;
-        app.stage.cursor = 'grabbing';
+        dragRef.current.downX = e.global.x;
+        dragRef.current.downY = e.global.y;
+        dragRef.current.button = e.button;
+        
+        if (shouldDrag) app.stage.cursor = 'grabbing';
       };
+
       const onPointerMove = (e: any) => {
         // 最新のグローバル座標を保存（ホイール時のズーム原点に使用）
         lastPointerGlobalRef.current = new Point(e.global.x, e.global.y);
+        
         if (dragRef.current.dragging) {
           const dx = e.global.x - dragRef.current.startX;
           const dy = e.global.y - dragRef.current.startY;
@@ -117,10 +184,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
         // ホバー更新（ドラッグしていない時）
         const local = world.toLocal(new Point(e.global.x, e.global.y));
-
         const isoX = (local.x - offsetX);
         const isoY = (local.y - offsetY);
         const tile = fromIsometric(isoX, isoY);
+        
         if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
           const changed = !hoverRef.current || hoverRef.current.x !== tile.x || hoverRef.current.y !== tile.y;
           if (changed) {
@@ -134,7 +201,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
               .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
               .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY + ISO_TILE_HEIGHT / 2)
               .lineTo(hIsoX, hIsoY)
-              .fill({ color: 0xf59e0b, alpha: 0.2 }) // amber-500 薄め
+              .fill({ color: 0xf59e0b, alpha: 0.2 })
               .stroke({ color: 0xf59e0b, width: 2 });
           }
         }
@@ -143,24 +210,31 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           hoverG.clear();
         }
       };
+
       const onPointerUp = (e: any) => {
         lastPointerGlobalRef.current = new Point(e.global.x, e.global.y);
         const wasDragging = dragRef.current.dragging;
-        const moved = dragRef.current.moved;
+        // const moved = dragRef.current.moved;
+        const pressedButton = dragRef.current.button;
+        
         dragRef.current.dragging = false;
         app.stage.cursor = 'grab';
 
-        if (onTileClick && wasDragging && !moved) {
-          const local = world.toLocal(new Point(e.global.x, e.global.y));
-
-          const isoX = (local.x - offsetX);
-          const isoY = (local.y - offsetY);
-          const tile = fromIsometric(isoX, isoY);
-          if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-            onTileClick({ x: tile.x, y: tile.y });
+        // 左クリックかつドラッグ開始ではない、かつ移動が小さい → クリック扱い
+        if (onTileClickRef.current && pressedButton === 0 && !wasDragging) {
+          const distSq = (e.global.x - dragRef.current.downX) ** 2 + (e.global.y - dragRef.current.downY) ** 2;
+          if (distSq <= 25) { // 5px以内
+            const local = world.toLocal(new Point(e.global.x, e.global.y));
+            const isoX = (local.x - offsetX);
+            const isoY = (local.y - offsetY);
+            const tile = fromIsometric(isoX, isoY);
+            if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+              onTileClickRef.current({ x: tile.x, y: tile.y });
+            }
           }
         }
       };
+
       app.stage.on('pointerdown', onPointerDown);
       app.stage.on('pointermove', onPointerMove);
       app.stage.on('pointerup', onPointerUp);
@@ -177,6 +251,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         Object.values(FACILITY_DATA)
           .flatMap(f => f.imgPaths ?? [])
       ));
+      
       if (uniquePaths.length > 0) {
         try {
           await Assets.load(uniquePaths);
@@ -184,51 +259,14 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
             const tex = Assets.get<Texture>(p);
             if (tex) texturesRef.current.set(p, tex);
           });
-        } 
+        }
         catch {
           // 読み込み失敗は無視（スプライトが出ないだけ）
         }
       }
 
-      // 初期の施設描画（中心タイルのみ）
-      const drawFacilities = () => {
-        if (!facilitiesLayerRef.current) return;
-        const layer = facilitiesLayerRef.current;
-        layer.removeChildren();
-        const { offsetX, offsetY } = offsetsRef.current;
-        facilities
-          .map(f => {
-            const data = FACILITY_DATA[f.type];
-            const imgPath = data.imgPaths?.[f.variantIndex ?? 0] ?? data.imgPaths?.[0];
-            const texture = imgPath ? texturesRef.current.get(imgPath) : undefined;
-            return { f, data, texture };
-          })
-          .filter(x => !!x.texture)
-          .forEach(({ f, data, texture }) => {
-            if (!texture) return;
-            const center = f.position;
-            const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-            const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-            const sprite = new Sprite(texture);
-            // 画像サイズが分かる場合は中央寄せ。なければそのまま
-            const size = data.imgSizes?.[0];
-            if (size) {
-              sprite.anchor.set(0.5, 1.0);
-              sprite.x = isoX + ISO_TILE_WIDTH / 2;
-              sprite.y = isoY + (ISO_TILE_HEIGHT / 2);
-              sprite.width = size.width;
-              sprite.height = size.height;
-            } else {
-              sprite.x = isoX;
-              sprite.y = isoY;
-            }
-            // 簡易Z-index
-            sprite.zIndex = isoY;
-            layer.addChild(sprite);
-          });
-      };
-
-      drawFacilities();
+      // 初期化完了フラグを設定
+      isInitializedRef.current = true;
 
       // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
@@ -237,8 +275,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         let globalPt: Point;
         if (lastPointerGlobalRef.current) {
           globalPt = lastPointerGlobalRef.current.clone();
-        }
-        else {
+        } else {
           const rect = (app.renderer.canvas as HTMLCanvasElement).getBoundingClientRect();
           const cssX = ev.clientX - rect.left;
           const cssY = ev.clientY - rect.top;
@@ -324,6 +361,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     return () => {
       const app = appRef.current;
       appRef.current = null;
+      isInitializedRef.current = false;
+      
       // init 完了していない場合は destroy を呼ばない
       if (didInit && app) {
         try {
@@ -349,7 +388,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           const tf = (app as any).__tickerFn as ((t: any) => void) | undefined;
           if (tf) app.ticker.remove(tf);
           app.destroy(true);
-        } 
+        }
         catch {
           // 破棄中例外は無視（未初期化や二重破棄対策）
         }
