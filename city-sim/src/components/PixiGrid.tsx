@@ -21,6 +21,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
   const worldRef = useRef<Container | null>(null);
   const cameraRef = useRef({ x: 0, y: 0, scale: 1 });
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false });
+  const keysRef = useRef<{ [code: string]: boolean }>({});
 
   useEffect(() => {
     const container = containerRef.current;
@@ -130,6 +131,39 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       };
       canvas.addEventListener('wheel', onWheel, { passive: false });
 
+      // WASD/矢印キーでパン
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
+          e.preventDefault();
+          keysRef.current[e.code] = true;
+        }
+      };
+      const onKeyUp = (e: KeyboardEvent) => {
+        if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
+          e.preventDefault();
+          keysRef.current[e.code] = false;
+        }
+      };
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
+
+      const panSpeed = 8;
+      const tickerFn = (ticker: any) => {
+        const delta = ticker.deltaTime ?? 1;
+        let dx = 0;
+        let dy = 0;
+        if (keysRef.current['KeyW'] || keysRef.current['ArrowUp']) dy += panSpeed * delta;
+        if (keysRef.current['KeyS'] || keysRef.current['ArrowDown']) dy += -panSpeed * delta;
+        if (keysRef.current['KeyA'] || keysRef.current['ArrowLeft']) dx += panSpeed * delta;
+        if (keysRef.current['KeyD'] || keysRef.current['ArrowRight']) dx += -panSpeed * delta;
+        if (dx !== 0 || dy !== 0) {
+          cameraRef.current.x += dx;
+          cameraRef.current.y += dy;
+          world.position.set(cameraRef.current.x, cameraRef.current.y);
+        }
+      };
+      app.ticker.add(tickerFn);
+
       const handleResize = () => {
         const w = Math.min(window.innerWidth, 1280);
         const h = Math.min(window.innerHeight, 720);
@@ -143,6 +177,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       (app as any).__ptrDown = onPointerDown;
       (app as any).__ptrMove = onPointerMove;
       (app as any).__ptrUp = onPointerUp;
+      (app as any).__keyDown = onKeyDown;
+      (app as any).__keyUp = onKeyUp;
+      (app as any).__tickerFn = tickerFn;
     };
 
     init();
@@ -155,14 +192,23 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
         try {
           const handler = (app as any).__handleResize as (() => void) | undefined;
           if (handler) window.removeEventListener('resize', handler);
+          
           const wheel = (app as any).__wheel as ((e: WheelEvent) => void) | undefined;
           if (wheel) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('wheel', wheel as any);
+
           const pd = (app as any).__ptrDown as any;
           const pm = (app as any).__ptrMove as any;
           const pu = (app as any).__ptrUp as any;
           if (pd) app.stage.off('pointerdown', pd);
           if (pm) app.stage.off('pointermove', pm);
           if (pu) app.stage.off('pointerup', pu);
+
+          const kd = (app as any).__keyDown as any;
+          const ku = (app as any).__keyUp as any;
+          if (kd) window.removeEventListener('keydown', kd);
+          if (ku) window.removeEventListener('keyup', ku);
+          const tf = (app as any).__tickerFn as ((t: any) => void) | undefined;
+          if (tf) app.ticker.remove(tf);
           app.destroy(true);
         } 
         catch {
