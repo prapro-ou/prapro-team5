@@ -121,13 +121,32 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       app.stage.on('pointermove', onPointerMove);
       app.stage.on('pointerup', onPointerUp);
 
-      // ホイールでズーム
+      // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
         ev.preventDefault();
+        const rect = (app.renderer.canvas as HTMLCanvasElement).getBoundingClientRect();
+        const screenX = ev.clientX - rect.left;
+        const screenY = ev.clientY - rect.top;
+        const globalPt = new Point(screenX, screenY);
+
+        // ズーム前にカーソル直下のワールド座標を取得
+        const beforeLocal = world.toLocal(globalPt);
+
+        // スケール更新
         const delta = ev.deltaY > 0 ? -0.1 : 0.1;
-        const newScale = Math.max(0.5, Math.min(3, cameraRef.current.scale + delta));
+        const oldScale = cameraRef.current.scale;
+        const newScale = Math.max(0.5, Math.min(3, oldScale + delta));
+        if (newScale === oldScale) return;
         cameraRef.current.scale = newScale;
         world.scale.set(newScale);
+
+        // ズーム後に同じローカル点がどこに表示されるかを取得し、差分だけカメラ位置を補正
+        const afterGlobal = world.toGlobal(beforeLocal);
+        const dx = afterGlobal.x - globalPt.x;
+        const dy = afterGlobal.y - globalPt.y;
+        cameraRef.current.x -= dx;
+        cameraRef.current.y -= dy;
+        world.position.set(cameraRef.current.x, cameraRef.current.y);
       };
       canvas.addEventListener('wheel', onWheel, { passive: false });
 
