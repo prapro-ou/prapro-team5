@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics, Container, Point } from 'pixi.js';
+import { Application, Graphics, Container, Point, Assets, Sprite, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
+import { FACILITY_DATA } from '../types/facility';
 
 interface PixiGridProps {
   size: GridSize;
@@ -15,7 +16,7 @@ interface PixiGridProps {
 }
 
 // グリッド描画
-export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
+export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilities = [] }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -24,6 +25,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
   const keysRef = useRef<{ [code: string]: boolean }>({});
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const lastPointerGlobalRef = useRef<Point | null>(null);
+  const facilitiesLayerRef = useRef<Container | null>(null);
+  const texturesRef = useRef<Map<string, Texture>>(new Map());
+  const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -57,6 +61,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
 
       const offsetX = width / 2;
       const offsetY = 120;
+      offsetsRef.current = { offsetX, offsetY };
       const maxX = Math.min(size.width, 20);
       const maxY = Math.min(size.height, 20);
 
@@ -160,6 +165,70 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick }) => {
       app.stage.on('pointermove', onPointerMove);
       app.stage.on('pointerup', onPointerUp);
       app.stage.on('pointerleave', () => { hoverRef.current = null; hoverG.clear(); });
+
+      // 施設用レイヤ
+      const facilitiesLayer = new Container();
+      facilitiesLayer.sortableChildren = true;
+      world.addChild(facilitiesLayer);
+      facilitiesLayerRef.current = facilitiesLayer;
+
+      // 施設テクスチャのプリロード
+      const uniquePaths = Array.from(new Set(
+        Object.values(FACILITY_DATA)
+          .flatMap(f => f.imgPaths ?? [])
+      ));
+      if (uniquePaths.length > 0) {
+        try {
+          await Assets.load(uniquePaths);
+          uniquePaths.forEach((p) => {
+            const tex = Assets.get<Texture>(p);
+            if (tex) texturesRef.current.set(p, tex);
+          });
+        } 
+        catch {
+          // 読み込み失敗は無視（スプライトが出ないだけ）
+        }
+      }
+
+      // 初期の施設描画（中心タイルのみ）
+      const drawFacilities = () => {
+        if (!facilitiesLayerRef.current) return;
+        const layer = facilitiesLayerRef.current;
+        layer.removeChildren();
+        const { offsetX, offsetY } = offsetsRef.current;
+        facilities
+          .map(f => {
+            const data = FACILITY_DATA[f.type];
+            const imgPath = data.imgPaths?.[f.variantIndex ?? 0] ?? data.imgPaths?.[0];
+            const texture = imgPath ? texturesRef.current.get(imgPath) : undefined;
+            return { f, data, texture };
+          })
+          .filter(x => !!x.texture)
+          .forEach(({ f, data, texture }) => {
+            if (!texture) return;
+            const center = f.position;
+            const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+            const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+            const sprite = new Sprite(texture);
+            // 画像サイズが分かる場合は中央寄せ。なければそのまま
+            const size = data.imgSizes?.[0];
+            if (size) {
+              sprite.anchor.set(0.5, 1.0);
+              sprite.x = isoX + ISO_TILE_WIDTH / 2;
+              sprite.y = isoY + (ISO_TILE_HEIGHT / 2);
+              sprite.width = size.width;
+              sprite.height = size.height;
+            } else {
+              sprite.x = isoX;
+              sprite.y = isoY;
+            }
+            // 簡易Z-index
+            sprite.zIndex = isoY;
+            layer.addChild(sprite);
+          });
+      };
+
+      drawFacilities();
 
       // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
