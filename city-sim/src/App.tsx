@@ -496,7 +496,11 @@ function App() {
             <PixiGrid
               size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
               onTileClick={handleTileClick}
+              selectedPosition={selectedTile}
               facilities={facilities}
+              selectedFacilityType={selectedFacilityType}
+              money={stats.money}
+              deleteMode={deleteMode}
             />
           ) : (
             <CanvasGrid 

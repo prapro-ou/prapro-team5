@@ -16,7 +16,7 @@ interface PixiGridProps {
 }
 
 // グリッド描画
-export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilities = [] }) => {
+export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilities = [], selectedFacilityType, money = 0 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -26,10 +26,19 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
   const lastPointerGlobalRef = useRef<Point | null>(null);
   const facilitiesLayerRef = useRef<Container | null>(null);
+  const previewLayerRef = useRef<Container | null>(null);
   const texturesRef = useRef<Map<string, Texture>>(new Map());
   const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   const isInitializedRef = useRef(false);
   const onTileClickRef = useRef<((position: Position) => void) | undefined>(onTileClick);
+  // プロップスの最新値を保持するref（イベントハンドラの古いクロージャ問題対策）
+  const selectedFacilityTypeRef = useRef<FacilityType | null | undefined>(selectedFacilityType);
+  const moneyRef = useRef<number>(money);
+  const facilitiesRef = useRef<Facility[]>(facilities);
+
+  useEffect(() => { selectedFacilityTypeRef.current = selectedFacilityType; }, [selectedFacilityType]);
+  useEffect(() => { moneyRef.current = money; }, [money]);
+  useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
 
   // 施設描画関数
   const drawFacilities = () => {
@@ -74,6 +83,82 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       });
   };
 
+  // プレビュー描画関数
+  const drawPreview = () => {
+    if (!previewLayerRef.current || !isInitializedRef.current) return;
+    
+    const layer = previewLayerRef.current;
+    layer.removeChildren();
+    
+    const currentType = selectedFacilityTypeRef.current;
+    if (!currentType || !hoverRef.current) return;
+    
+    const { offsetX, offsetY } = offsetsRef.current;
+    const facilityData = FACILITY_DATA[currentType];
+    const radius = Math.floor(facilityData.size / 2);
+    const center = hoverRef.current;
+    
+    // 施設マップを作成（既存施設の占有タイル）
+    const facilityMap = new Map<string, Facility>();
+    const facilitiesNow = facilitiesRef.current ?? [];
+    facilitiesNow.forEach(facility => {
+      facility.occupiedTiles.forEach(tile => {
+        facilityMap.set(`${tile.x}-${tile.y}`, facility);
+      });
+    });
+    
+    // プレビュー範囲を描画
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        const x = center.x + dx;
+        const y = center.y + dy;
+        
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+          const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+          
+          // プレビュー用のGraphics
+          const previewG = new Graphics();
+          previewG.moveTo(isoX, isoY)
+            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+            .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+            .lineTo(isoX, isoY);
+          
+          // プレビューステータスを決定
+          const tileKey = `${x}-${y}`;
+          const canAfford = (moneyRef.current ?? 0) >= facilityData.cost;
+          const isOccupied = facilityMap.has(tileKey);
+          
+          // 色を決定
+          let color = 0x00ff00; // デフォルト緑
+          let alpha = 0.3;
+          
+          if (canAfford && !isOccupied) {
+            // 施設タイプ別の色
+            switch (currentType) {
+              case 'residential': color = 0x86efac; break; // bg-green-300
+              case 'commercial': color = 0x93c5fd; break; // bg-blue-300
+              case 'industrial': color = 0xfef08a; break; // bg-yellow-200
+              case 'road': color = 0x9ca3af; break; // bg-gray-400
+              case 'city_hall': color = 0xc4b5fd; break; // bg-purple-300
+              case 'park': color = 0xd3fcaa; break; // bg-lime-200
+              case 'police': color = 0xf0abfc; break; // bg-fuchsia-400
+              default: color = 0x86efac; break; // デフォルト緑
+            }
+          }
+          else {
+            color = 0xfca5a5; // 赤（建設不可）
+          }
+          
+          previewG.fill({ color, alpha });
+          previewG.stroke({ color: 0xffffff, width: 1 });
+          layer.addChild(previewG);
+        }
+      }
+    }
+  };
+
   // onTileClickRefを最新の値に更新
   useEffect(() => {
     onTileClickRef.current = onTileClick;
@@ -83,6 +168,11 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   useEffect(() => {
     drawFacilities();
   }, [facilities]);
+
+  // プレビュー描画の更新
+  useEffect(() => {
+    drawPreview();
+  }, [selectedFacilityType, money, facilities]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -182,32 +272,37 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           return;
         }
 
-        // ホバー更新（ドラッグしていない時）
-        const local = world.toLocal(new Point(e.global.x, e.global.y));
-        const isoX = (local.x - offsetX);
-        const isoY = (local.y - offsetY);
-        const tile = fromIsometric(isoX, isoY);
-        
-        if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-          const changed = !hoverRef.current || hoverRef.current.x !== tile.x || hoverRef.current.y !== tile.y;
-          if (changed) {
-            hoverRef.current = { x: tile.x, y: tile.y };
-            // 再描画
-            hoverG.clear();
-            const hIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-            const hIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-            hoverG.moveTo(hIsoX, hIsoY)
-              .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY - ISO_TILE_HEIGHT / 2)
-              .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
-              .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY + ISO_TILE_HEIGHT / 2)
-              .lineTo(hIsoX, hIsoY)
-              .fill({ color: 0xf59e0b, alpha: 0.2 })
-              .stroke({ color: 0xf59e0b, width: 2 });
-          }
-        }
+         // ホバー更新（ドラッグしていない時）
+         const local = world.toLocal(new Point(e.global.x, e.global.y));
+         const isoX = (local.x - offsetX);
+         const isoY = (local.y - offsetY);
+         const tile = fromIsometric(isoX, isoY);
+         
+         if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+           const changed = !hoverRef.current || hoverRef.current.x !== tile.x || hoverRef.current.y !== tile.y;
+           if (changed) {
+             hoverRef.current = { x: tile.x, y: tile.y };
+             // 再描画
+             hoverG.clear();
+             const hIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+             const hIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+             hoverG.moveTo(hIsoX, hIsoY)
+               .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY - ISO_TILE_HEIGHT / 2)
+               .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
+               .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY + ISO_TILE_HEIGHT / 2)
+               .lineTo(hIsoX, hIsoY)
+               .fill({ color: 0xf59e0b, alpha: 0.2 })
+               .stroke({ color: 0xf59e0b, width: 2 });
+             
+             // プレビューも更新
+             drawPreview();
+           }
+         }
         else {
           hoverRef.current = null;
           hoverG.clear();
+          // プレビューもクリア
+          drawPreview();
         }
       };
 
@@ -240,11 +335,17 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       app.stage.on('pointerup', onPointerUp);
       app.stage.on('pointerleave', () => { hoverRef.current = null; hoverG.clear(); });
 
-      // 施設用レイヤ
-      const facilitiesLayer = new Container();
-      facilitiesLayer.sortableChildren = true;
-      world.addChild(facilitiesLayer);
-      facilitiesLayerRef.current = facilitiesLayer;
+       // 施設用レイヤ
+       const facilitiesLayer = new Container();
+       facilitiesLayer.sortableChildren = true;
+       world.addChild(facilitiesLayer);
+       facilitiesLayerRef.current = facilitiesLayer;
+
+       // プレビュー用レイヤ（施設レイヤーの上）
+       const previewLayer = new Container();
+       previewLayer.sortableChildren = true;
+       world.addChild(previewLayer);
+       previewLayerRef.current = previewLayer;
 
       // 施設テクスチャのプリロード
       const uniquePaths = Array.from(new Set(
