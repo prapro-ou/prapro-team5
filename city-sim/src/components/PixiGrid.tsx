@@ -59,7 +59,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         if (size) {
           sprite.anchor.set(0.5, 1.0);
           sprite.x = isoX + ISO_TILE_WIDTH / 2;
-          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT;
+          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(data.size / 2);
           sprite.width = size.width;
           sprite.height = size.height;
         }
