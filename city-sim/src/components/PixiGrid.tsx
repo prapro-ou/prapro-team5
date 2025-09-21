@@ -45,6 +45,27 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const selectedFacilityTypeRef = useRef<FacilityType | null | undefined>(selectedFacilityType);
   const moneyRef = useRef<number>(money);
   const facilitiesRef = useRef<Facility[]>(facilities);
+
+  // 再描画制御用の状態
+  const lastTerrainMapRef = useRef<string>('');
+  const lastFacilitiesRef = useRef<string>('');
+  const lastMousePositionRef = useRef<Position | null>(null);
+
+  // オブジェクトプール
+  const graphicsPoolRef = useRef<Graphics[]>([]);
+  const getPooledGraphics = () => {
+    const pool = graphicsPoolRef.current;
+    if (pool.length > 0) {
+      const g = pool.pop()!;
+      g.clear();
+      return g;
+    }
+    return new Graphics();
+  };
+  const returnGraphics = (g: Graphics) => {
+    g.clear();
+    graphicsPoolRef.current.push(g);
+  };
   
   // 地形ストアの使用
   const { terrainMap, getTerrainAt } = useTerrainStore();
@@ -72,8 +93,23 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawTerrain = () => {
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
+    // 地形データのハッシュを計算して変更チェック
+    const terrainHash = JSON.stringify(terrainMap);
+    if (terrainHash === lastTerrainMapRef.current) {
+      return; // 変更なしの場合はスキップ
+    }
+    lastTerrainMapRef.current = terrainHash;
+    
     const layer = terrainLayerRef.current;
+    
+    // 既存のGraphicsオブジェクトをプールに戻す
+    layer.children.forEach(child => {
+      if (child instanceof Graphics) {
+        returnGraphics(child);
+      }
+    });
     layer.removeChildren();
+    
     const { offsetX, offsetY } = offsetsRef.current;
     
     // 見える範囲のタイルを描画
@@ -89,7 +125,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
         const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
         
-        const terrainG = new Graphics();
+        const terrainG = getPooledGraphics();
         terrainG.moveTo(isoX, isoY)
           .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
           .lineTo(isoX + ISO_TILE_WIDTH, isoY)
@@ -108,11 +144,25 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawFacilities = () => {
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
     
-    const layer = facilitiesLayerRef.current;
-    layer.removeChildren();
-    const { offsetX, offsetY } = offsetsRef.current;
-    
+    // 施設データのハッシュを計算して変更チェック
     const facilitiesNow = facilitiesRef.current ?? [];
+    const facilitiesHash = JSON.stringify(facilitiesNow);
+    if (facilitiesHash === lastFacilitiesRef.current) {
+      return; // 変更なしの場合はスキップ
+    }
+    lastFacilitiesRef.current = facilitiesHash;
+    
+    const layer = facilitiesLayerRef.current;
+    
+    // 既存のGraphicsオブジェクトをプールに戻す
+    layer.children.forEach(child => {
+      if (child instanceof Graphics) {
+        returnGraphics(child);
+      }
+    });
+    layer.removeChildren();
+    
+    const { offsetX, offsetY } = offsetsRef.current;
     
     // 施設マップを作成（道路接続判定用）
     const facilityMap = new Map<string, Facility>();
@@ -202,11 +252,27 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawPreview = () => {
     if (!previewLayerRef.current || !isInitializedRef.current) return;
     
-    const layer = previewLayerRef.current;
-    layer.removeChildren();
-    
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !hoverRef.current) return;
+    
+    // マウス位置の変更チェック
+    const currentMousePos = hoverRef.current;
+    if (currentMousePos && lastMousePositionRef.current &&
+        currentMousePos.x === lastMousePositionRef.current.x &&
+        currentMousePos.y === lastMousePositionRef.current.y) {
+      return; // マウス位置が変わっていない場合はスキップ
+    }
+    lastMousePositionRef.current = currentMousePos ? { ...currentMousePos } : null;
+    
+    const layer = previewLayerRef.current;
+    
+    // 既存のGraphicsオブジェクトをプールに戻す
+    layer.children.forEach(child => {
+      if (child instanceof Graphics) {
+        returnGraphics(child);
+      }
+    });
+    layer.removeChildren();
     
     const { offsetX, offsetY } = offsetsRef.current;
     const facilityData = FACILITY_DATA[currentType];
@@ -232,7 +298,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
           const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
           
-          const previewG = new Graphics();
+          const previewG = getPooledGraphics();
           previewG.moveTo(isoX, isoY)
             .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
             .lineTo(isoX + ISO_TILE_WIDTH, isoY)
@@ -277,11 +343,26 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawEffectPreview = () => {
     if (!effectPreviewLayerRef.current || !isInitializedRef.current) return;
     
-    const layer = effectPreviewLayerRef.current;
-    layer.removeChildren();
-    
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !hoverRef.current) return;
+    
+    // マウス位置の変更チェック
+    const currentMousePos = hoverRef.current;
+    if (currentMousePos && lastMousePositionRef.current &&
+        currentMousePos.x === lastMousePositionRef.current.x &&
+        currentMousePos.y === lastMousePositionRef.current.y) {
+      return; // マウス位置が変わっていない場合はスキップ
+    }
+    
+    const layer = effectPreviewLayerRef.current;
+    
+    // 既存のGraphicsオブジェクトをプールに戻す
+    layer.children.forEach(child => {
+      if (child instanceof Graphics) {
+        returnGraphics(child);
+      }
+    });
+    layer.removeChildren();
     
     const { offsetX, offsetY } = offsetsRef.current;
     const facilityData = FACILITY_DATA[currentType];
@@ -303,7 +384,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
             const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
             const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
             
-            const effectG = new Graphics();
+            const effectG = getPooledGraphics();
             effectG.moveTo(isoX, isoY)
               .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
               .lineTo(isoX + ISO_TILE_WIDTH, isoY)
@@ -335,9 +416,14 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     
     const layer = previewLayerRef.current;
 
+    // 既存のGraphicsオブジェクトをプールに戻す
     const existingChildren = layer.children.filter(child => child.name !== 'road-drag');
+    existingChildren.forEach(child => {
+      if (child instanceof Graphics) {
+        returnGraphics(child);
+      }
+    });
     layer.removeChildren();
-    existingChildren.forEach(child => layer.addChild(child));
     
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !roadDragRef.current.isPlacing || !roadDragRef.current.startTile || !roadDragRef.current.endTile) return;
@@ -396,7 +482,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
       const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
       
-      const dragG = new Graphics();
+      const dragG = getPooledGraphics();
       dragG.name = 'road-drag';
       dragG.moveTo(isoX, isoY)
         .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
@@ -431,16 +517,18 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     onTileClickRef.current = onTileClick;
   }, [onTileClick]);
 
-  // 地形描画の更新
+  // 地形描画の更新（地形データが変更された時のみ）
   useEffect(() => {
     if (isInitializedRef.current) {
       drawTerrain();
     }
   }, [terrainMap]);
 
-  // 施設描画の更新
+  // 施設描画の更新（施設データが変更された時のみ）
   useEffect(() => {
-    drawFacilities();
+    if (isInitializedRef.current) {
+      drawFacilities();
+    }
   }, [facilities]);
 
   // プレビュー描画の更新
