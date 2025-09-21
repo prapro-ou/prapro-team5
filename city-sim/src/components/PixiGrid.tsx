@@ -5,6 +5,7 @@ import { Application, Graphics, Container, Point, Assets, Sprite, Texture } from
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
 import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from '../utils/roadConnection';
+import { useTerrainStore } from '../stores/TerrainStore';
 
 interface PixiGridProps {
   size: GridSize;
@@ -35,6 +36,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const facilitiesLayerRef = useRef<Container | null>(null);
   const previewLayerRef = useRef<Container | null>(null);
   const effectPreviewLayerRef = useRef<Container | null>(null);
+  const terrainLayerRef = useRef<Container | null>(null);
   const texturesRef = useRef<Map<string, Texture>>(new Map());
   const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   const isInitializedRef = useRef(false);
@@ -43,10 +45,64 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const selectedFacilityTypeRef = useRef<FacilityType | null | undefined>(selectedFacilityType);
   const moneyRef = useRef<number>(money);
   const facilitiesRef = useRef<Facility[]>(facilities);
+  
+  // 地形ストアの使用
+  const { terrainMap, getTerrainAt } = useTerrainStore();
 
   useEffect(() => { selectedFacilityTypeRef.current = selectedFacilityType; }, [selectedFacilityType]);
   useEffect(() => { moneyRef.current = money; }, [money]);
   useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
+
+  // 地形に応じた色を取得する関数
+  const getTerrainColor = React.useCallback((terrain: string): number => {
+    const terrainColors: Record<string, number> = {
+      grass: 0x90EE90,      // 薄い緑
+      water: 0x87CEEB,      // 空色
+      forest: 0x228B22,     // 濃い緑
+      desert: 0xF4A460,     // 砂色
+      mountain: 0x696969,   // 暗いグレー
+      beach: 0xF5DEB3,      // 小麦色
+      swamp: 0x8B4513,      // 茶色
+      rocky: 0xA0522D,      // シエナ
+    };
+    return terrainColors[terrain] || 0x90EE90;
+  }, []);
+
+  // 地形描画関数
+  const drawTerrain = () => {
+    if (!terrainLayerRef.current || !isInitializedRef.current) return;
+    
+    const layer = terrainLayerRef.current;
+    layer.removeChildren();
+    const { offsetX, offsetY } = offsetsRef.current;
+    
+    // 見える範囲のタイルを描画
+    const maxX = Math.min(size.width, 120);
+    const maxY = Math.min(size.height, 120);
+    
+    for (let y = 0; y < maxY; y++) {
+      for (let x = 0; x < maxX; x++) {
+        // 地形が未設定の場合はデフォルト（草）を使用
+        const terrain = getTerrainAt(x, y) || 'grass';
+        const color = getTerrainColor(terrain);
+        
+        const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        
+        const terrainG = new Graphics();
+        terrainG.moveTo(isoX, isoY)
+          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+          .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+          .lineTo(isoX, isoY)
+          .fill({ color, alpha: 0.8 })
+          .stroke({ color: 0x666666, width: 1 });
+        
+        terrainG.zIndex = isoY;
+        layer.addChild(terrainG);
+      }
+    }
+  };
 
   // 施設描画関数
   const drawFacilities = () => {
@@ -375,6 +431,13 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     onTileClickRef.current = onTileClick;
   }, [onTileClick]);
 
+  // 地形描画の更新
+  useEffect(() => {
+    if (isInitializedRef.current) {
+      drawTerrain();
+    }
+  }, [terrainMap]);
+
   // 施設描画の更新
   useEffect(() => {
     drawFacilities();
@@ -626,11 +689,17 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       app.stage.on('pointerup', onPointerUp);
       app.stage.on('pointerleave', () => { hoverRef.current = null; hoverG.clear(); });
 
-       // 施設用レイヤ
-       const facilitiesLayer = new Container();
-       facilitiesLayer.sortableChildren = true;
-       world.addChild(facilitiesLayer);
-       facilitiesLayerRef.current = facilitiesLayer;
+      // 地形用レイヤ（最下層）
+      const terrainLayer = new Container();
+      terrainLayer.sortableChildren = true;
+      world.addChild(terrainLayer);
+      terrainLayerRef.current = terrainLayer;
+
+      // 施設用レイヤ
+      const facilitiesLayer = new Container();
+      facilitiesLayer.sortableChildren = true;
+      world.addChild(facilitiesLayer);
+      facilitiesLayerRef.current = facilitiesLayer;
 
       // プレビュー用レイヤ（施設レイヤーの上）
       const previewLayer = new Container();
@@ -666,7 +735,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       // 初期化完了フラグを設定
       isInitializedRef.current = true;
       
-      // 初期化完了後にプレビューを更新
+      // 初期化完了後に描画を更新
+      drawTerrain();
+      drawFacilities();
       drawPreview();
       drawEffectPreview();
 
