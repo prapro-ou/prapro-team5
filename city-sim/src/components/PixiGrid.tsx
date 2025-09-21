@@ -24,6 +24,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, moved: false, button: 0, downX: 0, downY: 0 });
   const keysRef = useRef<{ [code: string]: boolean }>({});
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
+  // 道路ドラッグ連続設置用の状態管理
+  const roadDragRef = useRef({ 
+    isPlacing: false, 
+    startTile: null as { x: number; y: number } | null, 
+    endTile: null as { x: number; y: number } | null 
+  });
   const lastPointerGlobalRef = useRef<Point | null>(null);
   const facilitiesLayerRef = useRef<Container | null>(null);
   const previewLayerRef = useRef<Container | null>(null);
@@ -215,6 +221,103 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     }
   };
 
+  // 道路ドラッグ範囲描画関数
+  const drawRoadDragRange = () => {
+    if (!previewLayerRef.current || !isInitializedRef.current) return;
+    
+    const layer = previewLayerRef.current;
+
+    const existingChildren = layer.children.filter(child => child.name !== 'road-drag');
+    layer.removeChildren();
+    existingChildren.forEach(child => layer.addChild(child));
+    
+    const currentType = selectedFacilityTypeRef.current;
+    if (!currentType || !roadDragRef.current.isPlacing || !roadDragRef.current.startTile || !roadDragRef.current.endTile) return;
+    
+    if (currentType !== 'road') return;
+    
+    const { offsetX, offsetY } = offsetsRef.current;
+    const startTile = roadDragRef.current.startTile;
+    const endTile = roadDragRef.current.endTile;
+    
+    // 直線一列のみの敷設
+    const dx = Math.abs(endTile.x - startTile.x);
+    const dy = Math.abs(endTile.y - startTile.y);
+    
+    let tiles: { x: number; y: number }[] = [];
+    
+    // X軸方向の直線
+    if (dx > dy) {
+      const startX = Math.min(startTile.x, endTile.x);
+      const endX = Math.max(startTile.x, endTile.x);
+      const y = startTile.y;
+      
+      for (let x = startX; x <= endX; x++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.push({ x, y });
+        }
+      }
+    }
+    // Y軸方向の直線
+    else {
+      const startY = Math.min(startTile.y, endTile.y);
+      const endY = Math.max(startTile.y, endTile.y);
+      const x = startTile.x;
+      
+      for (let y = startY; y <= endY; y++) {
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          tiles.push({ x, y });
+        }
+      }
+    }
+    
+    // 施設マップを作成（既存施設の占有タイル）
+    const facilityMap = new Map<string, Facility>();
+    const facilitiesNow = facilitiesRef.current ?? [];
+    facilitiesNow.forEach(facility => {
+      facility.occupiedTiles.forEach(tile => {
+        facilityMap.set(`${tile.x}-${tile.y}`, facility);
+      });
+    });
+    
+    // 道路のコストを取得
+    const roadData = FACILITY_DATA['road'];
+    
+    // ドラッグ範囲を描画
+    tiles.forEach(({ x, y }) => {
+      const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      
+      const dragG = new Graphics();
+      dragG.name = 'road-drag';
+      dragG.moveTo(isoX, isoY)
+        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+        .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+        .lineTo(isoX, isoY);
+      
+      // プレビューステータスを決定
+      const tileKey = `${x}-${y}`;
+      const canAfford = (moneyRef.current ?? 0) >= roadData.cost;
+      const isOccupied = facilityMap.has(tileKey);
+      
+      // 色を決定（CanvasGridと同じ金色系）
+      let color = 0xFFD700; // 金色（デフォルト）
+      let alpha = 0.7;
+      let strokeColor = 0xFFA500; // オレンジ色の境界線
+      
+      if (!canAfford || isOccupied) {
+        color = 0xfca5a5; // 赤（建設不可）
+        alpha = 0.7;
+        strokeColor = 0xff0000; // 赤い境界線
+      }
+      
+      dragG.fill({ color, alpha });
+      dragG.stroke({ color: strokeColor, width: 2 });
+      layer.addChild(dragG);
+    });
+  };
+
   // onTileClickRefを最新の値に更新
   useEffect(() => {
     onTileClickRef.current = onTileClick;
@@ -310,7 +413,25 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         dragRef.current.downY = e.global.y;
         dragRef.current.button = e.button;
         
-        if (shouldDrag) app.stage.cursor = 'grabbing';
+        if (shouldDrag) {
+          app.stage.cursor = 'grabbing';
+        } 
+        else if (isLeft && selectedFacilityTypeRef.current) {
+          // 道路のドラッグ開始処理
+          if (selectedFacilityTypeRef.current === 'road') {
+            const local = world.toLocal(new Point(e.global.x, e.global.y));
+            const isoX = (local.x - offsetX);
+            const isoY = (local.y - offsetY);
+            const tile = fromIsometric(isoX, isoY);
+            
+            if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+              roadDragRef.current.isPlacing = true;
+              roadDragRef.current.startTile = { x: tile.x, y: tile.y };
+              roadDragRef.current.endTile = { x: tile.x, y: tile.y };
+              drawRoadDragRange();
+            }
+          }
+        }
       };
 
       const onPointerMove = (e: any) => {
@@ -326,6 +447,20 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           cameraRef.current.x += dx;
           cameraRef.current.y += dy;
           world.position.set(cameraRef.current.x, cameraRef.current.y);
+          return;
+        }
+
+        // 道路ドラッグ更新処理
+        if (roadDragRef.current.isPlacing) {
+          const local = world.toLocal(new Point(e.global.x, e.global.y));
+          const isoX = (local.x - offsetX);
+          const isoY = (local.y - offsetY);
+          const tile = fromIsometric(isoX, isoY);
+          
+          if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
+            roadDragRef.current.endTile = { x: tile.x, y: tile.y };
+            drawRoadDragRange();
+          }
           return;
         }
 
@@ -374,8 +509,50 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         dragRef.current.dragging = false;
         app.stage.cursor = 'grab';
 
+        // 道路ドラッグ確定処理
+        if (roadDragRef.current.isPlacing && onTileClickRef.current) {
+          const startTile = roadDragRef.current.startTile;
+          const endTile = roadDragRef.current.endTile;
+          
+          if (startTile && endTile) {
+            const dx = Math.abs(endTile.x - startTile.x);
+            const dy = Math.abs(endTile.y - startTile.y);
+            
+            // X軸方向の直線
+            if (dx > dy) {
+              const startX = Math.min(startTile.x, endTile.x);
+              const endX = Math.max(startTile.x, endTile.x);
+              const y = startTile.y;
+              
+              for (let x = startX; x <= endX; x++) {
+                if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+                  onTileClickRef.current({ x, y });
+                }
+              }
+            }
+            // Y軸方向の直線
+            else {
+              const startY = Math.min(startTile.y, endTile.y);
+              const endY = Math.max(startTile.y, endTile.y);
+              const x = startTile.x;
+              
+              for (let y = startY; y <= endY; y++) {
+                if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+                  onTileClickRef.current({ x, y });
+                }
+              }
+            }
+          }
+          
+          // 道路ドラッグ状態をリセット
+          roadDragRef.current.isPlacing = false;
+          roadDragRef.current.startTile = null;
+          roadDragRef.current.endTile = null;
+          drawPreview(); // 通常のプレビューに戻す
+          drawEffectPreview();
+        }
         // 左クリックかつドラッグ開始ではない、かつ移動が小さい → クリック扱い
-        if (onTileClickRef.current && pressedButton === 0 && !wasDragging) {
+        else if (onTileClickRef.current && pressedButton === 0 && !wasDragging) {
           const distSq = (e.global.x - dragRef.current.downX) ** 2 + (e.global.y - dragRef.current.downY) ** 2;
           if (distSq <= 25) { // 5px以内
             const local = world.toLocal(new Point(e.global.x, e.global.y));
