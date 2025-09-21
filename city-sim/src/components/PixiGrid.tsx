@@ -905,6 +905,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         world.position.set(cameraRef.current.x, cameraRef.current.y);
       };
       canvas.addEventListener('wheel', onWheel, { passive: false });
+      
+      // 右クリック時のコンテキストメニューを無効化
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        return false;
+      });
 
       // WASD/矢印キーでパン
       const onKeyDown = (e: KeyboardEvent) => {
@@ -977,6 +983,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           
           const wheel = (app as any).__wheel as ((e: WheelEvent) => void) | undefined;
           if (wheel) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('wheel', wheel as any);
+          
+          // コンテキストメニュー無効化のイベントリスナーを削除
+          (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+          });
 
           const pd = (app as any).__ptrDown as any;
           const pm = (app as any).__ptrMove as any;
