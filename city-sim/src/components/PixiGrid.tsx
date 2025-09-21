@@ -1,13 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics, Container, Point, Assets, Sprite, Texture } from 'pixi.js';
+import { Application, Graphics, Container, Point, Assets, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
 import { FACILITY_DATA } from '../types/facility';
-import { getRoadConnectionType } from '../utils/roadConnection';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
 import { useRedrawControl } from '../hooks/useRedrawControl';
+import { 
+  drawTerrain, 
+  drawFacilities, 
+  drawPreview, 
+  drawEffectPreview, 
+  drawRoadDragRange 
+} from '../utils/pixiDrawingUtils';
 
 interface PixiGridProps {
   size: GridSize;
@@ -101,23 +107,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     }
   }, [selectedFacilityType]);
 
-  // 地形に応じた色を取得する関数
-  const getTerrainColor = React.useCallback((terrain: string): number => {
-    const terrainColors: Record<string, number> = {
-      grass: 0x90EE90,      // 薄い緑
-      water: 0x87CEEB,      // 空色
-      forest: 0x228B22,     // 濃い緑
-      desert: 0xF4A460,     // 砂色
-      mountain: 0x696969,   // 暗いグレー
-      beach: 0xF5DEB3,      // 小麦色
-      swamp: 0x8B4513,      // 茶色
-      rocky: 0xA0522D,      // シエナ
-    };
-    return terrainColors[terrain] || 0x90EE90;
-  }, []);
 
   // 地形描画関数
-  const drawTerrain = () => {
+  const drawTerrainLayer = () => {
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
     // 地形データの変更をチェック
@@ -125,48 +117,22 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       return; // 変更なしの場合はスキップ
     }
     
-    const layer = terrainLayerRef.current;
-    
-    // 既存のGraphicsオブジェクトをプールに戻す
-    layer.children.forEach(child => {
-      if (child instanceof Graphics) {
-        returnGraphics(child);
-      }
-    });
-    layer.removeChildren();
-    
     const { offsetX, offsetY } = offsetsRef.current;
     
-    // 見える範囲のタイルを描画
-    const maxX = Math.min(size.width, 120);
-    const maxY = Math.min(size.height, 120);
-    
-    for (let y = 0; y < maxY; y++) {
-      for (let x = 0; x < maxX; x++) {
-        // 地形が未設定の場合はデフォルト（草）を使用
-        const terrain = getTerrainAt(x, y) || 'grass';
-        const color = getTerrainColor(terrain);
-        
-        const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-        
-        const terrainG = getPooledGraphics();
-        terrainG.moveTo(isoX, isoY)
-          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-          .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-          .lineTo(isoX, isoY)
-          .fill({ color, alpha: 0.8 })
-          .stroke({ color: 0x666666, width: 1 });
-        
-        terrainG.zIndex = isoY;
-        layer.addChild(terrainG);
-      }
-    }
+    drawTerrain(
+      terrainLayerRef.current,
+      terrainMap,
+      size,
+      offsetX,
+      offsetY,
+      getTerrainAt,
+      getPooledGraphics,
+      returnGraphics
+    );
   };
 
   // 施設描画関数
-  const drawFacilities = () => {
+  const drawFacilitiesLayer = () => {
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
     
     // 施設データの変更をチェック
@@ -175,104 +141,21 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       return; // 変更なしの場合はスキップ
     }
     
-    const layer = facilitiesLayerRef.current;
-    
-    // 既存のGraphicsオブジェクトをプールに戻す
-    layer.children.forEach(child => {
-      if (child instanceof Graphics) {
-        returnGraphics(child);
-      }
-    });
-    layer.removeChildren();
-    
     const { offsetX, offsetY } = offsetsRef.current;
     
-    // 施設マップを作成（道路接続判定用）
-    const facilityMap = new Map<string, Facility>();
-    facilitiesNow.forEach(facility => {
-      facility.occupiedTiles.forEach(tile => {
-        facilityMap.set(`${tile.x}-${tile.y}`, facility);
-      });
-    });
-    
-    facilitiesNow.forEach(facility => {
-      const facilityData = FACILITY_DATA[facility.type];
-      
-      // 道路接続描画処理
-      if (facility.type === 'road') {
-        facility.occupiedTiles.forEach(tile => {
-          const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
-          const imgPath = facilityData.imgPaths?.[connection.variantIndex];
-          if (!imgPath) return;
-          
-          const texture = texturesRef.current.get(imgPath);
-          if (!texture) return;
-          
-          const sprite = new Sprite(texture);
-          const isoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-          const isoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-          
-          // 道路のサイズ設定
-          const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
-          sprite.width = imgSize.width;
-          sprite.height = imgSize.height;
-          
-          // 道路のみアンカーを中心に設定
-          sprite.anchor.set(0.5, 0.5);
-          
-          // 位置設定
-          sprite.x = isoX + ISO_TILE_WIDTH / 2;
-          sprite.y = isoY;
-          
-          // 回転の適用
-          sprite.rotation = (connection.rotation * Math.PI) / 180;
-          
-          // フリップの適用
-          if (connection.flip) {
-            sprite.scale.x *= -1;   // 水平反転
-          }
-          
-          // Z-index
-          sprite.zIndex = isoY;
-          layer.addChild(sprite);
-        });
-      } 
-      else {
-        // 通常の施設
-        const imgPath = facilityData.imgPaths?.[0];
-        if (!imgPath) return;
-        
-        const texture = texturesRef.current.get(imgPath);
-        if (!texture) return;
-        
-        const sprite = new Sprite(texture);
-        const center = facility.position;
-        const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-        
-        // 画像サイズが分かる場合は中央寄せ。なければそのまま
-        const size = facilityData.imgSizes?.[0];
-        if (size) {
-          sprite.anchor.set(0.5, 1.0);
-          sprite.x = isoX + ISO_TILE_WIDTH / 2;
-          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
-          sprite.width = size.width;
-          sprite.height = size.height;
-        }
-        else {
-          sprite.x = isoX;
-          sprite.y = isoY;
-        }
-        
-        // 簡易Z-index
-        sprite.zIndex = isoY;
-        layer.addChild(sprite);
-      }
-    });
+    drawFacilities(
+      facilitiesLayerRef.current,
+      facilitiesNow,
+      offsetX,
+      offsetY,
+      texturesRef.current,
+      getPooledGraphics,
+      returnGraphics
+    );
   };
 
   // プレビュー描画関数
-  const drawPreview = () => {
+  const drawPreviewLayer = () => {
     if (!previewLayerRef.current || !isInitializedRef.current) return;
     
     const currentType = selectedFacilityTypeRef.current;
@@ -283,83 +166,25 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       return; // マウス位置が変わっていない場合はスキップ
     }
     
-    const layer = previewLayerRef.current;
-    
-    // 既存のGraphicsオブジェクトをプールに戻す
-    layer.children.forEach(child => {
-      if (child instanceof Graphics) {
-        returnGraphics(child);
-      }
-    });
-    layer.removeChildren();
-    
     const { offsetX, offsetY } = offsetsRef.current;
-    const facilityData = FACILITY_DATA[currentType];
-    const radius = Math.floor(facilityData.size / 2);
-    const center = hoverRef.current;
-    
-    // 施設マップを作成（既存施設の占有タイル）
-    const facilityMap = new Map<string, Facility>();
     const facilitiesNow = facilitiesRef.current ?? [];
-    facilitiesNow.forEach(facility => {
-      facility.occupiedTiles.forEach(tile => {
-        facilityMap.set(`${tile.x}-${tile.y}`, facility);
-      });
-    });
     
-    // プレビュー範囲を描画
-    for (let dx = -radius; dx <= radius; dx++) {
-      for (let dy = -radius; dy <= radius; dy++) {
-        const x = center.x + dx;
-        const y = center.y + dy;
-        
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-          const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-          
-          const previewG = getPooledGraphics();
-          previewG.moveTo(isoX, isoY)
-            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-            .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-            .lineTo(isoX, isoY);
-          
-          // プレビューステータスを決定
-          const tileKey = `${x}-${y}`;
-          const canAfford = (moneyRef.current ?? 0) >= facilityData.cost;
-          const isOccupied = facilityMap.has(tileKey);
-          
-          // 色を決定
-          let color = 0x00ff00; // デフォルト緑
-          let alpha = 0.3;
-          
-          if (canAfford && !isOccupied) {
-            // 施設カテゴリ別
-            const facilityData = FACILITY_DATA[currentType];
-            switch (facilityData.category) {
-              case 'residential': color = 0x86efac; break;      // 緑（住宅）
-              case 'commercial': color = 0x93c5fd; break;       // 青（商業）
-              case 'industrial': color = 0xfef08a; break;       // 黄（工業）
-              case 'infrastructure': color = 0x9ca3af; break;   // グレー（インフラ）
-              case 'government': color = 0xc4b5fd; break;       // 紫（公共）
-              case 'others': color = 0xf0abfc; break;           // ピンク（その他）
-              default: color = 0x86efac; break;                 // デフォルト
-            }
-          }
-          else {
-            color = 0xfca5a5; // 赤（建設不可）
-          }
-          
-          previewG.fill({ color, alpha });
-          previewG.stroke({ color: 0xffffff, width: 1 });
-          layer.addChild(previewG);
-        }
-      }
-    }
+    drawPreview(
+      previewLayerRef.current,
+      currentType,
+      hoverRef.current,
+      size,
+      offsetX,
+      offsetY,
+      moneyRef.current ?? 0,
+      facilitiesNow,
+      getPooledGraphics,
+      returnGraphics
+    );
   };
 
   // 効果範囲プレビュー描画関数
-  const drawEffectPreview = () => {
+  const drawEffectPreviewLayer = () => {
     if (!effectPreviewLayerRef.current || !isInitializedRef.current) return;
     
     const currentType = selectedFacilityTypeRef.current;
@@ -370,76 +195,23 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       return; // マウス位置が変わっていない場合はスキップ
     }
     
-    const layer = effectPreviewLayerRef.current;
-    
-    // 既存のGraphicsオブジェクトをプールに戻す
-    layer.children.forEach(child => {
-      if (child instanceof Graphics) {
-        returnGraphics(child);
-      }
-    });
-    layer.removeChildren();
-    
     const { offsetX, offsetY } = offsetsRef.current;
-    const facilityData = FACILITY_DATA[currentType];
-    const effectRadius = facilityData.effectRadius ?? 0;
     
-    if (effectRadius <= 0) return;
-    
-    const center = hoverRef.current;
-    
-    // 効果範囲を描画
-    for (let dx = -effectRadius; dx <= effectRadius; dx++) {
-      for (let dy = -effectRadius; dy <= effectRadius; dy++) {
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= effectRadius) {
-          const x = center.x + dx;
-          const y = center.y + dy;
-          
-          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-            const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-            const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-            
-            const effectG = getPooledGraphics();
-            effectG.moveTo(isoX, isoY)
-              .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-              .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-              .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-              .lineTo(isoX, isoY);
-            
-            // 効果範囲の色（施設タイプ別）
-            let color = 0x90EE90; // デフォルト緑
-            switch (currentType) {
-              case 'police': color = 0x87CEEB; break; // スカイブルー
-              case 'hospital': color = 0xFFB6C1; break; // ライトピンク
-              case 'park': color = 0x90EE90; break; // ライトグリーン
-              case 'city_hall': color = 0xDDA0DD; break; // プラム
-              default: color = 0x90EE90; break;
-            }
-            
-            effectG.fill({ color, alpha: 0.3 });
-            effectG.stroke({ color: 0xffffff, width: 1, alpha: 0.5 });
-            layer.addChild(effectG);
-          }
-        }
-      }
-    }
+    drawEffectPreview(
+      effectPreviewLayerRef.current,
+      currentType,
+      hoverRef.current,
+      size,
+      offsetX,
+      offsetY,
+      getPooledGraphics,
+      returnGraphics
+    );
   };
 
   // 道路ドラッグ範囲描画関数
-  const drawRoadDragRange = () => {
+  const drawRoadDragRangeLayer = () => {
     if (!previewLayerRef.current || !isInitializedRef.current) return;
-    
-    const layer = previewLayerRef.current;
-
-    // 既存のGraphicsオブジェクトをプールに戻す
-    const existingChildren = layer.children.filter(child => child.name !== 'road-drag');
-    existingChildren.forEach(child => {
-      if (child instanceof Graphics) {
-        returnGraphics(child);
-      }
-    });
-    layer.removeChildren();
     
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !roadDragRef.current.isPlacing || !roadDragRef.current.startTile || !roadDragRef.current.endTile) return;
@@ -447,85 +219,22 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     if (currentType !== 'road') return;
     
     const { offsetX, offsetY } = offsetsRef.current;
-    const startTile = roadDragRef.current.startTile;
-    const endTile = roadDragRef.current.endTile;
-    
-    // 直線一列のみの敷設
-    const dx = Math.abs(endTile.x - startTile.x);
-    const dy = Math.abs(endTile.y - startTile.y);
-    
-    let tiles: { x: number; y: number }[] = [];
-    
-    // X軸方向の直線
-    if (dx > dy) {
-      const startX = Math.min(startTile.x, endTile.x);
-      const endX = Math.max(startTile.x, endTile.x);
-      const y = startTile.y;
-      
-      for (let x = startX; x <= endX; x++) {
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          tiles.push({ x, y });
-        }
-      }
-    }
-    // Y軸方向の直線
-    else {
-      const startY = Math.min(startTile.y, endTile.y);
-      const endY = Math.max(startTile.y, endTile.y);
-      const x = startTile.x;
-      
-      for (let y = startY; y <= endY; y++) {
-        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          tiles.push({ x, y });
-        }
-      }
-    }
-    
-    // 施設マップを作成（既存施設の占有タイル）
-    const facilityMap = new Map<string, Facility>();
     const facilitiesNow = facilitiesRef.current ?? [];
-    facilitiesNow.forEach(facility => {
-      facility.occupiedTiles.forEach(tile => {
-        facilityMap.set(`${tile.x}-${tile.y}`, facility);
-      });
-    });
     
-    // 道路のコストを取得
-    const roadData = FACILITY_DATA['road'];
-    
-    // ドラッグ範囲を描画
-    tiles.forEach(({ x, y }) => {
-      const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-      const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-      
-      const dragG = getPooledGraphics();
-      dragG.name = 'road-drag';
-      dragG.moveTo(isoX, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX, isoY);
-      
-      // プレビューステータスを決定
-      const tileKey = `${x}-${y}`;
-      const canAfford = (moneyRef.current ?? 0) >= roadData.cost;
-      const isOccupied = facilityMap.has(tileKey);
-      
-      // 色を決定（CanvasGridと同じ金色系）
-      let color = 0xFFD700; // 金色（デフォルト）
-      let alpha = 0.7;
-      let strokeColor = 0xFFA500; // オレンジ色の境界線
-      
-      if (!canAfford || isOccupied) {
-        color = 0xfca5a5; // 赤（建設不可）
-        alpha = 0.7;
-        strokeColor = 0xff0000; // 赤い境界線
-      }
-      
-      dragG.fill({ color, alpha });
-      dragG.stroke({ color: strokeColor, width: 2 });
-      layer.addChild(dragG);
-    });
+    drawRoadDragRange(
+      previewLayerRef.current,
+      currentType,
+      roadDragRef.current.isPlacing,
+      roadDragRef.current.startTile,
+      roadDragRef.current.endTile,
+      size,
+      offsetX,
+      offsetY,
+      moneyRef.current ?? 0,
+      facilitiesNow,
+      getPooledGraphics,
+      returnGraphics
+    );
   };
 
   // onTileClickRefを最新の値に更新
@@ -536,22 +245,22 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   // 地形描画の更新（地形データが変更された時のみ）
   useEffect(() => {
     if (isInitializedRef.current) {
-      drawTerrain();
+      drawTerrainLayer();
     }
   }, [terrainMap]);
 
   // 施設描画の更新（施設データが変更された時のみ）
   useEffect(() => {
     if (isInitializedRef.current) {
-      drawFacilities();
+      drawFacilitiesLayer();
     }
   }, [facilities]);
 
   // プレビュー描画の更新
   useEffect(() => {
     if (isInitializedRef.current) {
-      drawPreview();
-      drawEffectPreview();
+      drawPreviewLayer();
+      drawEffectPreviewLayer();
     }
   }, [selectedFacilityType, money, facilities]);
 
@@ -650,7 +359,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
               roadDragRef.current.isPlacing = true;
               roadDragRef.current.startTile = { x: tile.x, y: tile.y };
               roadDragRef.current.endTile = { x: tile.x, y: tile.y };
-              drawRoadDragRange();
+              drawRoadDragRangeLayer();
             }
           }
         }
@@ -681,7 +390,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           
           if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
             roadDragRef.current.endTile = { x: tile.x, y: tile.y };
-            drawRoadDragRange();
+            drawRoadDragRangeLayer();
           }
           return;
         }
@@ -709,8 +418,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
                .stroke({ color: 0xf59e0b, width: 2 });
              
              // プレビューも更新
-             drawPreview();
-             drawEffectPreview();
+             drawPreviewLayer();
+             drawEffectPreviewLayer();
            }
          }
         else {
@@ -771,8 +480,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           roadDragRef.current.endTile = null;
           // 通常のプレビューに戻す
           if (hoverRef.current) {
-            drawPreview();
-            drawEffectPreview();
+            drawPreviewLayer();
+            drawEffectPreviewLayer();
           }
         }
         // 左クリックかつドラッグ開始ではない、かつ移動が小さい → クリック扱い
@@ -842,10 +551,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       isInitializedRef.current = true;
       
       // 初期化完了後に描画を更新
-      drawTerrain();
-      drawFacilities();
-      drawPreview();
-      drawEffectPreview();
+      drawTerrainLayer();
+      drawFacilitiesLayer();
+      drawPreviewLayer();
+      drawEffectPreviewLayer();
 
       // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
