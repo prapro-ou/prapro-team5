@@ -27,6 +27,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const lastPointerGlobalRef = useRef<Point | null>(null);
   const facilitiesLayerRef = useRef<Container | null>(null);
   const previewLayerRef = useRef<Container | null>(null);
+  const effectPreviewLayerRef = useRef<Container | null>(null);
   const texturesRef = useRef<Map<string, Texture>>(new Map());
   const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   const isInitializedRef = useRef(false);
@@ -158,6 +159,62 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     }
   };
 
+  // 効果範囲プレビュー描画関数
+  const drawEffectPreview = () => {
+    if (!effectPreviewLayerRef.current || !isInitializedRef.current) return;
+    
+    const layer = effectPreviewLayerRef.current;
+    layer.removeChildren();
+    
+    const currentType = selectedFacilityTypeRef.current;
+    if (!currentType || !hoverRef.current) return;
+    
+    const { offsetX, offsetY } = offsetsRef.current;
+    const facilityData = FACILITY_DATA[currentType];
+    const effectRadius = facilityData.effectRadius ?? 0;
+    
+    if (effectRadius <= 0) return;
+    
+    const center = hoverRef.current;
+    
+    // 効果範囲を描画
+    for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+      for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= effectRadius) {
+          const x = center.x + dx;
+          const y = center.y + dy;
+          
+          if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+            const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+            const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+            
+            const effectG = new Graphics();
+            effectG.moveTo(isoX, isoY)
+              .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+              .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+              .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+              .lineTo(isoX, isoY);
+            
+            // 効果範囲の色（施設タイプ別）
+            let color = 0x90EE90; // デフォルト緑
+            switch (currentType) {
+              case 'police': color = 0x87CEEB; break; // スカイブルー
+              case 'hospital': color = 0xFFB6C1; break; // ライトピンク
+              case 'park': color = 0x90EE90; break; // ライトグリーン
+              case 'city_hall': color = 0xDDA0DD; break; // プラム
+              default: color = 0x90EE90; break;
+            }
+            
+            effectG.fill({ color, alpha: 0.3 });
+            effectG.stroke({ color: 0xffffff, width: 1, alpha: 0.5 });
+            layer.addChild(effectG);
+          }
+        }
+      }
+    }
+  };
+
   // onTileClickRefを最新の値に更新
   useEffect(() => {
     onTileClickRef.current = onTileClick;
@@ -171,6 +228,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   // プレビュー描画の更新
   useEffect(() => {
     drawPreview();
+    drawEffectPreview();
   }, [selectedFacilityType, money, facilities]);
 
   useEffect(() => {
@@ -295,6 +353,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
              
              // プレビューも更新
              drawPreview();
+             drawEffectPreview();
            }
          }
         else {
@@ -302,6 +361,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           hoverG.clear();
           // プレビューもクリア
           drawPreview();
+          drawEffectPreview();
         }
       };
 
@@ -340,11 +400,17 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
        world.addChild(facilitiesLayer);
        facilitiesLayerRef.current = facilitiesLayer;
 
-       // プレビュー用レイヤ（施設レイヤーの上）
-       const previewLayer = new Container();
-       previewLayer.sortableChildren = true;
-       world.addChild(previewLayer);
-       previewLayerRef.current = previewLayer;
+      // プレビュー用レイヤ（施設レイヤーの上）
+      const previewLayer = new Container();
+      previewLayer.sortableChildren = true;
+      world.addChild(previewLayer);
+      previewLayerRef.current = previewLayer;
+
+      // 効果範囲プレビュー用レイヤ（プレビューレイヤーの上）
+      const effectPreviewLayer = new Container();
+      effectPreviewLayer.sortableChildren = true;
+      world.addChild(effectPreviewLayer);
+      effectPreviewLayerRef.current = effectPreviewLayer;
 
       // 施設テクスチャのプリロード
       const uniquePaths = Array.from(new Set(
