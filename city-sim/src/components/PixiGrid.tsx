@@ -4,6 +4,7 @@ import type { Facility, FacilityType } from '../types/facility';
 import { Application, Graphics, Container, Point, Assets, Sprite, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
 import { FACILITY_DATA } from '../types/facility';
+import { getRoadConnectionType } from '../utils/roadConnection';
 
 interface PixiGridProps {
   size: GridSize;
@@ -55,27 +56,77 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     layer.removeChildren();
     const { offsetX, offsetY } = offsetsRef.current;
     
-    facilities
-      .map(f => {
-        const data = FACILITY_DATA[f.type];
-        const imgPath = data.imgPaths?.[f.variantIndex ?? 0] ?? data.imgPaths?.[0];
-        const texture = imgPath ? texturesRef.current.get(imgPath) : undefined;
-        return { f, data, texture };
-      })
-      .filter(x => !!x.texture)
-      .forEach(({ f, data, texture }) => {
+    const facilitiesNow = facilitiesRef.current ?? [];
+    
+    // 施設マップを作成（道路接続判定用）
+    const facilityMap = new Map<string, Facility>();
+    facilitiesNow.forEach(facility => {
+      facility.occupiedTiles.forEach(tile => {
+        facilityMap.set(`${tile.x}-${tile.y}`, facility);
+      });
+    });
+    
+    facilitiesNow.forEach(facility => {
+      const facilityData = FACILITY_DATA[facility.type];
+      
+      // 道路接続描画処理
+      if (facility.type === 'road') {
+        facility.occupiedTiles.forEach(tile => {
+          const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
+          const imgPath = facilityData.imgPaths?.[connection.variantIndex];
+          if (!imgPath) return;
+          
+          const texture = texturesRef.current.get(imgPath);
+          if (!texture) return;
+          
+          const sprite = new Sprite(texture);
+          const isoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+          const isoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+          
+          // 道路のサイズ設定
+          const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
+          sprite.width = imgSize.width;
+          sprite.height = imgSize.height;
+          
+          // 道路のみアンカーを中心に設定
+          sprite.anchor.set(0.5, 0.5);
+          
+          // 位置設定
+          sprite.x = isoX + ISO_TILE_WIDTH / 2;
+          sprite.y = isoY;
+          
+          // 回転の適用
+          sprite.rotation = (connection.rotation * Math.PI) / 180;
+          
+          // フリップの適用
+          if (connection.flip) {
+            sprite.scale.x *= -1;   // 水平反転
+          }
+          
+          // Z-index
+          sprite.zIndex = isoY;
+          layer.addChild(sprite);
+        });
+      } 
+      else {
+        // 通常の施設
+        const imgPath = facilityData.imgPaths?.[0];
+        if (!imgPath) return;
+        
+        const texture = texturesRef.current.get(imgPath);
         if (!texture) return;
-        const center = f.position;
+        
+        const sprite = new Sprite(texture);
+        const center = facility.position;
         const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
         const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-        const sprite = new Sprite(texture);
         
         // 画像サイズが分かる場合は中央寄せ。なければそのまま
-        const size = data.imgSizes?.[0];
+        const size = facilityData.imgSizes?.[0];
         if (size) {
           sprite.anchor.set(0.5, 1.0);
           sprite.x = isoX + ISO_TILE_WIDTH / 2;
-          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(data.size / 2);
+          sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
           sprite.width = size.width;
           sprite.height = size.height;
         }
@@ -87,7 +138,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         // 簡易Z-index
         sprite.zIndex = isoY;
         layer.addChild(sprite);
-      });
+      }
+    });
   };
 
   // プレビュー描画関数
