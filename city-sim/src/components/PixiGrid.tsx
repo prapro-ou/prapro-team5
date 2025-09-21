@@ -117,7 +117,6 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
           const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
           
-          // プレビュー用のGraphics
           const previewG = new Graphics();
           previewG.moveTo(isoX, isoY)
             .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
@@ -135,16 +134,16 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           let alpha = 0.3;
           
           if (canAfford && !isOccupied) {
-            // 施設タイプ別の色
-            switch (currentType) {
-              case 'residential': color = 0x86efac; break; // bg-green-300
-              case 'commercial': color = 0x93c5fd; break; // bg-blue-300
-              case 'industrial': color = 0xfef08a; break; // bg-yellow-200
-              case 'road': color = 0x9ca3af; break; // bg-gray-400
-              case 'city_hall': color = 0xc4b5fd; break; // bg-purple-300
-              case 'park': color = 0xd3fcaa; break; // bg-lime-200
-              case 'police': color = 0xf0abfc; break; // bg-fuchsia-400
-              default: color = 0x86efac; break; // デフォルト緑
+            // 施設カテゴリ別
+            const facilityData = FACILITY_DATA[currentType];
+            switch (facilityData.category) {
+              case 'residential': color = 0x86efac; break;      // 緑（住宅）
+              case 'commercial': color = 0x93c5fd; break;       // 青（商業）
+              case 'industrial': color = 0xfef08a; break;       // 黄（工業）
+              case 'infrastructure': color = 0x9ca3af; break;   // グレー（インフラ）
+              case 'government': color = 0xc4b5fd; break;       // 紫（公共）
+              case 'others': color = 0xf0abfc; break;           // ピンク（その他）
+              default: color = 0x86efac; break;                 // デフォルト
             }
           }
           else {
