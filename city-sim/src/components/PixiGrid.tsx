@@ -6,6 +6,7 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordin
 import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from '../utils/roadConnection';
 import { useTerrainStore } from '../stores/TerrainStore';
+import { useGraphicsPool } from '../hooks/useGraphicsPool';
 
 interface PixiGridProps {
   size: GridSize;
@@ -53,20 +54,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const lastEffectPreviewMousePositionRef = useRef<Position | null>(null);
 
   // オブジェクトプール
-  const graphicsPoolRef = useRef<Graphics[]>([]);
-  const getPooledGraphics = () => {
-    const pool = graphicsPoolRef.current;
-    if (pool.length > 0) {
-      const g = pool.pop()!;
-      g.clear();
-      return g;
-    }
-    return new Graphics();
-  };
-  const returnGraphics = (g: Graphics) => {
-    g.clear();
-    graphicsPoolRef.current.push(g);
-  };
+  const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
 
   // プレビューをクリアする関数
   const clearPreviews = () => {
@@ -1005,6 +993,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           if (ku) window.removeEventListener('keyup', ku);
           const tf = (app as any).__tickerFn as ((t: any) => void) | undefined;
           if (tf) app.ticker.remove(tf);
+          
+          // オブジェクトプールをクリア
+          clearPool();
+          
           app.destroy(true);
         }
         catch {
