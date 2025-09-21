@@ -330,13 +330,16 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
   // プレビュー描画の更新
   useEffect(() => {
-    drawPreview();
-    drawEffectPreview();
+    if (isInitializedRef.current) {
+      drawPreview();
+      drawEffectPreview();
+    }
   }, [selectedFacilityType, money, facilities]);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !size.width || !size.height) return;
+
 
     let didInit = false;
     const canvas = document.createElement('canvas');
@@ -610,6 +613,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
       // 初期化完了フラグを設定
       isInitializedRef.current = true;
+      
+      // 初期化完了後にプレビューを更新
+      drawPreview();
+      drawEffectPreview();
 
       // ホイールでズーム（カーソル位置を基準に）
       const onWheel = (ev: WheelEvent) => {
