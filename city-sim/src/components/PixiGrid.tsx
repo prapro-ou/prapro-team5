@@ -7,6 +7,7 @@ import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from '../utils/roadConnection';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
+import { useRedrawControl } from '../hooks/useRedrawControl';
 
 interface PixiGridProps {
   size: GridSize;
@@ -47,14 +48,17 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const moneyRef = useRef<number>(money);
   const facilitiesRef = useRef<Facility[]>(facilities);
 
-  // 再描画制御用の状態
-  const lastTerrainMapRef = useRef<string | null>(null);
-  const lastFacilitiesRef = useRef<string | null>(null);
-  const lastPreviewMousePositionRef = useRef<Position | null>(null);
-  const lastEffectPreviewMousePositionRef = useRef<Position | null>(null);
-
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
+
+  // 再描画制御
+  const { 
+    shouldRedrawTerrain, 
+    shouldRedrawFacilities, 
+    shouldRedrawPreview, 
+    shouldRedrawEffectPreview, 
+    resetPreviewStates 
+  } = useRedrawControl();
 
   // プレビューをクリアする関数
   const clearPreviews = () => {
@@ -79,8 +83,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     }
     
     // マウス位置の状態をリセット
-    lastPreviewMousePositionRef.current = null;
-    lastEffectPreviewMousePositionRef.current = null;
+    resetPreviewStates();
     hoverRef.current = null;
   };
   
@@ -117,12 +120,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawTerrain = () => {
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
-    // 地形データのハッシュを計算して変更チェック
-    const terrainHash = JSON.stringify(terrainMap);
-    if (lastTerrainMapRef.current !== null && terrainHash === lastTerrainMapRef.current) {
+    // 地形データの変更をチェック
+    if (!shouldRedrawTerrain(terrainMap)) {
       return; // 変更なしの場合はスキップ
     }
-    lastTerrainMapRef.current = terrainHash;
     
     const layer = terrainLayerRef.current;
     
@@ -168,13 +169,11 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   const drawFacilities = () => {
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
     
-    // 施設データのハッシュを計算して変更チェック
+    // 施設データの変更をチェック
     const facilitiesNow = facilitiesRef.current ?? [];
-    const facilitiesHash = JSON.stringify(facilitiesNow);
-    if (lastFacilitiesRef.current !== null && facilitiesHash === lastFacilitiesRef.current) {
+    if (!shouldRedrawFacilities(facilitiesNow)) {
       return; // 変更なしの場合はスキップ
     }
-    lastFacilitiesRef.current = facilitiesHash;
     
     const layer = facilitiesLayerRef.current;
     
@@ -279,15 +278,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !hoverRef.current) return;
     
-    // マウス位置の変更チェック
-    const currentMousePos = hoverRef.current;
-    if (currentMousePos && lastPreviewMousePositionRef.current &&
-        currentMousePos.x === lastPreviewMousePositionRef.current.x &&
-        currentMousePos.y === lastPreviewMousePositionRef.current.y) {
+    // マウス位置の変更をチェック
+    if (!shouldRedrawPreview(hoverRef.current)) {
       return; // マウス位置が変わっていない場合はスキップ
     }
-    // マウス位置を更新
-    lastPreviewMousePositionRef.current = currentMousePos ? { ...currentMousePos } : null;
     
     const layer = previewLayerRef.current;
     
@@ -371,15 +365,10 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     const currentType = selectedFacilityTypeRef.current;
     if (!currentType || !hoverRef.current) return;
     
-    // マウス位置の変更チェック
-    const currentMousePos = hoverRef.current;
-    if (currentMousePos && lastEffectPreviewMousePositionRef.current &&
-        currentMousePos.x === lastEffectPreviewMousePositionRef.current.x &&
-        currentMousePos.y === lastEffectPreviewMousePositionRef.current.y) {
+    // マウス位置の変更をチェック
+    if (!shouldRedrawEffectPreview(hoverRef.current)) {
       return; // マウス位置が変わっていない場合はスキップ
     }
-    // マウス位置を更新
-    lastEffectPreviewMousePositionRef.current = currentMousePos ? { ...currentMousePos } : null;
     
     const layer = effectPreviewLayerRef.current;
     
