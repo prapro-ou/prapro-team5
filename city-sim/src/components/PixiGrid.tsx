@@ -67,6 +67,34 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     g.clear();
     graphicsPoolRef.current.push(g);
   };
+
+  // プレビューをクリアする関数
+  const clearPreviews = () => {
+    // プレビューレイヤーをクリア
+    if (previewLayerRef.current) {
+      previewLayerRef.current.children.forEach(child => {
+        if (child instanceof Graphics) {
+          returnGraphics(child);
+        }
+      });
+      previewLayerRef.current.removeChildren();
+    }
+    
+    // 効果範囲プレビューレイヤーをクリア
+    if (effectPreviewLayerRef.current) {
+      effectPreviewLayerRef.current.children.forEach(child => {
+        if (child instanceof Graphics) {
+          returnGraphics(child);
+        }
+      });
+      effectPreviewLayerRef.current.removeChildren();
+    }
+    
+    // マウス位置の状態をリセット
+    lastPreviewMousePositionRef.current = null;
+    lastEffectPreviewMousePositionRef.current = null;
+    hoverRef.current = null;
+  };
   
   // 地形ストアの使用
   const { terrainMap, getTerrainAt } = useTerrainStore();
@@ -74,6 +102,13 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   useEffect(() => { selectedFacilityTypeRef.current = selectedFacilityType; }, [selectedFacilityType]);
   useEffect(() => { moneyRef.current = money; }, [money]);
   useEffect(() => { facilitiesRef.current = facilities; }, [facilities]);
+
+  // 建設パネルが閉じられた時にプレビューをクリア
+  useEffect(() => {
+    if (!selectedFacilityType) {
+      clearPreviews();
+    }
+  }, [selectedFacilityType]);
 
   // 地形に応じた色を取得する関数
   const getTerrainColor = React.useCallback((terrain: string): number => {
@@ -705,8 +740,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           hoverRef.current = null;
           hoverG.clear();
           // プレビューもクリア
-          drawPreview();
-          drawEffectPreview();
+          clearPreviews();
         }
       };
 
@@ -758,8 +792,11 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
           roadDragRef.current.isPlacing = false;
           roadDragRef.current.startTile = null;
           roadDragRef.current.endTile = null;
-          drawPreview(); // 通常のプレビューに戻す
-          drawEffectPreview();
+          // 通常のプレビューに戻す
+          if (hoverRef.current) {
+            drawPreview();
+            drawEffectPreview();
+          }
         }
         // 左クリックかつドラッグ開始ではない、かつ移動が小さい → クリック扱い
         else if (onTileClickRef.current && pressedButton === 0 && !wasDragging) {
@@ -915,7 +952,11 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       (app as any).__ptrDown = onPointerDown;
       (app as any).__ptrMove = onPointerMove;
       (app as any).__ptrUp = onPointerUp;
-      (app as any).__ptrLeave = () => { hoverRef.current = null; hoverG.clear(); };
+      (app as any).__ptrLeave = () => { 
+        hoverRef.current = null; 
+        hoverG.clear(); 
+        clearPreviews();
+      };
       (app as any).__keyDown = onKeyDown;
       (app as any).__keyUp = onKeyUp;
       (app as any).__tickerFn = tickerFn;
