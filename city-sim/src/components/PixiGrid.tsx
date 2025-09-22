@@ -2,11 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import { Application, Graphics, Container, Point, Assets, Texture } from 'pixi.js';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordinates';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
 import { usePixiDrawing } from '../hooks/usePixiDrawing';
+import { usePixiCoordinates } from '../hooks/usePixiCoordinates';
 
 interface PixiGridProps {
   size: GridSize;
@@ -48,6 +49,19 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
   // 地形ストアの使用
   const { terrainMap, getTerrainAt } = useTerrainStore();
+
+  // 座標計算フックの使用
+  const {
+    updateHoverState,
+    startRoadDrag,
+    updateRoadDrag,
+    getClickTile,
+    tileToIsometric
+  } = usePixiCoordinates({
+    size,
+    worldRef,
+    offsetsRef
+  });
 
   // 描画フックの使用
   const {
@@ -201,15 +215,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         else if (isLeft && selectedFacilityTypeRef.current) {
           // 道路のドラッグ開始処理
           if (selectedFacilityTypeRef.current === 'road') {
-            const local = world.toLocal(new Point(e.global.x, e.global.y));
-            const isoX = (local.x - offsetX);
-            const isoY = (local.y - offsetY);
-            const tile = fromIsometric(isoX, isoY);
-            
-            if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-              roadDragRef.current.isPlacing = true;
-              roadDragRef.current.startTile = { x: tile.x, y: tile.y };
-              roadDragRef.current.endTile = { x: tile.x, y: tile.y };
+            if (startRoadDrag(e.global.x, e.global.y, roadDragRef)) {
               drawRoadDragRangeLayer();
             }
           }
@@ -234,32 +240,19 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
 
         // 道路ドラッグ更新処理
         if (roadDragRef.current.isPlacing) {
-          const local = world.toLocal(new Point(e.global.x, e.global.y));
-          const isoX = (local.x - offsetX);
-          const isoY = (local.y - offsetY);
-          const tile = fromIsometric(isoX, isoY);
-          
-          if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-            roadDragRef.current.endTile = { x: tile.x, y: tile.y };
+          if (updateRoadDrag(e.global.x, e.global.y, roadDragRef)) {
             drawRoadDragRangeLayer();
           }
           return;
         }
 
          // ホバー更新（ドラッグしていない時）
-         const local = world.toLocal(new Point(e.global.x, e.global.y));
-         const isoX = (local.x - offsetX);
-         const isoY = (local.y - offsetY);
-         const tile = fromIsometric(isoX, isoY);
-         
-         if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-           const changed = !hoverRef.current || hoverRef.current.x !== tile.x || hoverRef.current.y !== tile.y;
-           if (changed) {
-             hoverRef.current = { x: tile.x, y: tile.y };
+         const changed = updateHoverState(e.global.x, e.global.y, hoverRef);
+         if (changed) {
+           if (hoverRef.current) {
              // 再描画
              hoverG.clear();
-             const hIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-             const hIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+             const { x: hIsoX, y: hIsoY } = tileToIsometric(hoverRef.current.x, hoverRef.current.y);
              hoverG.moveTo(hIsoX, hIsoY)
                .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY - ISO_TILE_HEIGHT / 2)
                .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
@@ -272,13 +265,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
              drawPreviewLayer();
              drawEffectPreviewLayer();
            }
+           else {
+             hoverG.clear();
+             // プレビューもクリア
+             clearPreviews();
+           }
          }
-        else {
-          hoverRef.current = null;
-          hoverG.clear();
-          // プレビューもクリア
-          clearPreviews();
-        }
       };
 
       const onPointerUp = (e: any) => {
@@ -339,12 +331,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         else if (onTileClickRef.current && pressedButton === 0 && !wasDragging) {
           const distSq = (e.global.x - dragRef.current.downX) ** 2 + (e.global.y - dragRef.current.downY) ** 2;
           if (distSq <= 25) { // 5px以内
-            const local = world.toLocal(new Point(e.global.x, e.global.y));
-            const isoX = (local.x - offsetX);
-            const isoY = (local.y - offsetY);
-            const tile = fromIsometric(isoX, isoY);
-            if (tile.x >= 0 && tile.x < size.width && tile.y >= 0 && tile.y < size.height) {
-              onTileClickRef.current({ x: tile.x, y: tile.y });
+            const tile = getClickTile(e.global.x, e.global.y);
+            if (tile) {
+              onTileClickRef.current(tile);
             }
           }
         }
