@@ -8,6 +8,7 @@ import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
 import { usePixiDrawing } from '../hooks/usePixiDrawing';
 import { usePixiCoordinates } from '../hooks/usePixiCoordinates';
+import { useWheelZoom } from '../hooks/useWheelZoom';
 
 interface PixiGridProps {
   size: GridSize;
@@ -282,41 +283,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       drawPreviewLayer();
       drawEffectPreviewLayer();
 
-      // ホイールでズーム（カーソル位置を基準に）
-      const onWheel = (ev: WheelEvent) => {
-        ev.preventDefault();
-        // 直近のポインタ位置を優先してグローバル座標とする（Pixiの座標系）
-        let globalPt: Point;
-        if (lastPointerGlobalRef.current) {
-          globalPt = lastPointerGlobalRef.current.clone();
-        } else {
-          const rect = (app.renderer.canvas as HTMLCanvasElement).getBoundingClientRect();
-          const cssX = ev.clientX - rect.left;
-          const cssY = ev.clientY - rect.top;
-          const resolution = (app.renderer as any).resolution ?? 1;
-          globalPt = new Point(cssX * resolution, cssY * resolution);
-        }
-
-        // ズーム前にカーソル直下のワールド座標を取得
-        const beforeLocal = world.toLocal(globalPt);
-
-        // スケール更新
-        const delta = ev.deltaY > 0 ? -0.1 : 0.1;
-        const oldScale = cameraRef.current.scale;
-        const newScale = Math.max(0.5, Math.min(3, oldScale + delta));
-        if (newScale === oldScale) return;
-        cameraRef.current.scale = newScale;
-        world.scale.set(newScale);
-
-        // ズーム後に同じローカル点がどこに表示されるかを取得し、差分だけカメラ位置を補正
-        const afterGlobal = world.toGlobal(beforeLocal);
-        const dx = afterGlobal.x - globalPt.x;
-        const dy = afterGlobal.y - globalPt.y;
-        cameraRef.current.x -= dx;
-        cameraRef.current.y -= dy;
-        world.position.set(cameraRef.current.x, cameraRef.current.y);
-      };
-      canvas.addEventListener('wheel', onWheel, { passive: false });
+      // ホイールズーム
+      const { attachWheelZoom } = useWheelZoom({ appRef, worldRef, cameraRef, lastPointerGlobalRef });
+      const onWheel = attachWheelZoom();
       
       // 右クリック時のコンテキストメニューを無効化
       canvas.addEventListener('contextmenu', (e) => {
