@@ -6,14 +6,7 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, fromIsometric } from '../utils/coordin
 import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
-import { useRedrawControl } from '../hooks/useRedrawControl';
-import { 
-  drawTerrain, 
-  drawFacilities, 
-  drawPreview, 
-  drawEffectPreview, 
-  drawRoadDragRange 
-} from '../utils/pixiDrawingUtils';
+import { usePixiDrawing } from '../hooks/usePixiDrawing';
 
 interface PixiGridProps {
   size: GridSize;
@@ -41,10 +34,6 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     endTile: null as { x: number; y: number } | null 
   });
   const lastPointerGlobalRef = useRef<Point | null>(null);
-  const facilitiesLayerRef = useRef<Container | null>(null);
-  const previewLayerRef = useRef<Container | null>(null);
-  const effectPreviewLayerRef = useRef<Container | null>(null);
-  const terrainLayerRef = useRef<Container | null>(null);
   const texturesRef = useRef<Map<string, Texture>>(new Map());
   const offsetsRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   const isInitializedRef = useRef(false);
@@ -57,44 +46,36 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
 
-  // 再描画制御
-  const { 
-    shouldRedrawTerrain, 
-    shouldRedrawFacilities, 
-    shouldRedrawPreview, 
-    shouldRedrawEffectPreview, 
-    resetPreviewStates 
-  } = useRedrawControl();
-
-  // プレビューをクリアする関数
-  const clearPreviews = () => {
-    // プレビューレイヤーをクリア
-    if (previewLayerRef.current) {
-      previewLayerRef.current.children.forEach(child => {
-        if (child instanceof Graphics) {
-          returnGraphics(child);
-        }
-      });
-      previewLayerRef.current.removeChildren();
-    }
-    
-    // 効果範囲プレビューレイヤーをクリア
-    if (effectPreviewLayerRef.current) {
-      effectPreviewLayerRef.current.children.forEach(child => {
-        if (child instanceof Graphics) {
-          returnGraphics(child);
-        }
-      });
-      effectPreviewLayerRef.current.removeChildren();
-    }
-    
-    // マウス位置の状態をリセット
-    resetPreviewStates();
-    hoverRef.current = null;
-  };
-  
   // 地形ストアの使用
   const { terrainMap, getTerrainAt } = useTerrainStore();
+
+  // 描画フックの使用
+  const {
+    terrainLayerRef,
+    facilitiesLayerRef,
+    previewLayerRef,
+    effectPreviewLayerRef,
+    drawTerrainLayer,
+    drawFacilitiesLayer,
+    drawPreviewLayer,
+    drawEffectPreviewLayer,
+    drawRoadDragRangeLayer,
+    clearPreviews
+  } = usePixiDrawing({
+    terrainMap,
+    getTerrainAt,
+    facilitiesRef,
+    selectedFacilityTypeRef,
+    moneyRef,
+    size,
+    hoverRef,
+    roadDragRef,
+    offsetsRef,
+    texturesRef,
+    getPooledGraphics,
+    returnGraphics,
+    isInitializedRef
+  });
 
   useEffect(() => { selectedFacilityTypeRef.current = selectedFacilityType; }, [selectedFacilityType]);
   useEffect(() => { moneyRef.current = money; }, [money]);
@@ -106,136 +87,6 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       clearPreviews();
     }
   }, [selectedFacilityType]);
-
-
-  // 地形描画関数
-  const drawTerrainLayer = () => {
-    if (!terrainLayerRef.current || !isInitializedRef.current) return;
-    
-    // 地形データの変更をチェック
-    if (!shouldRedrawTerrain(terrainMap)) {
-      return; // 変更なしの場合はスキップ
-    }
-    
-    const { offsetX, offsetY } = offsetsRef.current;
-    
-    drawTerrain(
-      terrainLayerRef.current,
-      terrainMap,
-      size,
-      offsetX,
-      offsetY,
-      getTerrainAt,
-      getPooledGraphics,
-      returnGraphics
-    );
-  };
-
-  // 施設描画関数
-  const drawFacilitiesLayer = () => {
-    if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
-    
-    // 施設データの変更をチェック
-    const facilitiesNow = facilitiesRef.current ?? [];
-    if (!shouldRedrawFacilities(facilitiesNow)) {
-      return; // 変更なしの場合はスキップ
-    }
-    
-    const { offsetX, offsetY } = offsetsRef.current;
-    
-    drawFacilities(
-      facilitiesLayerRef.current,
-      facilitiesNow,
-      offsetX,
-      offsetY,
-      texturesRef.current,
-      getPooledGraphics,
-      returnGraphics
-    );
-  };
-
-  // プレビュー描画関数
-  const drawPreviewLayer = () => {
-    if (!previewLayerRef.current || !isInitializedRef.current) return;
-    
-    const currentType = selectedFacilityTypeRef.current;
-    if (!currentType || !hoverRef.current) return;
-    
-    // マウス位置の変更をチェック
-    if (!shouldRedrawPreview(hoverRef.current)) {
-      return; // マウス位置が変わっていない場合はスキップ
-    }
-    
-    const { offsetX, offsetY } = offsetsRef.current;
-    const facilitiesNow = facilitiesRef.current ?? [];
-    
-    drawPreview(
-      previewLayerRef.current,
-      currentType,
-      hoverRef.current,
-      size,
-      offsetX,
-      offsetY,
-      moneyRef.current ?? 0,
-      facilitiesNow,
-      getPooledGraphics,
-      returnGraphics
-    );
-  };
-
-  // 効果範囲プレビュー描画関数
-  const drawEffectPreviewLayer = () => {
-    if (!effectPreviewLayerRef.current || !isInitializedRef.current) return;
-    
-    const currentType = selectedFacilityTypeRef.current;
-    if (!currentType || !hoverRef.current) return;
-    
-    // マウス位置の変更をチェック
-    if (!shouldRedrawEffectPreview(hoverRef.current)) {
-      return; // マウス位置が変わっていない場合はスキップ
-    }
-    
-    const { offsetX, offsetY } = offsetsRef.current;
-    
-    drawEffectPreview(
-      effectPreviewLayerRef.current,
-      currentType,
-      hoverRef.current,
-      size,
-      offsetX,
-      offsetY,
-      getPooledGraphics,
-      returnGraphics
-    );
-  };
-
-  // 道路ドラッグ範囲描画関数
-  const drawRoadDragRangeLayer = () => {
-    if (!previewLayerRef.current || !isInitializedRef.current) return;
-    
-    const currentType = selectedFacilityTypeRef.current;
-    if (!currentType || !roadDragRef.current.isPlacing || !roadDragRef.current.startTile || !roadDragRef.current.endTile) return;
-    
-    if (currentType !== 'road') return;
-    
-    const { offsetX, offsetY } = offsetsRef.current;
-    const facilitiesNow = facilitiesRef.current ?? [];
-    
-    drawRoadDragRange(
-      previewLayerRef.current,
-      currentType,
-      roadDragRef.current.isPlacing,
-      roadDragRef.current.startTile,
-      roadDragRef.current.endTile,
-      size,
-      offsetX,
-      offsetY,
-      moneyRef.current ?? 0,
-      facilitiesNow,
-      getPooledGraphics,
-      returnGraphics
-    );
-  };
 
   // onTileClickRefを最新の値に更新
   useEffect(() => {
