@@ -85,6 +85,22 @@ export const usePixiDrawing = ({
     );
   };
 
+  // 地形を強制描画
+  const drawTerrainLayerForced = () => {
+    if (!terrainLayerRef.current || !isInitializedRef.current) return;
+    const { offsetX, offsetY } = offsetsRef.current;
+    drawTerrain(
+      terrainLayerRef.current,
+      terrainMap,
+      size,
+      offsetX,
+      offsetY,
+      getTerrainAt,
+      getPooledGraphics,
+      returnGraphics
+    );
+  };
+
   // 施設描画関数
   const drawFacilitiesLayer = () => {
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
@@ -238,6 +254,9 @@ export const usePixiDrawing = ({
     clearPreviews,
     
     // 状態リセット関数
-    resetTerrainState
+    resetTerrainState,
+    
+    // 強制描画
+    drawTerrainLayerForced
   };
 };

@@ -69,7 +69,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     facilitiesLayerRef,
     previewLayerRef,
     effectPreviewLayerRef,
-    drawTerrainLayer,
+    drawTerrainLayerForced,
     drawFacilitiesLayer,
     drawPreviewLayer,
     drawEffectPreviewLayer,
@@ -111,9 +111,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   // 地形描画の更新（地形データが変更された時のみ）
   useEffect(() => {
     if (isInitializedRef.current) {
-      // セーブデータロード後の強制再描画のため、地形状態をリセット
+      // セーブデータロード直後など、差分判定をバイパスして一度だけ強制描画
       resetTerrainState();
-      drawTerrainLayer();
+      drawTerrainLayerForced();
     }
   }, [terrainMap]);
 
@@ -275,8 +275,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       // 初期化完了フラグを設定
       isInitializedRef.current = true;
       
-      // 初期化完了後に描画を更新
-      drawTerrainLayer();
+      // 初期化完了後に描画を更新（強制描画で一度確実に反映）
+      resetTerrainState();
+      drawTerrainLayerForced();
       drawFacilitiesLayer();
       drawPreviewLayer();
       drawEffectPreviewLayer();
@@ -427,6 +428,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         }
       }
       if (container.contains(canvas)) container.removeChild(canvas);
+
+      // レイヤ参照をクリアして次回初期化時の初期状態を保証
+      terrainLayerRef.current = null;
+      facilitiesLayerRef.current = null;
+      previewLayerRef.current = null;
+      effectPreviewLayerRef.current = null;
     };
   }, [size.width, size.height]);
 
