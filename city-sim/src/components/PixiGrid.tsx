@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics, Container, Point, Assets, Texture } from 'pixi.js';
+import { Application, Graphics, Container, Point, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
-import { FACILITY_DATA } from '../types/facility';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
 import { usePixiDrawing } from '../hooks/usePixiDrawing';
 import { usePixiCoordinates } from '../hooks/usePixiCoordinates';
 import { useWheelZoom } from '../hooks/useWheelZoom';
+import { useFacilityTextures } from '../hooks/useFacilityTextures';
 
 interface PixiGridProps {
   size: GridSize;
@@ -254,24 +254,9 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       world.addChild(effectPreviewLayer);
       effectPreviewLayerRef.current = effectPreviewLayer;
 
-      // 施設テクスチャのプリロード
-      const uniquePaths = Array.from(new Set(
-        Object.values(FACILITY_DATA)
-          .flatMap(f => f.imgPaths ?? [])
-      ));
-      
-      if (uniquePaths.length > 0) {
-        try {
-          await Assets.load(uniquePaths);
-          uniquePaths.forEach((p) => {
-            const tex = Assets.get<Texture>(p);
-            if (tex) texturesRef.current.set(p, tex);
-          });
-        }
-        catch {
-          // 読み込み失敗は無視（スプライトが出ないだけ）
-        }
-      }
+      // 施設テクスチャのプリロード（フックに分離）
+      const { loadFacilityTextures } = useFacilityTextures(texturesRef);
+      await loadFacilityTextures();
 
       // 初期化完了フラグを設定
       isInitializedRef.current = true;
