@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { Point } from 'pixi.js';
 import { fromIsometric, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import type { GridSize } from '../types/grid';
