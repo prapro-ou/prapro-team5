@@ -2,10 +2,12 @@ import { Point } from 'pixi.js';
 import { fromIsometric, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import type { GridSize } from '../types/grid';
 
+type MutableRef<T> = { current: T };
+
 interface CoordinateHelpersProps {
   size: GridSize;
-  worldRef: React.MutableRefObject<any>;
-  offsetsRef: React.MutableRefObject<{ offsetX: number; offsetY: number }>;
+  worldRef: MutableRef<any>;
+  offsetsRef: MutableRef<{ offsetX: number; offsetY: number }>;
 }
 
 export const usePixiCoordinates = ({
@@ -50,7 +52,7 @@ export const usePixiCoordinates = ({
   const updateHoverState = (
     globalX: number, 
     globalY: number, 
-    hoverRef: React.MutableRefObject<{ x: number; y: number } | null>
+    hoverRef: MutableRef<{ x: number; y: number } | null>
   ): boolean => {
     const tile = globalToTile(globalX, globalY);
     
@@ -78,7 +80,7 @@ export const usePixiCoordinates = ({
   const startRoadDrag = (
     globalX: number, 
     globalY: number, 
-    roadDragRef: React.MutableRefObject<{
+    roadDragRef: MutableRef<{
       isPlacing: boolean;
       startTile: { x: number; y: number } | null;
       endTile: { x: number; y: number } | null;
@@ -100,7 +102,7 @@ export const usePixiCoordinates = ({
   const updateRoadDrag = (
     globalX: number, 
     globalY: number, 
-    roadDragRef: React.MutableRefObject<{
+    roadDragRef: MutableRef<{
       isPlacing: boolean;
       startTile: { x: number; y: number } | null;
       endTile: { x: number; y: number } | null;

@@ -57,11 +57,18 @@ export const useRedrawControl = () => {
     lastEffectPreviewMousePositionRef.current = null;
   };
 
+  // 地形の再描画判定をリセット
+  const resetTerrainState = (): void => {
+    lastTerrainMapRef.current = null;
+  };
+
   return {
     shouldRedrawTerrain,
     shouldRedrawFacilities,
     shouldRedrawPreview,
     shouldRedrawEffectPreview,
     resetPreviewStates
+    ,
+    resetTerrainState
   };
 };

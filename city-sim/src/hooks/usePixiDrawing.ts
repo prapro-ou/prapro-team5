@@ -11,24 +11,26 @@ import {
   drawRoadDragRange 
 } from '../utils/pixiDrawingUtils';
 
+type MutableRef<T> = { current: T };
+
 interface DrawingHooksProps {
   terrainMap: Map<string, string>;
   getTerrainAt: (x: number, y: number) => string | undefined;
-  facilitiesRef: React.MutableRefObject<Facility[]>;
-  selectedFacilityTypeRef: React.MutableRefObject<FacilityType | null | undefined>;
-  moneyRef: React.MutableRefObject<number>;
+  facilitiesRef: MutableRef<Facility[]>;
+  selectedFacilityTypeRef: MutableRef<FacilityType | null | undefined>;
+  moneyRef: MutableRef<number>;
   size: GridSize;
-  hoverRef: React.MutableRefObject<{ x: number; y: number } | null>;
-  roadDragRef: React.MutableRefObject<{
+  hoverRef: MutableRef<{ x: number; y: number } | null>;
+  roadDragRef: MutableRef<{
     isPlacing: boolean;
     startTile: { x: number; y: number } | null;
     endTile: { x: number; y: number } | null;
   }>;
-  offsetsRef: React.MutableRefObject<{ offsetX: number; offsetY: number }>;
-  texturesRef: React.MutableRefObject<Map<string, Texture>>;
+  offsetsRef: MutableRef<{ offsetX: number; offsetY: number }>;
+  texturesRef: MutableRef<Map<string, Texture>>;
   getPooledGraphics: () => Graphics;
   returnGraphics: (g: Graphics) => void;
-  isInitializedRef: React.MutableRefObject<boolean>;
+  isInitializedRef: MutableRef<boolean>;
 }
 
 export const usePixiDrawing = ({
