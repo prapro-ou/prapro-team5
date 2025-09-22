@@ -5,7 +5,7 @@ import { useGameStore } from '../stores/GameStore';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
-import { useRewardStore } from '../stores/RewardStore';
+import { useAchievementStore } from '../stores/AchievementStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
 
 interface SaveSlot {
@@ -30,7 +30,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const facilities = useFacilityStore(state => state.facilities);
   const terrainMap = useTerrainStore(state => state.terrainMap);
   const infrastructureStatus = useInfrastructureStore(state => state.status);
-  const rewards = useRewardStore(state => state.rewards);
+  const achievements = useAchievementStore(state => state.achievements);
   
   // セーブ・ロードフック
   const { saveGame, loadGame, exportGame } = useSaveLoad();
@@ -94,7 +94,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         facilities,
         terrainMap,
         infrastructureStatus,
-        rewards,
+        achievements,
         {
           isPaused: false,
           gameSpeed: 1,
@@ -154,7 +154,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         facilities,
         terrainMap,
         infrastructureStatus,
-        rewards,
+        achievements,
         {
           isPaused: false,
           gameSpeed: 1,
