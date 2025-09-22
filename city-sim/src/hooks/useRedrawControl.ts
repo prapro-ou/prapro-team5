@@ -67,8 +67,7 @@ export const useRedrawControl = () => {
     shouldRedrawFacilities,
     shouldRedrawPreview,
     shouldRedrawEffectPreview,
-    resetPreviewStates
-    ,
+    resetPreviewStates,
     resetTerrainState
   };
 };

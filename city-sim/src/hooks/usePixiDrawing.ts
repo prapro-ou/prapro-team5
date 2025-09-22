@@ -58,7 +58,8 @@ export const usePixiDrawing = ({
     shouldRedrawFacilities, 
     shouldRedrawPreview, 
     shouldRedrawEffectPreview, 
-    resetPreviewStates 
+    resetPreviewStates,
+    resetTerrainState
   } = useRedrawControl();
 
   // 地形描画関数
@@ -234,6 +235,9 @@ export const usePixiDrawing = ({
     drawPreviewLayer,
     drawEffectPreviewLayer,
     drawRoadDragRangeLayer,
-    clearPreviews
+    clearPreviews,
+    
+    // 状態リセット関数
+    resetTerrainState
   };
 };

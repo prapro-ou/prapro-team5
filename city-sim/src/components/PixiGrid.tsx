@@ -74,7 +74,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
     drawPreviewLayer,
     drawEffectPreviewLayer,
     drawRoadDragRangeLayer,
-    clearPreviews
+    clearPreviews,
+    resetTerrainState
   } = usePixiDrawing({
     terrainMap,
     getTerrainAt,
@@ -110,6 +111,8 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   // 地形描画の更新（地形データが変更された時のみ）
   useEffect(() => {
     if (isInitializedRef.current) {
+      // セーブデータロード後の強制再描画のため、地形状態をリセット
+      resetTerrainState();
       drawTerrainLayer();
     }
   }, [terrainMap]);
