@@ -5,13 +5,13 @@ import { Application, Graphics, Container, Point, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
-import { usePixiDrawing } from '../hooks/usePixiDrawing';
-import { usePixiCoordinates } from '../hooks/usePixiCoordinates';
+import { usePixiDrawing } from '../hooks/useDrawing';
+import { usePixiCoordinates } from '../hooks/useCoordinates';
 import { useWheelZoom } from '../hooks/useWheelZoom';
 import { useFacilityTextures } from '../hooks/useFacilityTextures';
 import { useKeyboardPan } from '../hooks/useKeyboardPan';
 
-interface PixiGridProps {
+interface IsometricGridProps {
   size: GridSize;
   onTileClick?: (position: Position) => void;
   selectedPosition?: Position | null;
@@ -22,7 +22,7 @@ interface PixiGridProps {
 }
 
 // グリッド描画
-export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilities = [], selectedFacilityType, money = 0 }) => {
+export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, facilities = [], selectedFacilityType, money = 0 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -201,7 +201,7 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
       app.stage.cursor = 'grab';
 
       // 分離したポインタイベントハンドラを作成
-      const { createPointerHandlers } = await import('../hooks/usePixiPointerHandlers');
+      const { createPointerHandlers } = await import('../hooks/usePointerHandlers');
       const { onPointerDown, onPointerMove, onPointerUp } = createPointerHandlers({
         appStage: app.stage,
         world,
@@ -371,4 +371,4 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
   );
 };
 
-export default PixiGrid;
+export default IsometricGrid;

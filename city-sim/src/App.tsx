@@ -1,6 +1,6 @@
 // import { Grid } from './components/grid'
-import { CanvasGrid } from './components/CanvasGrid'
-import { PixiGrid } from './components/PixiGrid'
+// import { CanvasGrid } from './components/CanvasGrid'
+import IsometricGrid from './components/MapGrid'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -492,27 +492,15 @@ function App() {
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
         <div className="w-full h-full">
-          {usePixi ? (
-            <PixiGrid
-              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-              onTileClick={handleTileClick}
-              selectedPosition={selectedTile}
-              facilities={facilities}
-              selectedFacilityType={selectedFacilityType}
-              money={stats.money}
-              deleteMode={deleteMode}
-            />
-          ) : (
-            <CanvasGrid 
-              size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
-              onTileClick={handleTileClick}
-              selectedPosition={selectedTile}
-              facilities={facilities}
-              selectedFacilityType={selectedFacilityType}
-              money={stats.money}
-              deleteMode={deleteMode}
-            />
-          )}
+          <IsometricGrid
+            size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
+            onTileClick={handleTileClick}
+            selectedPosition={selectedTile}
+            facilities={facilities}
+            selectedFacilityType={selectedFacilityType}
+            money={stats.money}
+            deleteMode={deleteMode}
+          />
         </div>
       </div>
 
