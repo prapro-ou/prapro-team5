@@ -9,6 +9,7 @@ import { usePixiDrawing } from '../hooks/usePixiDrawing';
 import { usePixiCoordinates } from '../hooks/usePixiCoordinates';
 import { useWheelZoom } from '../hooks/useWheelZoom';
 import { useFacilityTextures } from '../hooks/useFacilityTextures';
+import { useKeyboardPan } from '../hooks/useKeyboardPan';
 
 interface PixiGridProps {
   size: GridSize;
@@ -278,38 +279,12 @@ export const PixiGrid: React.FC<PixiGridProps> = ({ size, onTileClick, facilitie
         return false;
       });
 
-      // WASD/矢印キーでパン
-      const onKeyDown = (e: KeyboardEvent) => {
-        if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
-          e.preventDefault();
-          keysRef.current[e.code] = true;
-        }
-      };
-      const onKeyUp = (e: KeyboardEvent) => {
-        if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
-          e.preventDefault();
-          keysRef.current[e.code] = false;
-        }
-      };
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
-
-      const panSpeed = 8;
-      const tickerFn = (ticker: any) => {
-        const delta = ticker.deltaTime ?? 1;
-        let dx = 0;
-        let dy = 0;
-        if (keysRef.current['KeyW'] || keysRef.current['ArrowUp']) dy += panSpeed * delta;
-        if (keysRef.current['KeyS'] || keysRef.current['ArrowDown']) dy += -panSpeed * delta;
-        if (keysRef.current['KeyA'] || keysRef.current['ArrowLeft']) dx += panSpeed * delta;
-        if (keysRef.current['KeyD'] || keysRef.current['ArrowRight']) dx += -panSpeed * delta;
-        if (dx !== 0 || dy !== 0) {
-          cameraRef.current.x += dx;
-          cameraRef.current.y += dy;
-          world.position.set(cameraRef.current.x, cameraRef.current.y);
-        }
-      };
-      app.ticker.add(tickerFn);
+      // キーボードパン（フックに分離）
+      const { attachKeyboardPan } = useKeyboardPan({ appRef, worldRef, cameraRef, keysRef });
+      const { onKeyDown, onKeyUp, tickerFn, addTicker } = attachKeyboardPan();
+      
+      // app初期化後にtickerを確実に追加
+      addTicker();
 
       const handleResize = () => {
         const w = Math.min(window.innerWidth, 1280);
