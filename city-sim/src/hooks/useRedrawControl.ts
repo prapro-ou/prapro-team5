@@ -9,7 +9,9 @@ export const useRedrawControl = () => {
 
   // 地形データの変更をチェック
   const shouldRedrawTerrain = (terrainMap: any): boolean => {
-    const terrainHash = JSON.stringify(terrainMap);
+    const terrainHash = terrainMap instanceof Map
+      ? `size:${terrainMap.size}`
+      : JSON.stringify(terrainMap);
     if (lastTerrainMapRef.current !== null && terrainHash === lastTerrainMapRef.current) {
       return false; // 変更なしの場合はスキップ
     }
