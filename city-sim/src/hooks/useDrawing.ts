@@ -9,7 +9,7 @@ import {
   drawPreview, 
   drawEffectPreview, 
   drawRoadDragRange 
-} from '../utils/pixiDrawingUtils';
+} from '../utils/drawingUtils';
 
 type MutableRef<T> = { current: T };
 
