@@ -75,6 +75,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
     previewLayerRef,
     effectPreviewLayerRef,
     drawTerrainLayerForced,
+    drawFacilitiesLayerForced,
     drawFacilitiesLayer,
     drawPreviewLayer,
     drawEffectPreviewLayer,
@@ -273,7 +274,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       // 初期化完了後に描画を更新（強制描画で一度確実に反映）
       resetTerrainState();
       drawTerrainLayerForced();
-      drawFacilitiesLayer();
+      drawFacilitiesLayerForced();
       drawPreviewLayer();
       drawEffectPreviewLayer();
 

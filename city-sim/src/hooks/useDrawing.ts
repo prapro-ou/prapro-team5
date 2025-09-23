@@ -124,6 +124,22 @@ export const usePixiDrawing = ({
     );
   };
 
+  // 施設を強制描画
+  const drawFacilitiesLayerForced = () => {
+    if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
+    const { offsetX, offsetY } = offsetsRef.current;
+    const facilities = facilitiesRef.current;
+    drawFacilities(
+      facilitiesLayerRef.current,
+      facilities,
+      offsetX,
+      offsetY,
+      texturesRef.current,
+      getPooledGraphics,
+      returnGraphics
+    );
+  };
+
   // プレビュー描画関数
   const drawPreviewLayer = () => {
     if (!previewLayerRef.current || !isInitializedRef.current) return;
@@ -257,6 +273,7 @@ export const usePixiDrawing = ({
     resetTerrainState,
     
     // 強制描画
-    drawTerrainLayerForced
+    drawTerrainLayerForced,
+    drawFacilitiesLayerForced
   };
 };
