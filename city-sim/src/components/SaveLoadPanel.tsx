@@ -7,6 +7,7 @@ import { useTerrainStore } from '../stores/TerrainStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { useAchievementStore } from '../stores/AchievementStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
+import LoadingScreen from './LoadingScreen';
 
 interface SaveSlot {
   id: string;
@@ -295,11 +296,11 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
 
         {/* ローディング表示 */}
         {isLoading && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-white">処理中...</div>
-            </div>
-          </div>
+          <LoadingScreen
+            isVisible={true}
+            message={message?.text || 'データを読み込んでいます...'}
+            progress={70}
+          />
         )}
       </div>
     </div>
