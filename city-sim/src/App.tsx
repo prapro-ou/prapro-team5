@@ -81,8 +81,6 @@ function App() {
 
   // スタート画面の表示状態
   const [showStartScreen, setShowStartScreen] = useState(true);
-  // Pixi 使用切替（フェーズ1検証用）
-  const [usePixi, setUsePixi] = useState(true);
   
   // オープニングシーケンスの表示状態
   const [showOpeningSequence, setShowOpeningSequence] = useState(false);
@@ -543,13 +541,6 @@ function App() {
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
-      </button>
-      {/* Pixi/Canvas 切替ボタン（検証用） */}
-      <button
-        onClick={() => setUsePixi(v => !v)}
-        className="fixed bottom-4 right-4 bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
-      >
-        {usePixi ? 'Canvasに切替' : 'Pixiに切替'}
       </button>
 
       {/* 施設建設パネル */}
