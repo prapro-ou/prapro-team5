@@ -164,6 +164,15 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       appRef.current = app;
       didInit = true;
 
+      // キャンバスにフォーカス可能属性とポインター設定を付与
+      const canvasEl = app.renderer.canvas as HTMLCanvasElement;
+      canvasEl.tabIndex = 0;
+      canvasEl.style.outline = 'none';
+      canvasEl.style.pointerEvents = 'auto';
+      // 初回フォーカス＆クリック時に確実にフォーカス
+      const ensureFocus = () => { try { canvasEl.focus(); } catch {} };
+      ensureFocus();
+
       const world = new Container();
       app.stage.addChild(world);
       worldRef.current = world;
@@ -239,6 +248,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       app.stage.on('pointermove', onPointerMove);
       app.stage.on('pointerup', onPointerUp);
       app.stage.on('pointerleave', () => { hoverRef.current = null; hoverG.clear(); });
+      // クリック時にキャンバスへフォーカスを戻す
+      canvasEl.addEventListener('pointerdown', ensureFocus);
 
       // 地形用レイヤ（最下層）
       const terrainLayer = new Container();
@@ -292,11 +303,12 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       const { attachWheelZoom } = useWheelZoom({ appRef, worldRef, cameraRef, lastPointerGlobalRef });
       const onWheel = attachWheelZoom();
       
-      // 右クリック時のコンテキストメニューを無効化
-      canvas.addEventListener('contextmenu', (e) => {
+      // 右クリック時のコンテキストメニューを無効化（ハンドラを保持してクリーンアップ時に解除）
+      const onContextMenu = (e: MouseEvent) => {
         e.preventDefault();
-        return false;
-      });
+        return false as any;
+      };
+      canvasEl.addEventListener('contextmenu', onContextMenu);
 
       // キーボードパン（フックに分離）
       const { attachKeyboardPan } = useKeyboardPan({ appRef, worldRef, cameraRef, keysRef });
@@ -326,6 +338,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       (app as any).__keyDown = onKeyDown;
       (app as any).__keyUp = onKeyUp;
       (app as any).__tickerFn = tickerFn;
+      (app as any).__ctxMenu = onContextMenu;
+      (app as any).__ensureFocus = ensureFocus;
     };
 
     init();
@@ -345,10 +359,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
           if (wheel) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('wheel', wheel as any);
           
           // コンテキストメニュー無効化のイベントリスナーを削除
-          (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
-          });
+          const ctx = (app as any).__ctxMenu as any;
+          if (ctx) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('contextmenu', ctx);
 
           const pd = (app as any).__ptrDown as any;
           const pm = (app as any).__ptrMove as any;
@@ -365,6 +377,10 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
           if (ku) window.removeEventListener('keyup', ku);
           const tf = (app as any).__tickerFn as ((t: any) => void) | undefined;
           if (tf) app.ticker.remove(tf);
+
+          // フォーカス用リスナー解除
+          const ens = (app as any).__ensureFocus as any;
+          if (ens) (app.renderer.canvas as HTMLCanvasElement)?.removeEventListener('pointerdown', ens);
           
           // オブジェクトプールをクリア
           clearPool();

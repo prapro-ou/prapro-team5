@@ -191,13 +191,15 @@ function App() {
   // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
     if (!isInitializationComplete) return;
-    if (!showStartScreen || !showOpeningSequence || facilities.length === 0) return;
+    if (showStartScreen || showOpeningSequence) return;
+    if (facilities.length === 0) return;
     const { updateRoadConnectivity } = useFacilityStore.getState();
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
    useEffect(() => {
-     if (!isInitializationComplete || !showStartScreen || !showOpeningSequence) return;
+     if (!isInitializationComplete) return;
+     if (showStartScreen || showOpeningSequence) return;
      startHappinessDecayTask();
    }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
   // 地形生成
