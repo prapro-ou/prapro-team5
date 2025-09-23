@@ -392,7 +392,10 @@ function App() {
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
-            // タイトルからロード後は設定画面を自動で開かない
+            // タイトルからロード後、グリッド初期描画のローディングを先に開始
+            setIsGridLoading(true);
+            setGridLoadingStartedAt(Date.now());
+            // 設定画面は自動で開かない
             setShowStartScreen(false);
           }}
         />
