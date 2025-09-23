@@ -1,6 +1,7 @@
 // import { Grid } from './components/grid'
 // import { CanvasGrid } from './components/CanvasGrid'
 import IsometricGrid from './components/MapGrid'
+import LoadingScreen from './components/LoadingScreen'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -88,6 +89,10 @@ function App() {
   
   // 強制初期化完了フラグ
   const [isInitializationComplete, setIsInitializationComplete] = useState(false);
+
+  // グリッド初期描画ローディング
+  const [isGridLoading, setIsGridLoading] = useState(false);
+  const [gridLoadingStartedAt, setGridLoadingStartedAt] = useState<number | null>(null);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -364,7 +369,10 @@ function App() {
           }
           
           // オープニング状態を変更
-          setShowOpeningSequence(false);
+        // グリッド初期描画のローディングを開始
+        setIsGridLoading(true);
+        setGridLoadingStartedAt(Date.now());
+        setShowOpeningSequence(false);
           
           // 初期化完了フラグは既に有効化済み
         }}
@@ -495,6 +503,15 @@ function App() {
           <IsometricGrid
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
+            onReady={async () => {
+              // 最小表示時間200msを確保
+              const started = gridLoadingStartedAt ?? Date.now();
+              const elapsed = Date.now() - started;
+              const remain = Math.max(0, 200 - elapsed);
+              if (remain > 0) await new Promise((r) => setTimeout(r, remain));
+              setIsGridLoading(false);
+              setGridLoadingStartedAt(null);
+            }}
             selectedPosition={selectedTile}
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
@@ -584,7 +601,14 @@ function App() {
         <MissionPanel onClose={closeMissionPanel} />
       )}
 
-      {/* ローディング画面はタイトル/設定でのロード時のみ表示（各パネル内で制御） */}
+      {/* グリッド初期描画時のローディング */}
+      {isGridLoading && (
+        <LoadingScreen
+          isVisible={true}
+          message={'環境を準備しています...'}
+          progress={90}
+        />
+      )}
     </div>
     
   );

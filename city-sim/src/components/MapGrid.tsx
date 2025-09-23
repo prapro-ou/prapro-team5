@@ -14,6 +14,7 @@ import { useKeyboardPan } from '../hooks/useKeyboardPan';
 interface IsometricGridProps {
   size: GridSize;
   onTileClick?: (position: Position) => void;
+  onReady?: () => void;
   selectedPosition?: Position | null;
   facilities?: Facility[];
   selectedFacilityType?: FacilityType | null;
@@ -22,7 +23,7 @@ interface IsometricGridProps {
 }
 
 // グリッド描画
-export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, facilities = [], selectedFacilityType, money = 0 }) => {
+export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, onReady, facilities = [], selectedFacilityType, money = 0 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -45,6 +46,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   const selectedFacilityTypeRef = useRef<FacilityType | null | undefined>(selectedFacilityType);
   const moneyRef = useRef<number>(money);
   const facilitiesRef = useRef<Facility[]>(facilities);
+  const onReadyRef = useRef<(() => void) | undefined>(onReady);
+  const readyNotifiedRef = useRef(false);
 
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
@@ -109,6 +112,11 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   useEffect(() => {
     onTileClickRef.current = onTileClick;
   }, [onTileClick]);
+
+  // onReady を最新に保持
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
 
   // 地形描画の更新（地形データが変更された時のみ）
   useEffect(() => {
@@ -269,6 +277,16 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       drawPreviewLayer();
       drawEffectPreviewLayer();
 
+      // 初期描画完了を親へ通知（2フレーム待ってから）
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!readyNotifiedRef.current && onReadyRef.current) {
+            readyNotifiedRef.current = true;
+            try { onReadyRef.current(); } catch {}
+          }
+        });
+      });
+
       // ホイールズーム
       const { attachWheelZoom } = useWheelZoom({ appRef, worldRef, cameraRef, lastPointerGlobalRef });
       const onWheel = attachWheelZoom();
@@ -363,6 +381,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       facilitiesLayerRef.current = null;
       previewLayerRef.current = null;
       effectPreviewLayerRef.current = null;
+      readyNotifiedRef.current = false;
     };
   }, [size.width, size.height]);
 
