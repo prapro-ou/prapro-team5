@@ -392,10 +392,8 @@ function App() {
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
+            // タイトルからロード後は設定画面を自動で開かない
             setShowStartScreen(false);
-            setTimeout(() => {
-              openSettings();
-            }, 100);
           }}
         />
         {/* スタート画面中でも設定パネルを表示可能にする */}

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
+import LoadingScreen from './LoadingScreen';
 
 type Props = {
   onStart: () => void;
@@ -48,6 +49,10 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
   const [hasSaveData, setHasSaveData] = useState(false);
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const progressTimerRef = useRef<number | null>(null);
+  const loadingStartedAtRef = useRef<number | null>(null);
 
   // セーブデータの確認
   useEffect(() => {
@@ -141,6 +146,15 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
 
   // セーブデータからロード
   const handleLoadFromSlot = async (slotId: string) => {
+    setIsLoading(true);
+    setLoadingProgress(10);
+    loadingStartedAtRef.current = Date.now();
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      setLoadingProgress((p) => (p < 95 ? Math.min(95, p + 3) : p));
+    }, 120);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
     const slotKey = `city-sim-save-${slotId}`;
     const saveDataString = localStorage.getItem(slotKey);
     
@@ -150,6 +164,13 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
         // 全ストアの状態を復元
         const { saveLoadRegistry } = await import('../stores/SaveLoadRegistry');
         saveLoadRegistry.loadAllStores(saveData);
+        // 最小表示時間（200ms）を確保
+        const started = loadingStartedAtRef.current ?? Date.now();
+        const elapsed = Date.now() - started;
+        const remain = Math.max(0, 200 - elapsed);
+        if (remain > 0) await new Promise((r) => setTimeout(r, remain));
+        setLoadingProgress(100);
+        await new Promise<void>((resolve) => setTimeout(resolve, 100));
         // ロード完了フラグを設定
         localStorage.setItem('city-sim-loaded', 'true');
         // セーブデータをロードしてゲーム開始
@@ -158,6 +179,14 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
         console.error('セーブデータの読み込みに失敗しました:', error);
       }
     }
+
+    if (progressTimerRef.current) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    setIsLoading(false);
+    setLoadingProgress(100);
+    loadingStartedAtRef.current = null;
   };
 
   const formatDate = (timestamp: number) => {
@@ -246,6 +275,14 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
               </div>
             ))}
           </div>
+          {/* ローディング（セーブ選択パネル表示中のロード） */}
+          {isLoading && (
+            <LoadingScreen
+              isVisible={true}
+              message={'データを読み込んでいます...'}
+              progress={loadingProgress}
+            />
+          )}
         </div>
       </div>
     );
@@ -329,6 +366,15 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
           設定
         </button>
       </div>
+
+      {/* タイトルからロード中のローディング */}
+      {isLoading && (
+        <LoadingScreen
+          isVisible={true}
+          message={'データを読み込んでいます...'}
+          progress={loadingProgress}
+        />
+      )}
 
     </div>
   );
