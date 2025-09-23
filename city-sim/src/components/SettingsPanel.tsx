@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { BGMPlayer } from './SoundSettings';
 import { TbX, TbFileText, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
@@ -16,6 +16,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingKind, setLoadingKind] = useState<'idle' | 'load' | 'save'>('idle');
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const progressTimerRef = useRef<number | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   // ゲーム状態を取得
@@ -59,6 +61,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
     setIsLoading(true);
     setLoadingKind('load');
     setMessage(null);
+    setLoadingProgress(10);
+
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      setLoadingProgress((p) => (p < 95 ? Math.min(95, p + 3) : p));
+    }, 120);
+    // 次フレームで描画させてから重い処理を開始
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     
     try {
       const slotKey = `city-sim-save-${slotId}`;
@@ -70,17 +80,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
       }
 
       const saveData = JSON.parse(saveDataString);
+      setLoadingProgress(50);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       
       // 全ストアの状態を復元
       saveLoadRegistry.loadAllStores(saveData);
+      setLoadingProgress(85);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       
       setMessage({ type: 'success', text: 'ゲームを読み込みました' });
+      setLoadingProgress(100);
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
       onClose(); // 設定パネルを閉じる
     } 
     catch (error) {
       setMessage({ type: 'error', text: 'ロードに失敗しました' });
     } 
     finally {
+      if (progressTimerRef.current) {
+        window.clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+      setLoadingProgress(100);
       setIsLoading(false);
       setLoadingKind('idle');
     }
@@ -260,8 +281,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
           {isLoading && loadingKind === 'load' && (
             <LoadingScreen
               isVisible={true}
-              message={message?.text || 'データを処理中...'}
-              progress={70}
+              message={message?.text || 'データを読み込んでいます...'}
+              progress={loadingProgress}
             />
           )}
         </div>

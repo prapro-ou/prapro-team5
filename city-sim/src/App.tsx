@@ -11,7 +11,6 @@ import AchievementPanel from './components/AchievementPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 import MissionPanel from './components/MissionPanel';
-import LoadingScreen from './components/LoadingScreen';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
@@ -585,12 +584,7 @@ function App() {
         <MissionPanel onClose={closeMissionPanel} />
       )}
 
-      {/* テスト用ローディング画面 */}
-      <LoadingScreen 
-        message="テスト用ローディング画面"
-        progress={75}
-        isVisible={true}
-      />
+      {/* ローディング画面はタイトル/設定でのロード時のみ表示（各パネル内で制御） */}
     </div>
     
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // import { TbLoader2, TbBuilding } from 'react-icons/tb';
 import { TbLoader2 } from 'react-icons/tb';
 
@@ -39,7 +40,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
   if (!isVisible) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-gradient-to-b from-slate-900 via-indigo-800 to-amber-200">
       <div className="p-8 w-full max-w-md mx-4">
         {/* ローディングアイコン */}
@@ -79,7 +80,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
