@@ -27,7 +27,7 @@ export const getPreviewColor = (
   isOccupied: boolean
 ): { color: number; alpha: number } => {
   if (!canAfford || isOccupied) {
-    return { color: 0xfca5a5, alpha: 0.7 }; // 赤（建設不可）
+    return { color: 0xfca5a5, alpha: 0.9 }; // 赤（建設不可）
   }
 
   // 施設カテゴリ別の色
@@ -44,17 +44,17 @@ export const getPreviewColor = (
     default: color = 0x86efac; break;                 // デフォルト
   }
 
-  return { color, alpha: 0.3 };
+  return { color, alpha: 0.9 };
 };
 
 // 効果範囲の色を取得
 export const getEffectColor = (facilityType: FacilityType): number => {
   switch (facilityType) {
-    case 'police': return 0x87CEEB; // スカイブルー
-    case 'hospital': return 0xFFB6C1; // ライトピンク
-    case 'park': return 0x90EE90; // ライトグリーン
-    case 'city_hall': return 0xDDA0DD; // プラム
-    default: return 0x90EE90; // デフォルト緑
+    case 'police': return 0x87CEEB;     // スカイブルー
+    case 'hospital': return 0xFFB6C1;   // ライトピンク
+    case 'park': return 0x90EE90;       // ライトグリーン
+    case 'city_hall': return 0xDDA0DD;  // プラム
+    default: return 0x90EE90;           // デフォルト緑
   }
 };
 
@@ -338,7 +338,7 @@ export const drawEffectPreview = (
 
           const color = getEffectColor(selectedFacilityType);
 
-          effectG.fill({ color, alpha: 0.3 });
+          effectG.fill({ color, alpha: 0.2 });
           effectG.stroke({ color: 0xffffff, width: 1, alpha: 0.5 });
           layer.addChild(effectG);
         }
