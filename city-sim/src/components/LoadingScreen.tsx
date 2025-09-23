@@ -40,14 +40,14 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-[3000] flex items-center justify-center">
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-gradient-to-b from-slate-900 via-indigo-800 to-amber-200">
       <div className="p-8 w-full max-w-md mx-4">
         {/* ローディングアイコン */}
         <div className="flex justify-center mb-6">
           <div className="relative">
             <TbLoader2 
               size={48} 
-              className="text-blue-400 animate-spin" 
+              className="text-white animate-spin" 
             />
             {/* <div className="absolute inset-0 flex items-center justify-center">
               <TbBuilding size={24} className="text-white" />
@@ -58,18 +58,20 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
         {/* メッセージ */}
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-white mb-2">
-            Revitalize
+            <span className="inline-block bg-slate-900/20 px-4 py-2 rounded-lg shadow">
+              Revitalize
+            </span>
           </h2>
-          <p className="text-gray-300 text-sm">
+          <p className="text-white/90 text-sm">
             {message}
           </p>
         </div>
 
         {/* プログレスバー */}
         <div className="mb-6">
-          <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
             <div 
-              className={`h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-out ${
+              className={`h-full bg-white/90 rounded-full transition-all duration-500 ease-out ${
                 isAnimating ? 'animate-pulse' : ''
               }`}
               style={{ width: `${displayProgress}%` }}
