@@ -15,14 +15,14 @@ export const useKeyboardPan = ({ appRef, worldRef, cameraRef, keysRef }: UseKeyb
   // キーボードイベントハンドラを作成
   const createKeyHandlers = () => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
+      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
         keysRef.current[e.code] = true;
       }
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
-      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
+      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
         keysRef.current[e.code] = false;
       }

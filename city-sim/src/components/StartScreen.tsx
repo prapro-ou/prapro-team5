@@ -164,6 +164,16 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
         // 全ストアの状態を復元
         const { saveLoadRegistry } = await import('../stores/SaveLoadRegistry');
         saveLoadRegistry.loadAllStores(saveData);
+
+        // ロード後に道路接続とインフラ、描画に関連する状態を再計算
+        try {
+          const { useFacilityStore } = await import('../stores/FacilityStore');
+          const { useInfrastructureStore } = await import('../stores/InfrastructureStore');
+
+          useFacilityStore.getState().clearRoadConnectivityCache();
+          useFacilityStore.getState().updateRoadConnectivity({ width: 120, height: 120 });
+          useInfrastructureStore.getState().calculateInfrastructure(useFacilityStore.getState().facilities);
+        } catch {}
         // 最小表示時間（200ms）を確保
         const started = loadingStartedAtRef.current ?? Date.now();
         const elapsed = Date.now() - started;

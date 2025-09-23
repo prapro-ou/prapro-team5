@@ -93,6 +93,7 @@ function App() {
   // グリッド初期描画ローディング
   const [isGridLoading, setIsGridLoading] = useState(false);
   const [gridLoadingStartedAt, setGridLoadingStartedAt] = useState<number | null>(null);
+  const [gridKey, setGridKey] = useState(0);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -389,6 +390,7 @@ function App() {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
             setShowOpeningSequence(true);
+            setGridKey(k => k + 1);
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
@@ -397,6 +399,8 @@ function App() {
             setGridLoadingStartedAt(Date.now());
             // 設定画面は自動で開かない
             setShowStartScreen(false);
+            // Gridを確実に再マウント
+            setGridKey(k => k + 1);
           }}
         />
         {/* スタート画面中でも設定パネルを表示可能にする */}
@@ -502,6 +506,7 @@ function App() {
       <div className="pt-20 w-full h-full overflow-hidden">
         <div className="w-full h-full">
           <IsometricGrid
+            key={gridKey}
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
             onReady={async () => {
