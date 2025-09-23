@@ -3,6 +3,7 @@ import { BGMPlayer } from './SoundSettings';
 import { TbX, TbFileText, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
+import LoadingScreen from './LoadingScreen';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -14,6 +15,7 @@ interface SettingsPanelProps {
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCredits, isGameStarted, onReturnToTitle }) => {
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingKind, setLoadingKind] = useState<'idle' | 'load' | 'save'>('idle');
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   // ゲーム状態を取得
@@ -24,6 +26,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
 
   const handleSave = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('save');
     setMessage(null);
     
     try {
@@ -48,11 +51,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
     } 
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
   const handleLoad = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('load');
     setMessage(null);
     
     try {
@@ -77,6 +82,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
     } 
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
@@ -250,13 +256,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
             })}
           </div>
 
-          {/* ローディング表示 */}
-          {isLoading && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <div className="text-white">処理中...</div>
-              </div>
-            </div>
+          {/* ローディング画面（タイトル/設定からのロード/セーブ中のみ） */}
+          {isLoading && loadingKind === 'load' && (
+            <LoadingScreen
+              isVisible={true}
+              message={message?.text || 'データを処理中...'}
+              progress={70}
+            />
           )}
         </div>
       </div>

@@ -24,6 +24,7 @@ interface SaveLoadPanelProps {
 export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingKind, setLoadingKind] = useState<'idle' | 'load' | 'save'>('idle');
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   // ストアから状態を取得
@@ -87,6 +88,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
 
   const handleSave = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('save');
     setMessage(null);
     
     try {
@@ -119,11 +121,13 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
     }
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
   const handleLoad = async (_slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('load');
     setMessage(null);
     
     try {
@@ -145,6 +149,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
     }
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
@@ -295,7 +300,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         </div>
 
         {/* ローディング表示 */}
-        {isLoading && (
+        {isLoading && loadingKind === 'load' && (
           <LoadingScreen
             isVisible={true}
             message={message?.text || 'データを読み込んでいます...'}
