@@ -218,7 +218,35 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       app.stage.hitArea = app.screen;
       app.stage.cursor = 'grab';
 
-      // 分離したポインタイベントハンドラを作成
+      // 地形用レイヤ（最下層）
+      const terrainLayer = new Container();
+      terrainLayer.sortableChildren = true;
+      world.addChild(terrainLayer);
+      terrainLayerRef.current = terrainLayer;
+
+      // 施設用レイヤ
+      const facilitiesLayer = new Container();
+      facilitiesLayer.sortableChildren = true;
+      world.addChild(facilitiesLayer);
+      facilitiesLayerRef.current = facilitiesLayer;
+
+      // プレビュー用レイヤ（施設レイヤーの上）
+      const previewLayer = new Container();
+      previewLayer.sortableChildren = true;
+      world.addChild(previewLayer);
+      previewLayerRef.current = previewLayer;
+
+      // 効果範囲プレビュー用レイヤ（プレビューレイヤーの上）
+      const effectPreviewLayer = new Container();
+      effectPreviewLayer.sortableChildren = true;
+      world.addChild(effectPreviewLayer);
+      effectPreviewLayerRef.current = effectPreviewLayer;
+
+      // 施設テクスチャのプリロード（フックに分離）
+      const { loadFacilityTextures } = useFacilityTextures(texturesRef);
+      await loadFacilityTextures();
+
+      // 分離したポインタイベントハンドラを作成（テクスチャ読み込み後）
       const { createPointerHandlers } = await import('../hooks/usePointerHandlers');
       const { onPointerDown, onPointerMove, onPointerUp } = createPointerHandlers({
         appStage: app.stage,
@@ -251,35 +279,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       // クリック時にキャンバスへフォーカスを戻す
       canvasEl.addEventListener('pointerdown', ensureFocus);
 
-      // 地形用レイヤ（最下層）
-      const terrainLayer = new Container();
-      terrainLayer.sortableChildren = true;
-      world.addChild(terrainLayer);
-      terrainLayerRef.current = terrainLayer;
-
-      // 施設用レイヤ
-      const facilitiesLayer = new Container();
-      facilitiesLayer.sortableChildren = true;
-      world.addChild(facilitiesLayer);
-      facilitiesLayerRef.current = facilitiesLayer;
-
-      // プレビュー用レイヤ（施設レイヤーの上）
-      const previewLayer = new Container();
-      previewLayer.sortableChildren = true;
-      world.addChild(previewLayer);
-      previewLayerRef.current = previewLayer;
-
-      // 効果範囲プレビュー用レイヤ（プレビューレイヤーの上）
-      const effectPreviewLayer = new Container();
-      effectPreviewLayer.sortableChildren = true;
-      world.addChild(effectPreviewLayer);
-      effectPreviewLayerRef.current = effectPreviewLayer;
-
-      // 施設テクスチャのプリロード（フックに分離）
-      const { loadFacilityTextures } = useFacilityTextures(texturesRef);
-      await loadFacilityTextures();
-
-      // 初期化完了フラグを設定
+      // 初期化完了フラグを設定（イベントハンドラ設定後）
       isInitializedRef.current = true;
       
       // 初期化完了後に描画を更新（強制描画で一度確実に反映）

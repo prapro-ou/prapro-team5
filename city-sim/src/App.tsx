@@ -398,7 +398,6 @@ function App() {
             }
             else {
               // オープニングなしの場合は直接初期化完了に移行
-              setIsInitializationComplete(true);
               
               // ゲーム状態を初期化
               useGameStore.setState({
@@ -463,6 +462,7 @@ function App() {
                 });
               }
               
+              setIsInitializationComplete(true);
               setIsGridLoading(true);
               setGridLoadingStartedAt(Date.now());
             }
