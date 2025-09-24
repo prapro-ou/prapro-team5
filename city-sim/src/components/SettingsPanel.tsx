@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { BGMPlayer } from './SoundSettings';
 import { TbX, TbFileText, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
+import { useUIStore } from '../stores/UIStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
 import LoadingScreen from './LoadingScreen';
 
@@ -22,6 +23,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
 
   // ゲーム状態を取得
   const gameStats = useGameStore(state => state.stats);
+  
+  // UI設定を取得
+  const { showOpeningSequence, setShowOpeningSequence } = useUIStore();
 
   // ゲーム中かどうかを判定（スタート画面が閉じられている）
   const isGameInProgress = isGameStarted;
@@ -303,6 +307,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
         <div className="space-y-4">
           {/* 既存のBGMプレイヤー */}
           <BGMPlayer />
+
+          {/* オープニングシークエンス設定（タイトル画面でのみ表示） */}
+          {!isGameInProgress && (
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-medium">オープニング</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showOpeningSequence}
+                    onChange={(e) => setShowOpeningSequence(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">
+                新規ゲーム開始時にオープニングを表示するかどうかを設定します
+              </p>
+            </div>
+          )}
 
           {/* ゲーム中のみセーブ・ロードボタンを表示 */}
           {isGameInProgress && (

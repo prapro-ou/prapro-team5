@@ -85,6 +85,9 @@ function App() {
   // オープニングシーケンスの表示状態
   const [showOpeningSequence, setShowOpeningSequence] = useState(false);
   
+  // UI設定からオープニングシークエンスの表示設定を取得
+  const { showOpeningSequence: uiShowOpeningSequence } = useUIStore();
+  
   // 強制初期化完了フラグ
   const [isInitializationComplete, setIsInitializationComplete] = useState(false);
 
@@ -389,7 +392,15 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
-            setShowOpeningSequence(true);
+            // UI設定に応じてオープニングシークエンスを表示するかどうかを決定
+            if (uiShowOpeningSequence) {
+              setShowOpeningSequence(true);
+            } else {
+              // オープニングなしの場合は直接初期化完了に移行
+              setIsInitializationComplete(true);
+              setIsGridLoading(true);
+              setGridLoadingStartedAt(Date.now());
+            }
             setGridKey(k => k + 1);
           }} 
           onShowSettings={openSettings}
