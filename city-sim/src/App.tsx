@@ -392,12 +392,77 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
-            // UI設定に応じてオープニングシークエンスを表示するかどうかを決定
+            // UI設定に応じてオープニングを表示するかどうかを決定
             if (uiShowOpeningSequence) {
               setShowOpeningSequence(true);
-            } else {
+            }
+            else {
               // オープニングなしの場合は直接初期化完了に移行
               setIsInitializationComplete(true);
+              
+              // ゲーム状態を初期化
+              useGameStore.setState({
+                stats: {
+                  level: 1,
+                  money: 10000,
+                  population: 0,
+                  satisfaction: 50,
+                  workforceAllocations: [],
+                  date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
+                  monthlyBalance: { income: 0, expense: 0, balance: 0 },
+                  yearlyEvaluation: null,
+                  yearlyStats: null,
+                  previousYearStats: null,
+                  previousYearEvaluation: null,
+                  monthlyAccumulation: {
+                    year: 2024,
+                    monthlyTaxRevenue: new Array(12).fill(0),
+                    monthlyMaintenanceCost: new Array(12).fill(0),
+                    monthlyPopulation: new Array(12).fill(0),
+                    monthlySatisfaction: new Array(12).fill(50),
+                    monthlySupportRatings: {
+                      central_government: new Array(12).fill(50),
+                      citizens: new Array(12).fill(50),
+                      chamber_of_commerce: new Array(12).fill(50)
+                    }
+                  },
+                  supportSystem: {
+                    factionSupports: [
+                      { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+                    ],
+                    monthlyHistory: [],
+                    yearlyHistory: [],
+                    lastCalculationDate: { year: 2024, month: 1 }
+                  }
+                },
+                levelUpMessage: null
+              });
+              
+              // 他のストアをリセット
+              useFacilityStore.getState().resetToInitial();
+              useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              useInfrastructureStore.getState().resetToInitial();
+              useAchievementStore.getState().resetToInitial();
+              useMissionStore.getState().resetToInitial();
+              useTimeControlStore.getState().resetToInitial();
+              useSecretaryStore.getState().resetToInitial();
+              useSupportStore.getState().resetToInitial();
+              useYearlyEvaluationStore.getState().resetToInitial();
+
+              // 地形生成と道路配置
+              const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              if (generatedRoads.length > 0) {
+                const { addFacility, createFacility } = useFacilityStore.getState();
+                generatedRoads.forEach(road => {
+                  const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+                  roadFacility.variantIndex = road.variantIndex;
+                  roadFacility.isConnected = true;
+                  addFacility(roadFacility);
+                });
+              }
+              
               setIsGridLoading(true);
               setGridLoadingStartedAt(Date.now());
             }
