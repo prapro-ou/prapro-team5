@@ -16,7 +16,7 @@ export function createSaveData(
 	facilities: Facility[],
 	terrainMap: Map<string, TerrainType>,
 	infrastructureStatus: InfrastructureStatus,
-	rewards: Achievement[],
+	achievements: Achievement[],
 	gameSettings: {
 		isPaused: boolean;
 		gameSpeed: number;
@@ -42,7 +42,7 @@ export function createSaveData(
 		facilities,
 		terrainMap: terrainArray,
 		infrastructureStatus,
-		rewards,
+		achievements,
 		gameSettings,
 		metadata: {
 			totalPlayTime: 0, // 後で実装

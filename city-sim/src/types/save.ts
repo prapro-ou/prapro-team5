@@ -1,7 +1,7 @@
 import type { GameStats } from './game';
 import type { Facility } from './facility';
 import type { TerrainType } from './terrain';
-import type { Reward } from '../components/RewardPanel';
+import type { Achievement } from './achievement';
 import type { InfrastructureStatus } from '../stores/InfrastructureStore';
 
 // 保存データのバージョン管理
@@ -26,8 +26,8 @@ export interface SaveData {
   // インフラ状況
   infrastructureStatus: InfrastructureStatus;
   
-  // 報酬・実績データ
-  rewards: Reward[];
+  // 実績データ
+  achievements: Achievement[];
   
   // ゲーム設定
   gameSettings: {
