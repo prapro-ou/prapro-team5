@@ -1,235 +1,442 @@
-import type { Position } from '../types/grid';
-import type { Facility } from '../types/facility';
-import type { 
-  TileDrawParams, 
-  FacilityImageParams, 
-  EffectDrawParams, 
-  DragRangeParams 
-} from '../types/drawing';
+import { Graphics, Sprite, Texture, Container } from 'pixi.js';
+import type { GridSize } from '../types/grid';
+import type { Facility, FacilityType } from '../types/facility';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { DRAWING_CONSTANTS } from '../constants/drawingConstants';
+import { FACILITY_DATA } from '../types/facility';
+import { getRoadConnectionType } from './roadConnection';
 
-// タイルの描画
-export const drawTile = ({
-  ctx,
-  x,
-  y,
-  tileColor,
-  mapOffsetX,
-  mapOffsetY,
-  getIsometricPosition
-}: TileDrawParams): void => {
-  const isoPos = getIsometricPosition(x, y);
-  
-  // アイソメトリックタイルのパスを作成
-  ctx.beginPath();
-  ctx.moveTo(isoPos.x + mapOffsetX, isoPos.y + mapOffsetY);
-  ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH / 2, isoPos.y + mapOffsetY - ISO_TILE_HEIGHT / 2);
-  ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH, isoPos.y + mapOffsetY);
-  ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH / 2, isoPos.y + mapOffsetY + ISO_TILE_HEIGHT / 2);
-  ctx.closePath();
-  
-  // タイルの色を設定
-  ctx.fillStyle = tileColor;
-  ctx.fill();
-  
-  // 境界線を描画
-  ctx.strokeStyle = DRAWING_CONSTANTS.TILE_BORDER_COLOR;
-  ctx.lineWidth = DRAWING_CONSTANTS.TILE_BORDER_WIDTH;
-  ctx.stroke();
+// 地形色の取得
+export const getTerrainColor = (terrain: string): number => {
+  const terrainColors: Record<string, number> = {
+    grass: 0x90EE90,      // 薄い緑
+    water: 0x87CEEB,      // 空色
+    forest: 0x228B22,     // 濃い緑
+    desert: 0xF4A460,     // 砂色
+    mountain: 0x696969,   // 暗いグレー
+    beach: 0xF5DEB3,      // 小麦色
+    swamp: 0x8B4513,      // 茶色
+    rocky: 0xA0522D,      // シエナ
+  };
+  return terrainColors[terrain] || 0x90EE90;
 };
 
-// 変形の適用
-const applyTransform = (
-  ctx: CanvasRenderingContext2D, 
-  transform: string, 
-  drawX: number, 
-  drawY: number, 
-  imgSize: { width: number; height: number }
-): void => {
-  ctx.translate(drawX + imgSize.width / 2, drawY + imgSize.height / 2);
-  
-  if (transform.includes('rotate')) {
-    const rotation = transform.match(/rotate\(([^)]+)\)/)?.[1];
-    if (rotation) {
-      ctx.rotate((parseFloat(rotation) * Math.PI) / 180);
-    }
+// プレビュー色の決定
+export const getPreviewColor = (
+  facilityType: FacilityType,
+  canAfford: boolean,
+  isOccupied: boolean
+): { color: number; alpha: number } => {
+  if (!canAfford || isOccupied) {
+    return { color: 0xfca5a5, alpha: 0.9 }; // 赤（建設不可）
   }
-  
-  if (transform.includes('scaleX(-1)')) {
-    ctx.scale(-1, 1);
-  }
-  
-  ctx.translate(-(drawX + imgSize.width / 2), -(drawY + imgSize.height / 2));
-};
 
-// 道路画像の描画
-const drawRoadImage = (
-  ctx: CanvasRenderingContext2D,
-  facility: Facility,
-  x: number,
-  y: number,
-  isoPos: Position,
-  mapOffsetX: number,
-  mapOffsetY: number,
-  imageCache: { [key: string]: HTMLImageElement },
-  getRoadImageData: (facility: Facility, x: number, y: number) => { imgPath: string; imgSize: { width: number; height: number }; transform?: string }
-): void => {
-  const { imgPath, imgSize, transform } = getRoadImageData(facility, x, y);
-  const cachedImage = imageCache[imgPath];
-  
-  if (!cachedImage) return;
-  
-  const drawX = isoPos.x + mapOffsetX - imgSize.width / 2 + 16;
-  const drawY = isoPos.y + mapOffsetY - imgSize.height + 16 * (1) / 2;
-  
-  ctx.save();
-  if (transform) {
-    applyTransform(ctx, transform, drawX, drawY, imgSize);
-  }
-  
-  ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
-  ctx.restore();
-};
+  // 施設カテゴリ別の色
+  const facilityData = FACILITY_DATA[facilityType];
+  let color = 0x86efac; // デフォルト緑
 
-// 建物画像の描画
-const drawBuildingImage = (
-  ctx: CanvasRenderingContext2D,
-  facility: Facility,
-  x: number,
-  y: number,
-  isoPos: Position,
-  mapOffsetX: number,
-  mapOffsetY: number,
-  imageCache: { [key: string]: HTMLImageElement },
-  getFacilityImageData: (facility: Facility, x: number, y: number) => { imgPath: string; imgSize: { width: number; height: number }; size: number }
-): void => {
-  const { imgPath, imgSize, size: facilitySize } = getFacilityImageData(facility, x, y);
-  const cachedImage = imageCache[imgPath];
-  
-  if (!cachedImage) return;
-  
-  const drawX = isoPos.x + mapOffsetX - imgSize.width / 2 + 16;
-  const drawY = isoPos.y + mapOffsetY - imgSize.height + 16 * (facilitySize) / 2;
-  
-  ctx.drawImage(cachedImage, drawX, drawY, imgSize.width, imgSize.height);
-};
-
-// 施設画像の描画
-export const drawFacilityImage = ({
-  ctx,
-  facility,
-  x,
-  y,
-  mapOffsetX,
-  mapOffsetY,
-  imageCache,
-  getIsometricPosition,
-  isFacilityCenter,
-  getFacilityImageData,
-  getRoadImageData
-}: FacilityImageParams): void => {
-  const isCenter = isFacilityCenter(facility, x, y);
-  if (!isCenter) return;
-  
-  const isoPos = getIsometricPosition(x, y);
-  
-  if (facility.type === 'road') {
-    drawRoadImage(ctx, facility, x, y, isoPos, mapOffsetX, mapOffsetY, imageCache, getRoadImageData);
-  } else {
-    drawBuildingImage(ctx, facility, x, y, isoPos, mapOffsetX, mapOffsetY, imageCache, getFacilityImageData);
+  switch (facilityData.category) {
+    case 'residential': color = 0x86efac; break;      // 緑（住宅）
+    case 'commercial': color = 0x93c5fd; break;       // 青（商業）
+    case 'industrial': color = 0xfef08a; break;       // 黄（工業）
+    case 'infrastructure': color = 0x9ca3af; break;   // グレー（インフラ）
+    case 'government': color = 0xc4b5fd; break;       // 紫（公共）
+    case 'others': color = 0xf0abfc; break;           // ピンク（その他）
+    default: color = 0x86efac; break;                 // デフォルト
   }
+
+  return { color, alpha: 0.9 };
 };
 
 // 効果範囲の色を取得
-const getEffectColor = (selectedPosition: Position | null, facilities: Facility[]): string => {
-  if (!selectedPosition) return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
-  
-  const selectedFacility = facilities.find(f => 
-    f.position.x === selectedPosition.x && 
-    f.position.y === selectedPosition.y
-  );
-  
-  if (!selectedFacility) return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
-  
-  switch (selectedFacility.type) {
-    case 'park':
-      return DRAWING_CONSTANTS.PARK_EFFECT_COLOR;
-    case 'police':
-      return DRAWING_CONSTANTS.POLICE_EFFECT_COLOR;
-    default:
-      return DRAWING_CONSTANTS.DEFAULT_EFFECT_COLOR;
+export const getEffectColor = (facilityType: FacilityType): number => {
+  switch (facilityType) {
+    case 'police': return 0x87CEEB;     // スカイブルー
+    case 'hospital': return 0xFFB6C1;   // ライトピンク
+    case 'park': return 0x90EE90;       // ライトグリーン
+    case 'city_hall': return 0xDDA0DD;  // プラム
+    default: return 0x90EE90;           // デフォルト緑
   }
 };
 
-// 施設効果範囲の描画
-export const drawFacilityEffects = ({
-  ctx,
-  facilityEffectTiles,
-  size,
-  mapOffsetX,
-  mapOffsetY,
-  selectedPosition,
-  facilities,
-  getIsometricPosition,
-  drawTile
-}: EffectDrawParams): void => {
-  if (facilityEffectTiles.size === 0) return;
-  
-  ctx.globalAlpha = DRAWING_CONSTANTS.EFFECT_ALPHA;
-  
-  const effectColor = getEffectColor(selectedPosition, facilities);
-  
-  facilityEffectTiles.forEach(tileKey => {
-    const [x, y] = tileKey.split('-').map(Number);
-    if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-      drawTile({
-        ctx,
-        x,
-        y,
-        tileColor: effectColor,
-        mapOffsetX,
-        mapOffsetY,
-        getIsometricPosition
-      });
-    }
-  });
-  
-  ctx.globalAlpha = 1.0;
+// 道路ドラッグ色の取得
+export const getRoadDragColor = (canAfford: boolean, isOccupied: boolean) => {
+  if (!canAfford || isOccupied) {
+    return {
+      color: 0xfca5a5, // 赤（建設不可）
+      alpha: 0.7,
+      strokeColor: 0xff0000 // 赤い境界線
+    };
+  }
+
+  return {
+    color: 0xFFD700, // 金色（デフォルト）
+    alpha: 0.7,
+    strokeColor: 0xFFA500 // オレンジ色の境界線
+  };
 };
 
-// ドラッグ範囲の描画
-export const drawDragRange = ({
-  ctx,
-  isPlacingFacility,
-  dragRange,
-  size,
-  mapOffsetX,
-  mapOffsetY,
-  getIsometricPosition
-}: DragRangeParams): void => {
-  if (!isPlacingFacility || dragRange.size === 0) return;
-  
-  ctx.globalAlpha = DRAWING_CONSTANTS.DRAG_ALPHA;
-  ctx.fillStyle = DRAWING_CONSTANTS.DRAG_COLOR;
-  ctx.strokeStyle = DRAWING_CONSTANTS.DRAG_STROKE_COLOR;
-  ctx.lineWidth = DRAWING_CONSTANTS.DRAG_STROKE_WIDTH;
-  
-  dragRange.forEach(tileKey => {
-    const [x, y] = tileKey.split('-').map(Number);
-    if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-      const isoPos = getIsometricPosition(x, y);
-      
-      ctx.beginPath();
-      ctx.moveTo(isoPos.x + mapOffsetX, isoPos.y + mapOffsetY);
-      ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH / 2, isoPos.y + mapOffsetY - ISO_TILE_HEIGHT / 2);
-      ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH, isoPos.y + mapOffsetY);
-      ctx.lineTo(isoPos.x + mapOffsetX + ISO_TILE_WIDTH / 2, isoPos.y + mapOffsetY + ISO_TILE_HEIGHT / 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+// 地形描画
+export const drawTerrain = (
+  layer: Container,
+  _terrainMap: Map<string, string>,
+  size: GridSize,
+  offsetX: number,
+  offsetY: number,
+  getTerrainAt: (x: number, y: number) => string | undefined,
+  getPooledGraphics: () => Graphics,
+  returnGraphics: (g: Graphics) => void
+) => {
+  // 既存のGraphicsオブジェクトをプールに戻す
+  layer.children.forEach(child => {
+    if (child instanceof Graphics) {
+      returnGraphics(child);
     }
   });
-  
-  ctx.globalAlpha = 1.0;
+  layer.removeChildren();
+
+  // 見える範囲のタイルを描画
+  const maxX = Math.min(size.width, 120);
+  const maxY = Math.min(size.height, 120);
+
+  for (let y = 0; y < maxY; y++) {
+    for (let x = 0; x < maxX; x++) {
+      // 地形が未設定の場合はデフォルト（草）を使用
+      const terrain = getTerrainAt(x, y) || 'grass';
+      const color = getTerrainColor(terrain);
+
+      const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+      const terrainG = getPooledGraphics();
+      terrainG.moveTo(isoX, isoY)
+        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+        .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+        .lineTo(isoX, isoY)
+        .fill({ color, alpha: 0.8 })
+        .stroke({ color: 0x666666, width: 1 });
+
+      terrainG.zIndex = isoY;
+      layer.addChild(terrainG);
+    }
+  }
+};
+
+// 施設描画
+export const drawFacilities = (
+  layer: Container,
+  facilities: Facility[],
+  offsetX: number,
+  offsetY: number,
+  textures: Map<string, Texture>,
+  _getPooledGraphics: () => Graphics,
+  returnGraphics: (g: Graphics) => void
+) => {
+  // 既存のGraphicsオブジェクトをプールに戻す
+  layer.children.forEach(child => {
+    if (child instanceof Graphics) {
+      returnGraphics(child);
+    }
+  });
+  layer.removeChildren();
+
+  // 施設マップを作成（道路接続判定用）
+  const facilityMap = new Map<string, Facility>();
+  facilities.forEach(facility => {
+    facility.occupiedTiles.forEach(tile => {
+      facilityMap.set(`${tile.x}-${tile.y}`, facility);
+    });
+  });
+
+  facilities.forEach(facility => {
+    const facilityData = FACILITY_DATA[facility.type];
+
+    // 道路接続描画処理
+    if (facility.type === 'road') {
+      facility.occupiedTiles.forEach(tile => {
+        const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
+        const imgPath = facilityData.imgPaths?.[connection.variantIndex];
+        if (!imgPath) return;
+
+        const texture = textures.get(imgPath);
+        if (!texture) return;
+
+        const sprite = new Sprite(texture);
+        const isoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const isoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+        // 道路のサイズ設定
+        const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
+        sprite.width = imgSize.width;
+        sprite.height = imgSize.height;
+
+        // 道路のみアンカーを中心に設定
+        sprite.anchor.set(0.5, 0.5);
+
+        // 位置設定
+        sprite.x = isoX + ISO_TILE_WIDTH / 2;
+        sprite.y = isoY;
+
+        // 回転の適用
+        sprite.rotation = (connection.rotation * Math.PI) / 180;
+
+        // フリップの適用
+        if (connection.flip) {
+          sprite.scale.x *= -1;   // 水平反転
+        }
+
+        // Z-index
+        sprite.zIndex = isoY;
+        layer.addChild(sprite);
+      });
+    } else {
+      // 通常の施設
+      const imgPath = facilityData.imgPaths?.[0];
+      if (!imgPath) return;
+
+      const texture = textures.get(imgPath);
+      if (!texture) return;
+
+      const sprite = new Sprite(texture);
+      const center = facility.position;
+      const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+      // 画像サイズが分かる場合は中央寄せ。なければそのまま
+      const size = facilityData.imgSizes?.[0];
+      if (size) {
+        sprite.anchor.set(0.5, 1.0);
+        sprite.x = isoX + ISO_TILE_WIDTH / 2;
+        sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
+        sprite.width = size.width;
+        sprite.height = size.height;
+      } else {
+        sprite.x = isoX;
+        sprite.y = isoY;
+      }
+
+      // 簡易Z-index
+      sprite.zIndex = isoY;
+      layer.addChild(sprite);
+    }
+  });
+};
+
+// プレビュー描画
+export const drawPreview = (
+  layer: Container,
+  selectedFacilityType: FacilityType | null,
+  hoverPosition: { x: number; y: number } | null,
+  size: GridSize,
+  offsetX: number,
+  offsetY: number,
+  money: number,
+  facilities: Facility[],
+  getPooledGraphics: () => Graphics,
+  returnGraphics: (g: Graphics) => void
+) => {
+  if (!selectedFacilityType || !hoverPosition) return;
+
+  // 既存のGraphicsオブジェクトをプールに戻す
+  layer.children.forEach(child => {
+    if (child instanceof Graphics) {
+      returnGraphics(child);
+    }
+  });
+  layer.removeChildren();
+
+  const facilityData = FACILITY_DATA[selectedFacilityType];
+  const radius = Math.floor(facilityData.size / 2);
+  const center = hoverPosition;
+
+  // 施設マップを作成（既存施設の占有タイル）
+  const facilityMap = new Map<string, Facility>();
+  facilities.forEach(facility => {
+    facility.occupiedTiles.forEach(tile => {
+      facilityMap.set(`${tile.x}-${tile.y}`, facility);
+    });
+  });
+
+  // プレビュー範囲を描画
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      const x = center.x + dx;
+      const y = center.y + dy;
+
+      if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+        const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+        const previewG = getPooledGraphics();
+        previewG.moveTo(isoX, isoY)
+          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+          .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+          .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+          .lineTo(isoX, isoY);
+
+        // プレビューステータスを決定
+        const tileKey = `${x}-${y}`;
+        const canAfford = money >= facilityData.cost;
+        const isOccupied = facilityMap.has(tileKey);
+
+        const { color, alpha } = getPreviewColor(selectedFacilityType, canAfford, isOccupied);
+
+        previewG.fill({ color, alpha });
+        previewG.stroke({ color: 0xffffff, width: 1 });
+        layer.addChild(previewG);
+      }
+    }
+  }
+};
+
+// 効果範囲プレビュー描画
+export const drawEffectPreview = (
+  layer: Container,
+  selectedFacilityType: FacilityType | null,
+  hoverPosition: { x: number; y: number } | null,
+  size: GridSize,
+  offsetX: number,
+  offsetY: number,
+  getPooledGraphics: () => Graphics,
+  returnGraphics: (g: Graphics) => void
+) => {
+  if (!selectedFacilityType || !hoverPosition) return;
+
+  // 既存のGraphicsオブジェクトをプールに戻す
+  layer.children.forEach(child => {
+    if (child instanceof Graphics) {
+      returnGraphics(child);
+    }
+  });
+  layer.removeChildren();
+
+  const facilityData = FACILITY_DATA[selectedFacilityType];
+  const effectRadius = facilityData.effectRadius ?? 0;
+
+  if (effectRadius <= 0) return;
+
+  const center = hoverPosition;
+
+  // 効果範囲を描画
+  for (let dx = -effectRadius; dx <= effectRadius; dx++) {
+    for (let dy = -effectRadius; dy <= effectRadius; dy++) {
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= effectRadius) {
+        const x = center.x + dx;
+        const y = center.y + dy;
+
+        if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+          const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+          const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+          const effectG = getPooledGraphics();
+          effectG.moveTo(isoX, isoY)
+            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+            .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+            .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+            .lineTo(isoX, isoY);
+
+          const color = getEffectColor(selectedFacilityType);
+
+          effectG.fill({ color, alpha: 0.2 });
+          effectG.stroke({ color: 0xffffff, width: 1, alpha: 0.5 });
+          layer.addChild(effectG);
+        }
+      }
+    }
+  }
+};
+
+// 道路ドラッグ範囲描画
+export const drawRoadDragRange = (
+  layer: Container,
+  selectedFacilityType: FacilityType | null,
+  isPlacing: boolean,
+  startTile: { x: number; y: number } | null,
+  endTile: { x: number; y: number } | null,
+  size: GridSize,
+  offsetX: number,
+  offsetY: number,
+  money: number,
+  facilities: Facility[],
+  getPooledGraphics: () => Graphics,
+  returnGraphics: (g: Graphics) => void
+) => {
+  if (!isPlacing || !startTile || !endTile || selectedFacilityType !== 'road') return;
+
+  // 既存のGraphicsオブジェクトをプールに戻す
+  const existingChildren = layer.children.filter(child => child.name !== 'road-drag');
+  existingChildren.forEach(child => {
+    if (child instanceof Graphics) {
+      returnGraphics(child);
+    }
+  });
+  layer.removeChildren();
+
+  // 直線一列のみの敷設
+  const dx = Math.abs(endTile.x - startTile.x);
+  const dy = Math.abs(endTile.y - startTile.y);
+
+  let tiles: { x: number; y: number }[] = [];
+
+  // X軸方向の直線
+  if (dx > dy) {
+    const startX = Math.min(startTile.x, endTile.x);
+    const endX = Math.max(startTile.x, endTile.x);
+    const y = startTile.y;
+
+    for (let x = startX; x <= endX; x++) {
+      if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+        tiles.push({ x, y });
+      }
+    }
+  }
+  // Y軸方向の直線
+  else {
+    const startY = Math.min(startTile.y, endTile.y);
+    const endY = Math.max(startTile.y, endTile.y);
+    const x = startTile.x;
+
+    for (let y = startY; y <= endY; y++) {
+      if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
+        tiles.push({ x, y });
+      }
+    }
+  }
+
+  // 施設マップを作成（既存施設の占有タイル）
+  const facilityMap = new Map<string, Facility>();
+  facilities.forEach(facility => {
+    facility.occupiedTiles.forEach(tile => {
+      facilityMap.set(`${tile.x}-${tile.y}`, facility);
+    });
+  });
+
+  // 道路のコストを取得
+  const roadData = FACILITY_DATA['road'];
+
+  // ドラッグ範囲を描画
+  tiles.forEach(({ x, y }) => {
+    const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+    const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+
+    const dragG = getPooledGraphics();
+    dragG.name = 'road-drag';
+    dragG.moveTo(isoX, isoY)
+      .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
+      .lineTo(isoX + ISO_TILE_WIDTH, isoY)
+      .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
+      .lineTo(isoX, isoY);
+
+    // プレビューステータスを決定
+    const tileKey = `${x}-${y}`;
+    const canAfford = money >= roadData.cost;
+    const isOccupied = facilityMap.has(tileKey);
+
+    const { color, alpha, strokeColor } = getRoadDragColor(canAfford, isOccupied);
+
+    dragG.fill({ color, alpha });
+    dragG.stroke({ color: strokeColor, width: 2 });
+    layer.addChild(dragG);
+  });
 };

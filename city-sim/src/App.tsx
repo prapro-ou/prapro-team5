@@ -1,5 +1,7 @@
 // import { Grid } from './components/grid'
-import { CanvasGrid } from './components/CanvasGrid'
+// import { CanvasGrid } from './components/CanvasGrid'
+import IsometricGrid from './components/MapGrid'
+import LoadingScreen from './components/LoadingScreen'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -83,8 +85,16 @@ function App() {
   // オープニングシーケンスの表示状態
   const [showOpeningSequence, setShowOpeningSequence] = useState(false);
   
+  // UI設定からオープニングシークエンスの表示設定を取得
+  const { showOpeningSequence: uiShowOpeningSequence } = useUIStore();
+  
   // 強制初期化完了フラグ
   const [isInitializationComplete, setIsInitializationComplete] = useState(false);
+
+  // グリッド初期描画ローディング
+  const [isGridLoading, setIsGridLoading] = useState(false);
+  const [gridLoadingStartedAt, setGridLoadingStartedAt] = useState<number | null>(null);
+  const [gridKey, setGridKey] = useState(0);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -184,13 +194,15 @@ function App() {
   // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
     if (!isInitializationComplete) return;
-    if (!showStartScreen || !showOpeningSequence || facilities.length === 0) return;
+    if (showStartScreen || showOpeningSequence) return;
+    if (facilities.length === 0) return;
     const { updateRoadConnectivity } = useFacilityStore.getState();
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
    useEffect(() => {
-     if (!isInitializationComplete || !showStartScreen || !showOpeningSequence) return;
+     if (!isInitializationComplete) return;
+     if (showStartScreen || showOpeningSequence) return;
      startHappinessDecayTask();
    }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
   // 地形生成
@@ -361,7 +373,10 @@ function App() {
           }
           
           // オープニング状態を変更
-          setShowOpeningSequence(false);
+        // グリッド初期描画のローディングを開始
+        setIsGridLoading(true);
+        setGridLoadingStartedAt(Date.now());
+        setShowOpeningSequence(false);
           
           // 初期化完了フラグは既に有効化済み
         }}
@@ -377,14 +392,91 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
-            setShowOpeningSequence(true);
+            // UI設定に応じてオープニングを表示するかどうかを決定
+            if (uiShowOpeningSequence) {
+              setShowOpeningSequence(true);
+            }
+            else {
+              // オープニングなしの場合は直接初期化完了に移行
+              
+              // ゲーム状態を初期化
+              useGameStore.setState({
+                stats: {
+                  level: 1,
+                  money: 10000,
+                  population: 0,
+                  satisfaction: 50,
+                  workforceAllocations: [],
+                  date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
+                  monthlyBalance: { income: 0, expense: 0, balance: 0 },
+                  yearlyEvaluation: null,
+                  yearlyStats: null,
+                  previousYearStats: null,
+                  previousYearEvaluation: null,
+                  monthlyAccumulation: {
+                    year: 2024,
+                    monthlyTaxRevenue: new Array(12).fill(0),
+                    monthlyMaintenanceCost: new Array(12).fill(0),
+                    monthlyPopulation: new Array(12).fill(0),
+                    monthlySatisfaction: new Array(12).fill(50),
+                    monthlySupportRatings: {
+                      central_government: new Array(12).fill(50),
+                      citizens: new Array(12).fill(50),
+                      chamber_of_commerce: new Array(12).fill(50)
+                    }
+                  },
+                  supportSystem: {
+                    factionSupports: [
+                      { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+                    ],
+                    monthlyHistory: [],
+                    yearlyHistory: [],
+                    lastCalculationDate: { year: 2024, month: 1 }
+                  }
+                },
+                levelUpMessage: null
+              });
+              
+              // 他のストアをリセット
+              useFacilityStore.getState().resetToInitial();
+              useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              useInfrastructureStore.getState().resetToInitial();
+              useAchievementStore.getState().resetToInitial();
+              useMissionStore.getState().resetToInitial();
+              useTimeControlStore.getState().resetToInitial();
+              useSecretaryStore.getState().resetToInitial();
+              useSupportStore.getState().resetToInitial();
+              useYearlyEvaluationStore.getState().resetToInitial();
+
+              // 地形生成と道路配置
+              const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              if (generatedRoads.length > 0) {
+                const { addFacility, createFacility } = useFacilityStore.getState();
+                generatedRoads.forEach(road => {
+                  const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+                  roadFacility.variantIndex = road.variantIndex;
+                  roadFacility.isConnected = true;
+                  addFacility(roadFacility);
+                });
+              }
+              
+              setIsInitializationComplete(true);
+              setIsGridLoading(true);
+              setGridLoadingStartedAt(Date.now());
+            }
+            setGridKey(k => k + 1);
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
+            // タイトルからロード後、グリッド初期描画のローディングを先に開始
+            setIsGridLoading(true);
+            setGridLoadingStartedAt(Date.now());
+            // 設定画面は自動で開かない
             setShowStartScreen(false);
-            setTimeout(() => {
-              openSettings();
-            }, 100);
+            // Gridを確実に再マウント
+            setGridKey(k => k + 1);
           }}
         />
         {/* スタート画面中でも設定パネルを表示可能にする */}
@@ -489,9 +581,19 @@ function App() {
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
         <div className="w-full h-full">
-          <CanvasGrid 
+          <IsometricGrid
+            key={gridKey}
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
+            onReady={async () => {
+              // 最小表示時間200msを確保
+              const started = gridLoadingStartedAt ?? Date.now();
+              const elapsed = Date.now() - started;
+              const remain = Math.max(0, 200 - elapsed);
+              if (remain > 0) await new Promise((r) => setTimeout(r, remain));
+              setIsGridLoading(false);
+              setGridLoadingStartedAt(null);
+            }}
             selectedPosition={selectedTile}
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
@@ -572,6 +674,15 @@ function App() {
       {/* ミッションパネル */}
       {isMissionPanelOpen && (
         <MissionPanel onClose={closeMissionPanel} />
+      )}
+
+      {/* グリッド初期描画時のローディング */}
+      {isGridLoading && (
+        <LoadingScreen
+          isVisible={true}
+          message={'環境を準備しています...'}
+          progress={90}
+        />
       )}
     </div>
     

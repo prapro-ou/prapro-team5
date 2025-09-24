@@ -43,6 +43,10 @@ export interface UIStore {
   openMissionPanel: () => void;
   closeMissionPanel: () => void;
   
+  // オープニングシークエンス設定
+  showOpeningSequence: boolean;
+  setShowOpeningSequence: (show: boolean) => void;
+  
   // 選択されたタイル
   selectedTile: Position | null;
   setSelectedTile: (tile: Position | null) => void;
@@ -60,6 +64,7 @@ export const useUIStore = create<UIStore>((set) => ({
   isStatisticsOpen: false,
   isYearlyEvaluationResultOpen: false,
   isMissionPanelOpen: false,
+  showOpeningSequence: false, // デフォルトでオープニングなし
 
   togglePanel: () => {
     set((state) => {
@@ -137,5 +142,8 @@ export const useUIStore = create<UIStore>((set) => ({
   closeMissionPanel: () => {
     playPanelSound();
     set({ isMissionPanelOpen: false });
+  },
+  setShowOpeningSequence: (show) => {
+    set({ showOpeningSequence: show });
   },
 }));
