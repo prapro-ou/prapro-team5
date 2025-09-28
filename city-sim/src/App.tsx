@@ -16,6 +16,7 @@ import MissionPanel from './components/MissionPanel';
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
+import { GRID_WIDTH, GRID_HEIGHT } from './constants/gridConstants'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer, TbMessageCircle } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
@@ -104,9 +105,6 @@ function App() {
   
   // 時間制御
   const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
-
-  const GRID_WIDTH = 120;  // グリッドの幅
-  const GRID_HEIGHT = 120; // グリッドの高さ
 
   // 施設状態
   const { 

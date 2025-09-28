@@ -10,6 +10,7 @@ import { usePixiCoordinates } from '../hooks/useCoordinates';
 import { useWheelZoom } from '../hooks/useWheelZoom';
 import { useFacilityTextures } from '../hooks/useFacilityTextures';
 import { useKeyboardPan } from '../hooks/useKeyboardPan';
+import { GRID_WIDTH, GRID_HEIGHT } from '../constants/gridConstants';
 
 interface IsometricGridProps {
   size: GridSize;
@@ -185,10 +186,10 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       world.addChild(hoverG);
 
       const offsetX = width / 2;
-      const offsetY = 120;
+      const offsetY = GRID_HEIGHT;
       offsetsRef.current = { offsetX, offsetY };
-      const maxX = Math.min(size.width, 120);
-      const maxY = Math.min(size.height, 120);
+      const maxX = Math.min(size.width, GRID_WIDTH);
+      const maxY = Math.min(size.height, GRID_HEIGHT);
 
       g.rect(0, 0, width, height).fill({ color: 0x111827 });
 
