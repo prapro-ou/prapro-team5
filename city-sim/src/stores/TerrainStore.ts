@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
-import type { HeightTerrainTile, HeightLevel, CornerHeights } from '../types/heightTerrain';
-import { generateNaturalTerrainMap } from '../utils/terrainGenerator';
+import type { HeightTerrainTile } from '../types/heightTerrain';
+import { generateNaturalTerrainMap, generateHeightTerrainMapFromTerrain } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
-import { isSlope, canBuildFacility } from '../utils/heightTerrainUtils';
+import { canBuildFacility } from '../utils/heightTerrainUtils';
 
 interface TerrainStore {
   // 状態
@@ -102,51 +102,11 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
 
   // 高さ地形システムのメソッド
   generateHeightTerrain: (gridSize: GridSize) => {
+    console.log('地形生成開始', gridSize);
     const { terrainMap } = get();
-    const heightTerrainMap = new Map<string, HeightTerrainTile>();
-    
-    // まず高さマップを生成
-    const heightMap = new Map<string, HeightLevel>();
-    for (let x = 0; x < gridSize.width; x++) {
-      for (let y = 0; y < gridSize.height; y++) {
-        const height = Math.floor(Math.random() * 3) + 1 as HeightLevel; // 1-3の範囲
-        heightMap.set(`${x},${y}`, height);
-      }
-    }
-    
-    // 各タイルの四隅の高さを生成
-    for (let x = 0; x < gridSize.width; x++) {
-      for (let y = 0; y < gridSize.height; y++) {
-        const terrain = terrainMap.get(`${x},${y}`) || 'grass';
-        const baseHeight = heightMap.get(`${x},${y}`) || 1;
-        
-        // 四隅の高さを生成
-        const cornerHeights: CornerHeights = [
-          baseHeight, // 左上
-          heightMap.get(`${x + 1},${y}`) || baseHeight, // 右上
-          heightMap.get(`${x + 1},${y + 1}`) || baseHeight, // 右下
-          heightMap.get(`${x},${y + 1}`) || baseHeight // 左下
-        ];
-        
-        // 斜面判定
-        const slope = isSlope(cornerHeights);
-        
-        // 建設可能性判定
-        const isBuildable = true;
-        
-        const heightTile: HeightTerrainTile = {
-          terrain,
-          height: baseHeight,
-          cornerHeights,
-          isSlope: slope,
-          isBuildable
-        };
-        
-        heightTerrainMap.set(`${x},${y}`, heightTile);
-      }
-    }
-    
+    const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, terrainMap);
     set({ heightTerrainMap });
+    console.log('地形生成完了', heightTerrainMap.size, 'タイル');
   },
 
   getHeightTerrainAt: (x: number, y: number) => {
