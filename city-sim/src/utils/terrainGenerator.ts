@@ -347,6 +347,135 @@ export function generateNaturalTerrainMap(gridSize: GridSize): {
   };
 }
 
+// 既存の地形とノイズを流用して高さ地形を自然に生成
+export function generateHeightTerrainMapFromTerrain(
+  gridSize: GridSize,
+  terrainMap: Map<string, TerrainType>,
+  seed?: number
+): Map<string, import('../types/heightTerrain').HeightTerrainTile> {
+  const { HEIGHT_SCALE, OCTAVES, PERSISTENCE } = TERRAIN_CONSTANTS.NOISE;
+  const usedSeed = seed ?? Math.floor(Math.random() * 1000000);
+
+  // 中心高さの一次マップ（連続値 0..1）
+  const continuousHeight = new Map<string, number>();
+  for (let x = 0; x < gridSize.width; x++) {
+    for (let y = 0; y < gridSize.height; y++) {
+      const h = perlinNoise(x, y, OCTAVES, PERSISTENCE, HEIGHT_SCALE, usedSeed);
+      continuousHeight.set(`${x},${y}`, h);
+    }
+  }
+
+  // タイル中心の離散高さレベル 0..4 を terrain に合わせて割当
+  const centerHeightLevel = new Map<string, number>();
+  for (let x = 0; x < gridSize.width; x++) {
+    for (let y = 0; y < gridSize.height; y++) {
+      const key = `${x},${y}`;
+      const terrain = terrainMap.get(key) ?? 'grass';
+      const h = continuousHeight.get(key)!; // 0..1
+
+      let level: number = 1;
+      if (terrain === 'water') {
+        level = 0;
+      } else if (terrain === 'beach') {
+        level = 1;
+      } else if (terrain === 'grass') {
+        // 草地は常に高さ1
+        level = 1;
+      } else if (terrain === 'forest') {
+        level = h > 0.6 ? 3 : 2;
+      } else if (terrain === 'mountain') {
+        level = h > 0.7 ? 4 : 3;
+      }
+
+      centerHeightLevel.set(key, Math.max(0, Math.min(4, Math.round(level))));
+    }
+  }
+
+  // コーナー高さを周辺4タイルの平均から決めて段階化
+  function getCenterLevel(cx: number, cy: number): number | null {
+    if (cx < 0 || cy < 0 || cx >= gridSize.width || cy >= gridSize.height) return null;
+    const v = centerHeightLevel.get(`${cx},${cy}`);
+    return v == null ? null : v;
+  }
+
+  const result = new Map<string, import('../types/heightTerrain').HeightTerrainTile>();
+
+  for (let x = 0; x < gridSize.width; x++) {
+    for (let y = 0; y < gridSize.height; y++) {
+      const key = `${x},${y}`;
+      const terrain = terrainMap.get(key) ?? 'grass';
+      const c = getCenterLevel(x, y) ?? 1;
+
+      // TL/TR/BR/BL の各コーナーに対して周囲4セルの平均を使う
+      const avgTL = averageDefined([
+        getCenterLevel(x, y),
+        getCenterLevel(x - 1, y),
+        getCenterLevel(x, y - 1),
+        getCenterLevel(x - 1, y - 1)
+      ]);
+      const avgTR = averageDefined([
+        getCenterLevel(x, y),
+        getCenterLevel(x + 1, y),
+        getCenterLevel(x, y - 1),
+        getCenterLevel(x + 1, y - 1)
+      ]);
+      const avgBR = averageDefined([
+        getCenterLevel(x, y),
+        getCenterLevel(x + 1, y),
+        getCenterLevel(x, y + 1),
+        getCenterLevel(x + 1, y + 1)
+      ]);
+      const avgBL = averageDefined([
+        getCenterLevel(x, y),
+        getCenterLevel(x - 1, y),
+        getCenterLevel(x, y + 1),
+        getCenterLevel(x - 1, y + 1)
+      ]);
+
+      // 角は丸めて HeightLevel に落とす（水面優先）
+      function clampToLevel(v: number): 0 | 1 | 2 | 3 | 4 {
+        const r = Math.max(0, Math.min(4, Math.round(v)));
+        return r as 0 | 1 | 2 | 3 | 4;
+      }
+
+      const cornerHeights: [0|1|2|3|4, 0|1|2|3|4, 0|1|2|3|4, 0|1|2|3|4] = [
+        clampToLevel(avgTL),
+        clampToLevel(avgTR),
+        clampToLevel(avgBR),
+        clampToLevel(avgBL)
+      ];
+
+      // 中心高さは terrain に合わせたレベル（角との一貫性確保のため中央値に寄せる）
+      const medianCenter = clampToLevel(median([c, avgTL, avgTR, avgBR, avgBL]));
+
+      const isSlope = cornerHeights.some(h => h !== cornerHeights[0]);
+      const isBuildable = terrain !== 'water';
+
+      result.set(key, {
+        terrain,
+        height: medianCenter,
+        cornerHeights,
+        isSlope,
+        isBuildable
+      });
+    }
+  }
+
+  return result;
+
+  function averageDefined(values: Array<number | null>): number {
+    const nums = values.filter((v): v is number => v != null);
+    if (nums.length === 0) return 0;
+    return nums.reduce((a, b) => a + b, 0) / nums.length;
+  }
+
+  function median(values: number[]): number {
+    const arr = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(arr.length / 2);
+    return arr.length % 2 === 0 ? (arr[mid - 1] + arr[mid]) / 2 : arr[mid];
+  }
+}
+
 function determineTerrainType(
   x: number, 
   y: number, 
