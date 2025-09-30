@@ -54,7 +54,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
 
   // 地形ストアの使用
-  const { terrainMap, getTerrainAt } = useTerrainStore();
+  const { terrainMap, getTerrainAt, heightTerrainMap } = useTerrainStore();
 
   // 座標計算フックの使用
   const {
@@ -86,6 +86,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   } = usePixiDrawing({
     terrainMap,
     getTerrainAt,
+    heightTerrainMap,
     facilitiesRef,
     selectedFacilityTypeRef,
     moneyRef,
@@ -98,6 +99,13 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
     returnGraphics,
     isInitializedRef
   });
+
+  // 高さ地形マップが変更されたら強制描画
+  useEffect(() => {
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      drawTerrainLayerForced();
+    }
+  }, [heightTerrainMap, drawTerrainLayerForced]);
 
   useEffect(() => { selectedFacilityTypeRef.current = selectedFacilityType; }, [selectedFacilityType]);
   useEffect(() => { moneyRef.current = money; }, [money]);

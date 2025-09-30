@@ -204,7 +204,7 @@ function App() {
      startHappinessDecayTask();
    }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
   // 地形生成
-  const { generateTerrain } = useTerrainStore();
+  const { generateTerrain, generateHeightTerrain, toggleHeightSystem, enableHeightSystem } = useTerrainStore();
 
   // 施設配置処理
   const placeFacility = (position: Position, type: FacilityType) => {
@@ -617,6 +617,21 @@ function App() {
         className="fixed bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg transition-colors z-[900]"
       >
         {showPanel ? <TbCraneOff/> : <TbCrane/>}
+      </button>
+      
+      {/* 高さ地形生成ボタン */}
+      <button 
+        onClick={() => {
+          toggleHeightSystem();
+          if (!enableHeightSystem) {
+            console.log('高さ地形生成を開始');
+            generateHeightTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+          }
+        }}
+        className={`fixed bottom-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg transition-colors z-[900] ${enableHeightSystem ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+        title="高さ地形システム"
+      >
+        {enableHeightSystem ? '高さON' : '高さOFF'}
       </button>
 
       {/* 施設建設パネル */}
