@@ -24,5 +24,5 @@ export const getShadowOffset = (height: HeightLevel): number => {
 
 // 高さに応じた境界線の太さ
 export const getBorderWidth = (height: HeightLevel): number => {
-  return Math.max(1, height);
+  return Math.max(HEIGHT_DRAWING_CONSTANTS.BORDER.WIDTH_FLAT, height);
 };

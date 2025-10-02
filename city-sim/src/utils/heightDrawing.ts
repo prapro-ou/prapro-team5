@@ -6,6 +6,29 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { getHeightColor, getShadowOffset, getBorderWidth } from './heightVisuals';
 import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
+// 境界線を描画する共通関数
+const drawBorder = (
+  graphics: Graphics,
+  borderType: 'flat' | 'slope' | 'cliff',
+  height?: HeightLevel
+) => {
+  const { BORDER } = HEIGHT_DRAWING_CONSTANTS;
+  
+  let width: number;
+  switch (borderType) {
+    case 'flat':
+      width = BORDER.WIDTH_FLAT;
+      break;
+    case 'slope':
+      width = BORDER.WIDTH_SLOPE;
+      break;
+    default:
+      width = BORDER.WIDTH_FLAT;
+  }
+  
+  graphics.stroke({ color: BORDER.COLOR, width });
+};
+
 // 高さ地形タイルを描画
 export const drawHeightTile = (
   graphics: Graphics,
@@ -60,8 +83,9 @@ const drawFlatTile = (
     .lineTo(isoX + ISO_TILE_WIDTH, adjustedIsoY)
     .lineTo(isoX + ISO_TILE_WIDTH / 2, adjustedIsoY + ISO_TILE_HEIGHT / 2)
     .lineTo(isoX, adjustedIsoY)
-    .fill({ color, alpha: 0.9 })
-    .stroke({ color: 0x333333, width: getBorderWidth(height) });
+    .fill({ color, alpha: 0.9 });
+  
+  drawBorder(graphics, 'flat', height);
 };
 
 // 斜面タイルを描画
@@ -88,13 +112,13 @@ const drawSlopeTile = (
     .lineTo(corners.bottomRight.x, corners.bottomRight.y)
     .lineTo(corners.bottomLeft.x, corners.bottomLeft.y)
     .lineTo(corners.topLeft.x, corners.topLeft.y)
-    .fill({ color, alpha: 0.9 })
-    .stroke({ color: 0x666666, width: 2 });
+    .fill({ color, alpha: 0.9 });
+  
+  // 境界線を描画
+  drawBorder(graphics, 'slope');
 };
 
-/**
- * 斜面の四隅の座標を計算
- */
+// 斜面の四隅の座標を計算
 const calculateSlopeCorners = (
   cornerHeights: [HeightLevel, HeightLevel, HeightLevel, HeightLevel],
   x: number,
@@ -140,9 +164,7 @@ const calculateSlopeCorners = (
   };
 };
 
-/**
- * 斜面の影を描画
- */
+// 斜面の影を描画
 const drawSlopeShadow = (
   graphics: Graphics,
   corners: any,
