@@ -113,7 +113,7 @@ export const drawTerrain = (
 
           const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
 
-          const heightOffset = Math.max(0, (heightTile.height - 1) * HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL);
+          const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
           terrainG.zIndex = baseIsoY + heightOffset;
           layer.addChild(terrainG);
           continue;

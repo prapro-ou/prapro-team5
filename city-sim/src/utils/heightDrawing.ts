@@ -40,7 +40,7 @@ const drawFlatTile = (
   const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
   
   // 高さによるY座標の調整（高さ0は水面、高さ1以上は陸地として浮かせる）
-  const heightOffset = height === 0 ? 0 : (height * HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL);
+  const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[height];
   const adjustedIsoY = isoY - heightOffset;
   
   // 影を描画（高さ1以上の場合のみ、水面は影なし）
@@ -106,19 +106,16 @@ const calculateSlopeCorners = (
   const baseIsoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
   const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
   
-  const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL;
+  const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS;
   
   const [hTL, hTR, hBR, hBL] = cornerHeights;
   
   // 高さ0（水面）は基準位置、高さ1以上は上に移動
   const getHeightAdjustedY = (height: HeightLevel, baseY: number) => {
-    if (height === 0) {
-      return baseY; // 水面は基準位置
-    }
-    return baseY - (height * heightOffset); // 陸地は高さに応じて上に移動
+    return baseY - heightOffset[height];
   };
   
-  // ダイヤ形の正しい4頂点
+  // ダイヤ形の4頂点
   // top    ← TL,  (x: base + W/2, y: base - H/2)
   // right  ← TR,  (x: base + W,   y: base)
   // bottom ← BR,  (x: base + W/2, y: base + H/2)
