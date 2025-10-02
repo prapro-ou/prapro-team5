@@ -4,6 +4,7 @@ import { Graphics } from 'pixi.js';
  import type { HeightTerrainTile, HeightLevel } from '../types/heightTerrain';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { getHeightColor, getShadowOffset, getBorderWidth } from './heightVisuals';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 // 高さ地形タイルを描画
 export const drawHeightTile = (
@@ -39,7 +40,7 @@ const drawFlatTile = (
   const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
   
   // 高さによるY座標の調整（高さ0は水面、高さ1以上は陸地として浮かせる）
-  const heightOffset = height === 0 ? 0 : (height * 8);
+  const heightOffset = height === 0 ? 0 : (height * HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL);
   const adjustedIsoY = isoY - heightOffset;
   
   // 影を描画（高さ1以上の場合のみ、水面は影なし）
@@ -105,7 +106,7 @@ const calculateSlopeCorners = (
   const baseIsoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
   const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
   
-  const heightOffset = 8; // 高さ1につき8ピクセル上に移動
+  const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL;
   
   const [hTL, hTR, hBR, hBL] = cornerHeights;
   
@@ -152,7 +153,7 @@ const drawSlopeShadow = (
 ) => {
   // 高さに応じた影のオフセット（高さが高いほど影が長い）
   const maxHeight = Math.max(...cornerHeights);
-  const shadowOffset = Math.max(2, maxHeight * 2);
+  const shadowOffset = Math.max(HEIGHT_DRAWING_CONSTANTS.MIN_SHADOW_OFFSET, maxHeight * HEIGHT_DRAWING_CONSTANTS.SHADOW_OFFSET_PER_LEVEL);
   
   // 水面（高さ0）の場合は影を描画しない
   if (maxHeight === 0) {

@@ -6,6 +6,7 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from './roadConnection';
 import { drawHeightTile } from './heightDrawing';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 // 地形色の取得
 export const getTerrainColor = (terrain: string): number => {
@@ -112,7 +113,7 @@ export const drawTerrain = (
 
           const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
 
-          const heightOffset = Math.max(0, (heightTile.height - 1) * 8);
+          const heightOffset = Math.max(0, (heightTile.height - 1) * HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSET_PER_LEVEL);
           terrainG.zIndex = baseIsoY + heightOffset;
           layer.addChild(terrainG);
           continue;

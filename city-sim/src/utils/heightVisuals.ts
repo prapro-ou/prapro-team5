@@ -1,6 +1,7 @@
 // シンプルな高さ視覚表現
 
 import type { HeightLevel } from '../types/heightTerrain';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 // 高さレベル別の色定義
 export const HEIGHT_COLORS: Record<HeightLevel, number> = {
@@ -18,7 +19,7 @@ export const getHeightColor = (height: HeightLevel): number => {
 
 // 高さに応じた影のオフセット
 export const getShadowOffset = (height: HeightLevel): number => {
-  return height * 2; // 高さ1につき2ピクセル
+  return height * HEIGHT_DRAWING_CONSTANTS.SHADOW_OFFSET_PER_LEVEL;
 };
 
 // 高さに応じた境界線の太さ
