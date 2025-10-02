@@ -9,7 +9,7 @@ import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 // 境界線を描画する共通関数
 const drawBorder = (
   graphics: Graphics,
-  borderType: 'flat' | 'slope' | 'cliff',
+  borderType: 'flat' | 'slope',
 ) => {
   const { BORDER } = HEIGHT_DRAWING_CONSTANTS;
   
