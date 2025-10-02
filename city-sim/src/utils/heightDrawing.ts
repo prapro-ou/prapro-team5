@@ -3,14 +3,13 @@
 import { Graphics } from 'pixi.js';
  import type { HeightTerrainTile, HeightLevel } from '../types/heightTerrain';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { getHeightColor, getShadowOffset, getBorderWidth } from './heightVisuals';
+import { getHeightColor, getShadowOffset } from './heightVisuals';
 import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 // 境界線を描画する共通関数
 const drawBorder = (
   graphics: Graphics,
   borderType: 'flat' | 'slope' | 'cliff',
-  height?: HeightLevel
 ) => {
   const { BORDER } = HEIGHT_DRAWING_CONSTANTS;
   
@@ -85,7 +84,7 @@ const drawFlatTile = (
     .lineTo(isoX, adjustedIsoY)
     .fill({ color, alpha: 0.9 });
   
-  drawBorder(graphics, 'flat', height);
+  drawBorder(graphics, 'flat');
 };
 
 // 斜面タイルを描画
