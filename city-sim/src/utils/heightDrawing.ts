@@ -3,7 +3,7 @@
 import { Graphics } from 'pixi.js';
  import type { HeightTerrainTile, HeightLevel } from '../types/heightTerrain';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { getHeightColor, getShadowOffset } from './heightVisuals';
+import { getHeightColor } from './heightVisuals';
 import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 // 境界線を描画する共通関数
@@ -93,7 +93,7 @@ const drawSlopeTile = (
   const corners = calculateSlopeCorners(cornerHeights, x, y, offsetX, offsetY);
   
   // 影を描画
-  drawSlopeShadow(graphics, corners, cornerHeights);
+  // drawSlopeShadow(graphics, corners, cornerHeights);
   
   // 斜面の面を描画
   graphics.moveTo(corners.topLeft.x, corners.topLeft.y)
@@ -105,6 +105,9 @@ const drawSlopeTile = (
   
   // 境界線を描画
   drawBorder(graphics, 'slope');
+  
+  // 同じ高さの角同士を結ぶ線を描画
+  drawHeightConnectionLines(graphics, corners, cornerHeights);
 };
 
 // 斜面の四隅の座標を計算
@@ -174,4 +177,64 @@ const drawSlopeShadow = (
     .lineTo(corners.bottomLeft.x + shadowOffset, corners.bottomLeft.y + shadowOffset)
     .lineTo(corners.topLeft.x + shadowOffset, corners.topLeft.y + shadowOffset)
     .fill({ color: 0x000000, alpha: Math.min(0.4, maxHeight * 0.1) });
+};
+
+// 同じ高さの角同士を結ぶ線を描画
+const drawHeightConnectionLines = (
+  graphics: Graphics,
+  corners: any,
+  cornerHeights: [HeightLevel, HeightLevel, HeightLevel, HeightLevel]
+) => {
+  const { BORDER } = HEIGHT_DRAWING_CONSTANTS;
+  
+  // 角の定義（左上、右上、右下、左下）
+  const cornerPositions = [
+    { name: 'topLeft', pos: corners.topLeft },
+    { name: 'topRight', pos: corners.topRight },
+    { name: 'bottomRight', pos: corners.bottomRight },
+    { name: 'bottomLeft', pos: corners.bottomLeft }
+  ];
+  
+  // 高さごとに角をグループ化
+  const heightGroups = new Map<HeightLevel, Array<{ name: string; pos: any }>>();
+  
+  cornerPositions.forEach((corner, index) => {
+    const height = cornerHeights[index];
+    if (!heightGroups.has(height)) {
+      heightGroups.set(height, []);
+    }
+    heightGroups.get(height)!.push(corner);
+  });
+  
+  // 同じ高さの角が2つ以上ある場合、それらを線で結ぶ
+  heightGroups.forEach((cornersAtHeight) => {
+    if (cornersAtHeight.length >= 2) {
+      // 同じ高さの角同士を線で結ぶ
+      for (let i = 0; i < cornersAtHeight.length - 1; i++) {
+        const startCorner = cornersAtHeight[i];
+        const endCorner = cornersAtHeight[i + 1];
+        
+        // 高さが同じ角同士を結ぶ線を描画
+        graphics.moveTo(startCorner.pos.x, startCorner.pos.y)
+          .lineTo(endCorner.pos.x, endCorner.pos.y)
+          .stroke({ 
+            color: BORDER.COLOR, 
+            width: BORDER.WIDTH_FLAT,
+            alpha: 0.8 
+          });
+      }
+      
+      if (cornersAtHeight.length > 2) {
+        const firstCorner = cornersAtHeight[0];
+        const lastCorner = cornersAtHeight[cornersAtHeight.length - 1];
+        graphics.moveTo(firstCorner.pos.x, firstCorner.pos.y)
+          .lineTo(lastCorner.pos.x, lastCorner.pos.y)
+          .stroke({ 
+            color: BORDER.COLOR, 
+            width: BORDER.WIDTH_FLAT,
+            alpha: 0.8 
+          });
+      }
+    }
+  });
 };
