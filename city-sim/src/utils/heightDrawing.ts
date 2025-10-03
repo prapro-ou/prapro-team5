@@ -42,7 +42,8 @@ export const drawHeightTile = (
   // 斜面かどうかで描画方法を分岐
   if (tile.isSlope) {
     drawSlopeTile(graphics, tile, x, y, offsetX, offsetY);
-  } else {
+  }
+  else {
     drawFlatTile(graphics, color, x, y, offsetX, offsetY, tile.height);
   }
 };
@@ -64,17 +65,6 @@ const drawFlatTile = (
   // 高さによるY座標の調整（高さ0は水面、高さ1以上は陸地として浮かせる）
   const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[height];
   const adjustedIsoY = isoY - heightOffset;
-  
-  // 影を描画（高さ1以上の場合のみ、水面は影なし）
-  if (height > 0) {
-    const shadowOffset = getShadowOffset(height);
-    graphics.moveTo(isoX + shadowOffset, isoY + shadowOffset)
-      .lineTo(isoX + ISO_TILE_WIDTH / 2 + shadowOffset, isoY - ISO_TILE_HEIGHT / 2 + shadowOffset)
-      .lineTo(isoX + ISO_TILE_WIDTH + shadowOffset, isoY + shadowOffset)
-      .lineTo(isoX + ISO_TILE_WIDTH / 2 + shadowOffset, isoY + ISO_TILE_HEIGHT / 2 + shadowOffset)
-      .lineTo(isoX + shadowOffset, isoY + shadowOffset)
-      .fill({ color: 0x000000, alpha: 0.3 });
-  }
   
   // メインタイルを描画
   graphics.moveTo(isoX, adjustedIsoY)
