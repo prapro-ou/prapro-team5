@@ -448,7 +448,8 @@ export function generateHeightTerrainMapFromTerrain(
       // 中心高さは terrain に合わせたレベル（角との一貫性確保のため中央値に寄せる）
       const medianCenter = clampToLevel(median([c, avgTL, avgTR, avgBR, avgBL]));
 
-      const isSlope = cornerHeights.some(h => h !== cornerHeights[0]);
+      const hasWater = cornerHeights.includes(0);
+      const isSlope = !hasWater && cornerHeights.some(h => h !== cornerHeights[0]);
       const isBuildable = terrain !== 'water';
 
       result.set(key, {
