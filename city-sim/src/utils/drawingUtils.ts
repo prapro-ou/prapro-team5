@@ -109,7 +109,7 @@ export const drawTerrain = (
       if (heightTerrainMap && heightTerrainMap.size > 0) {
         const heightTile = heightTerrainMap.get(`${x},${y}`);
         if (heightTile) {
-          drawHeightTile(terrainG, heightTile, x, y, offsetX, offsetY);
+          drawHeightTile(terrainG, heightTile, x, y, offsetX, offsetY, heightTerrainMap, size, getTerrainAt);
 
           const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
 

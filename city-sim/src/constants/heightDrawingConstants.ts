@@ -17,4 +17,10 @@ export const HEIGHT_DRAWING_CONSTANTS = {
     WIDTH_FLAT: 1,               // 平地の境界線の太さ
     WIDTH_SLOPE: 1,               // 斜面の境界線の太さ
   },
+  
+  // 側面描画の設定
+  SIDE_FACE: {
+    COLOR: 0x4E342E,             // 側面の色（暗めの茶色）
+    ALPHA: 1.0,                  // 側面の透明度（不透明）
+  },
 } as const;
