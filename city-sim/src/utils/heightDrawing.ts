@@ -99,6 +99,11 @@ const isAdjacentToWater = (
   return false;
 };
 
+// マップ端にいるかをチェック
+const isAtMapEdge = (x: number, y: number, gridSize: GridSize): boolean => {
+  return x === 0 || x === gridSize.width - 1 || y === 0 || y === gridSize.height - 1;
+};
+
 // 平地タイルの垂直面を描画
 const drawFlatTileVerticalFaces = (
   graphics: Graphics,
@@ -106,7 +111,10 @@ const drawFlatTileVerticalFaces = (
   y: number,
   offsetX: number,
   offsetY: number,
-  currentHeight: HeightLevel
+  currentHeight: HeightLevel,
+  heightTerrainMap: Map<string, HeightTerrainTile>,
+  gridSize: GridSize,
+  getTerrainAt?: (x: number, y: number) => string | undefined
 ) => {
   if (currentHeight === 0) {
     return; // 水面の場合は描画しない
@@ -137,34 +145,48 @@ const drawFlatTileVerticalFaces = (
   const groundRight = { x: isoX + ISO_TILE_WIDTH, y: groundLevel };
   const groundBottom = { x: isoX + ISO_TILE_WIDTH / 2, y: groundLevel + ISO_TILE_HEIGHT / 2 };
   
-  // 各辺から地面までの垂直面を描画
-  graphics.moveTo(left.x, left.y)
-    .lineTo(top.x, top.y)
-    .lineTo(groundTop.x, groundTop.y)
-    .lineTo(groundLeft.x, groundLeft.y)
-    .lineTo(left.x, left.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  // 各方向の隣接タイルの高さを取得
+  const northHeight = getNeighborHeight(x, y, 'north', heightTerrainMap, gridSize, getTerrainAt);
+  const eastHeight = getNeighborHeight(x, y, 'east', heightTerrainMap, gridSize, getTerrainAt);
+  const southHeight = getNeighborHeight(x, y, 'south', heightTerrainMap, gridSize, getTerrainAt);
+  const westHeight = getNeighborHeight(x, y, 'west', heightTerrainMap, gridSize, getTerrainAt);
   
-  graphics.moveTo(top.x, top.y)
-    .lineTo(right.x, right.y)
-    .lineTo(groundRight.x, groundRight.y)
-    .lineTo(groundTop.x, groundTop.y)
-    .lineTo(top.x, top.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  // 各辺から地面までの垂直面を描画（隣接タイルが存在しないか、現在のタイルより低い場合のみ）
+  if (northHeight === null || (northHeight !== null && currentHeight > northHeight)) {
+    graphics.moveTo(top.x, top.y)
+      .lineTo(right.x, right.y)
+      .lineTo(groundRight.x, groundRight.y)
+      .lineTo(groundTop.x, groundTop.y)
+      .lineTo(top.x, top.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
   
-  graphics.moveTo(right.x, right.y)
-    .lineTo(bottom.x, bottom.y)
-    .lineTo(groundBottom.x, groundBottom.y)
-    .lineTo(groundRight.x, groundRight.y)
-    .lineTo(right.x, right.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  if (eastHeight === null || (eastHeight !== null && currentHeight > eastHeight)) {
+    graphics.moveTo(right.x, right.y)
+      .lineTo(bottom.x, bottom.y)
+      .lineTo(groundBottom.x, groundBottom.y)
+      .lineTo(groundRight.x, groundRight.y)
+      .lineTo(right.x, right.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
   
-  graphics.moveTo(bottom.x, bottom.y)
-    .lineTo(left.x, left.y)
-    .lineTo(groundLeft.x, groundLeft.y)
-    .lineTo(groundBottom.x, groundBottom.y)
-    .lineTo(bottom.x, bottom.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  if (southHeight === null || (southHeight !== null && currentHeight > southHeight)) {
+    graphics.moveTo(bottom.x, bottom.y)
+      .lineTo(left.x, left.y)
+      .lineTo(groundLeft.x, groundLeft.y)
+      .lineTo(groundBottom.x, groundBottom.y)
+      .lineTo(bottom.x, bottom.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
+  
+  if (westHeight === null || (westHeight !== null && currentHeight > westHeight)) {
+    graphics.moveTo(left.x, left.y)
+      .lineTo(top.x, top.y)
+      .lineTo(groundTop.x, groundTop.y)
+      .lineTo(groundLeft.x, groundLeft.y)
+      .lineTo(left.x, left.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
 };
 
 // 斜面タイルの垂直面を描画
@@ -174,7 +196,10 @@ const drawSlopeTileVerticalFaces = (
   x: number,
   y: number,
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  heightTerrainMap: Map<string, HeightTerrainTile>,
+  gridSize: GridSize,
+  getTerrainAt?: (x: number, y: number) => string | undefined
 ) => {
   const { SIDE_FACE, HEIGHT_OFFSETS } = HEIGHT_DRAWING_CONSTANTS;
   const { cornerHeights } = tile;
@@ -213,34 +238,48 @@ const drawSlopeTileVerticalFaces = (
   const groundBottomRight = { x: baseIsoX + ISO_TILE_WIDTH / 2, y: baseIsoY + ISO_TILE_HEIGHT / 2 };
   const groundBottomLeft = { x: baseIsoX, y: baseIsoY };
   
-  // 各辺から地面までの垂直面を描画
-  graphics.moveTo(topLeft.x, topLeft.y)
-    .lineTo(topRight.x, topRight.y)
-    .lineTo(groundTopRight.x, groundTopRight.y)
-    .lineTo(groundTopLeft.x, groundTopLeft.y)
-    .lineTo(topLeft.x, topLeft.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  // 各方向の隣接タイルの高さを取得
+  const northHeight = getNeighborHeight(x, y, 'north', heightTerrainMap, gridSize, getTerrainAt);
+  const eastHeight = getNeighborHeight(x, y, 'east', heightTerrainMap, gridSize, getTerrainAt);
+  const southHeight = getNeighborHeight(x, y, 'south', heightTerrainMap, gridSize, getTerrainAt);
+  const westHeight = getNeighborHeight(x, y, 'west', heightTerrainMap, gridSize, getTerrainAt);
   
-  graphics.moveTo(topRight.x, topRight.y)
-    .lineTo(bottomRight.x, bottomRight.y)
-    .lineTo(groundBottomRight.x, groundBottomRight.y)
-    .lineTo(groundTopRight.x, groundTopRight.y)
-    .lineTo(topRight.x, topRight.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  // 各辺から地面までの垂直面を描画（隣接タイルが存在しないか、現在のタイルより低い場合のみ）
+  if (northHeight === null || (northHeight !== null && Math.max(...cornerHeights) > northHeight)) {
+    graphics.moveTo(topLeft.x, topLeft.y)
+      .lineTo(topRight.x, topRight.y)
+      .lineTo(groundTopRight.x, groundTopRight.y)
+      .lineTo(groundTopLeft.x, groundTopLeft.y)
+      .lineTo(topLeft.x, topLeft.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
   
-  graphics.moveTo(bottomRight.x, bottomRight.y)
-    .lineTo(bottomLeft.x, bottomLeft.y)
-    .lineTo(groundBottomLeft.x, groundBottomLeft.y)
-    .lineTo(groundBottomRight.x, groundBottomRight.y)
-    .lineTo(bottomRight.x, bottomRight.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  if (eastHeight === null || (eastHeight !== null && Math.max(...cornerHeights) > eastHeight)) {
+    graphics.moveTo(topRight.x, topRight.y)
+      .lineTo(bottomRight.x, bottomRight.y)
+      .lineTo(groundBottomRight.x, groundBottomRight.y)
+      .lineTo(groundTopRight.x, groundTopRight.y)
+      .lineTo(topRight.x, topRight.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
   
-  graphics.moveTo(bottomLeft.x, bottomLeft.y)
-    .lineTo(topLeft.x, topLeft.y)
-    .lineTo(groundTopLeft.x, groundTopLeft.y)
-    .lineTo(groundBottomLeft.x, groundBottomLeft.y)
-    .lineTo(bottomLeft.x, bottomLeft.y)
-    .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  if (southHeight === null || (southHeight !== null && Math.max(...cornerHeights) > southHeight)) {
+    graphics.moveTo(bottomRight.x, bottomRight.y)
+      .lineTo(bottomLeft.x, bottomLeft.y)
+      .lineTo(groundBottomLeft.x, groundBottomLeft.y)
+      .lineTo(groundBottomRight.x, groundBottomRight.y)
+      .lineTo(bottomRight.x, bottomRight.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
+  
+  if (westHeight === null || (westHeight !== null && Math.max(...cornerHeights) > westHeight)) {
+    graphics.moveTo(bottomLeft.x, bottomLeft.y)
+      .lineTo(topLeft.x, topLeft.y)
+      .lineTo(groundTopLeft.x, groundTopLeft.y)
+      .lineTo(groundBottomLeft.x, groundBottomLeft.y)
+      .lineTo(bottomLeft.x, bottomLeft.y)
+      .fill({ color: SIDE_FACE.COLOR, alpha: SIDE_FACE.ALPHA });
+  }
 };
 
 
@@ -286,21 +325,20 @@ const drawSideFaces = (
   gridSize: GridSize,
   getTerrainAt?: (x: number, y: number) => string | undefined
 ) => {
-  // 水面と接しているか、マップ下端かをチェック
+  // 水面と接しているか、マップ端かをチェック
   const isWaterAdjacent = isAdjacentToWater(x, y, heightTerrainMap, gridSize, getTerrainAt);
-  const isMapBottom = y === gridSize.height - 1;
+  const isMapEdge = isAtMapEdge(x, y, gridSize);
   
-  
-  if (!isWaterAdjacent && !isMapBottom) {
-    return; // 水面と接していないかつマップ下端でない場合は描画しない
+  if (!isWaterAdjacent && !isMapEdge) {
+    return; // 水面と接していないかつマップ端でない場合は描画しない
   }
   
   if (tile.isSlope) {
     // 斜面タイルの側面描画
-    drawSlopeTileVerticalFaces(graphics, tile, x, y, offsetX, offsetY);
+    drawSlopeTileVerticalFaces(graphics, tile, x, y, offsetX, offsetY, heightTerrainMap, gridSize, getTerrainAt);
   } else {
     // 平地タイルの側面描画
-    drawFlatTileVerticalFaces(graphics, x, y, offsetX, offsetY, tile.height);
+    drawFlatTileVerticalFaces(graphics, x, y, offsetX, offsetY, tile.height, heightTerrainMap, gridSize, getTerrainAt);
   }
 };
 
