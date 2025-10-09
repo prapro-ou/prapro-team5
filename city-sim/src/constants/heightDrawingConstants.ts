@@ -1,6 +1,5 @@
 // 高さ地形の描画定数
 export const HEIGHT_DRAWING_CONSTANTS = {
-  // 高さレベル別のオフセット
   HEIGHT_OFFSETS: {
     0: 0,
     1: 2, 
@@ -8,19 +7,20 @@ export const HEIGHT_DRAWING_CONSTANTS = {
     3: 34,
     4: 50,
   },
-  SHADOW_OFFSET_PER_LEVEL: 1,    // 高さ1につき1ピクセルの影オフセット
-  MIN_SHADOW_OFFSET: 1,          // 最小影オフセット
   
-  // 境界線の設定
   BORDER: {
-    COLOR: 0x333333,             // 境界線の色
-    WIDTH_FLAT: 1,               // 平地の境界線の太さ
-    WIDTH_SLOPE: 1,               // 斜面の境界線の太さ
+    COLOR: 0x333333,
+    WIDTH_FLAT: 1,
+    WIDTH_SLOPE: 1,
   },
   
-  // 側面描画の設定
   SIDE_FACE: {
-    COLOR: 0x4E342E,             // 側面の色（暗めの茶色）
-    ALPHA: 1.0,                  // 側面の透明度（不透明）
+    COLOR: 0x4E342E,
+    ALPHA: 1.0,
+  },
+  
+  SLOPE_SHADOW: {
+    FACTOR: 0.6,
+    LIGHT_FACTOR: 0.75,
   },
 } as const;

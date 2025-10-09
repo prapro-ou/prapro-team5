@@ -367,6 +367,32 @@ const drawFlatTile = (
 };
 
 // 斜面タイルを描画
+const isSlopeNorthWestFacing = (cornerHeights: [HeightLevel, HeightLevel, HeightLevel, HeightLevel]): boolean => {
+  const [hTL, hTR, hBR, hBL] = cornerHeights;
+  const leftAvg = (hTL + hBL) / 2;
+  const rightAvg = (hTR + hBR) / 2;
+  return leftAvg < rightAvg;
+};
+
+const isSlopeSouthWestFacing = (cornerHeights: [HeightLevel, HeightLevel, HeightLevel, HeightLevel]): boolean => {
+  const [hTL, hTR, hBR, hBL] = cornerHeights;
+  const topAvg = (hTL + hTR) / 2;
+  const bottomAvg = (hBL + hBR) / 2;
+  return topAvg > bottomAvg;
+};
+
+const applyShadowToColor = (color: number, shadowFactor: number): number => {
+  const r = (color >> 16) & 0xFF;
+  const g = (color >> 8) & 0xFF;
+  const b = color & 0xFF;
+  
+  const shadowR = Math.floor(r * shadowFactor);
+  const shadowG = Math.floor(g * shadowFactor);
+  const shadowB = Math.floor(b * shadowFactor);
+  
+  return (shadowR << 16) | (shadowG << 8) | shadowB;
+};
+
 const drawSlopeTile = (
   graphics: Graphics,
   tile: HeightTerrainTile,
@@ -376,7 +402,13 @@ const drawSlopeTile = (
   offsetY: number
 ) => {
   const { cornerHeights } = tile;
-  const color = getHeightColor(tile.height);
+  let color = getHeightColor(tile.height);
+  
+  if (isSlopeNorthWestFacing(cornerHeights)) {
+    color = applyShadowToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.FACTOR);
+  } else if (isSlopeSouthWestFacing(cornerHeights)) {
+    color = applyShadowToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.LIGHT_FACTOR);
+  }
   
   const corners = calculateSlopeCorners(cornerHeights, x, y, offsetX, offsetY);
   
