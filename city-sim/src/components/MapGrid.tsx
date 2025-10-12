@@ -66,7 +66,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   } = usePixiCoordinates({
     size,
     worldRef,
-    offsetsRef
+    offsetsRef,
+    heightTerrainMap
   });
 
   // 描画フックの使用

@@ -1,6 +1,8 @@
 import { Point } from 'pixi.js';
-import { fromIsometric, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
+import { fromIsometric, fromIsometricWithHeight, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import type { GridSize } from '../types/grid';
+import type { HeightTerrainTile } from '../types/heightTerrain';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
 
 type MutableRef<T> = { current: T };
 
@@ -8,12 +10,14 @@ interface CoordinateHelpersProps {
   size: GridSize;
   worldRef: MutableRef<any>;
   offsetsRef: MutableRef<{ offsetX: number; offsetY: number }>;
+  heightTerrainMap?: Map<string, HeightTerrainTile>;
 }
 
 export const usePixiCoordinates = ({
   size,
   worldRef,
-  offsetsRef
+  offsetsRef,
+  heightTerrainMap
 }: CoordinateHelpersProps) => {
   
   // グローバル座標からタイル座標に変換
@@ -24,6 +28,28 @@ export const usePixiCoordinates = ({
     const { offsetX, offsetY } = offsetsRef.current;
     const isoX = (local.x - offsetX);
     const isoY = (local.y - offsetY);
+    
+    // 高さ地形が有効な場合は高さを考慮
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      const candidates = fromIsometricWithHeight(
+        isoX, 
+        isoY, 
+        heightTerrainMap, 
+        HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS
+      );
+      
+      // 最も近い候補を選択
+      for (const candidate of candidates) {
+        if (candidate.x >= 0 && candidate.x < size.width && 
+            candidate.y >= 0 && candidate.y < size.height) {
+          return { x: candidate.x, y: candidate.y };
+        }
+      }
+      
+      return null;
+    }
+    
+    // 従来の方法（高さ地形なし）
     const tile = fromIsometric(isoX, isoY);
     
     // グリッド範囲内かチェック
