@@ -39,7 +39,7 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
   
   // 高さ地形システム
   heightTerrainMap: new Map(),
-  enableHeightSystem: false,
+  enableHeightSystem: true,
 
   // 地形生成
   generateTerrain: (gridSize: GridSize) => {
