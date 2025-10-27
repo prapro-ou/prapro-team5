@@ -11,14 +11,12 @@ export const toIsometric = (x: number, y: number) => {
 
 // アイソメトリック座標からグリッド座標への変換
 export const fromIsometric = (isoX: number, isoY: number) => {
-  const x = Math.round((isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2) - 1;
+  // 逆変換: isoX = (x - y) * (ISO_TILE_WIDTH / 2), isoY = (x + y) * (ISO_TILE_HEIGHT / 2)
+  // 解: x = (isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2
+  //    y = (isoY / (ISO_TILE_HEIGHT / 2) - isoX / (ISO_TILE_WIDTH / 2)) / 2
+  const x = Math.round((isoX / (ISO_TILE_WIDTH / 2) + isoY / (ISO_TILE_HEIGHT / 2)) / 2);
   const y = Math.round((isoY / (ISO_TILE_HEIGHT / 2) - isoX / (ISO_TILE_WIDTH / 2)) / 2);
   return { x, y };
-};
-
-// 高さオフセットを適用したY座標を計算
-export const getAdjustedIsoY = (baseIsoY: number, heightOffset: number): number => {
-  return baseIsoY - heightOffset;
 };
 
 // 高さを考慮したグリッド座標への逆変換
@@ -38,27 +36,39 @@ export const fromIsometricWithHeight = (
   // 周辺のタイルをチェック
   const candidates: Array<{ x: number; y: number; distance: number }> = [];
   
-  for (let dx = -2; dx <= 2; dx++) {
-    for (let dy = -2; dy <= 2; dy++) {
+  for (let dx = -3; dx <= 3; dx++) {
+    for (let dy = -3; dy <= 3; dy++) {
       const checkX = baseGrid.x + dx;
       const checkY = baseGrid.y + dy;
       
       const tile = heightTerrainMap.get(`${checkX},${checkY}`);
       if (!tile) continue;
       
-      const tileBaseIsoY = (checkX + checkY) * (ISO_TILE_HEIGHT / 2);
+      // タイルのアイソメトリック座標を計算（offsetなし）
+      const tileIsoX = (checkX - checkY) * (ISO_TILE_WIDTH / 2);
+      const tileIsoY = (checkX + checkY) * (ISO_TILE_HEIGHT / 2);
       const heightOffset = heightOffsets[tile.height] || 0;
-      const tileAdjustedIsoY = tileBaseIsoY - heightOffset;
+      const tileAdjustedIsoY = tileIsoY - heightOffset;
       
-      // 距離計算
-      const distance = Math.abs(isoY - tileAdjustedIsoY);
+      // 菱形の中心座標を計算
+      const tileCenterIsoX = tileIsoX + ISO_TILE_WIDTH / 2;
+      const tileCenterIsoY = tileAdjustedIsoY;
       
-      candidates.push({ x: checkX, y: checkY, distance });
+      // 中心からの距離を計算
+      const deltaX = isoX - tileCenterIsoX;
+      const deltaY = isoY - tileCenterIsoY;
+      const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      candidates.push({ x: checkX, y: checkY, distance: dist });
     }
   }
   
   // 距離ソート
   candidates.sort((a, b) => a.distance - b.distance);
+  
+  // 候補が見つからない場合は基本座標を返す
+  if (candidates.length === 0) {
+    return [{ x: baseGrid.x, y: baseGrid.y, distance: 0 }];
+  }
   
   return candidates;
 };

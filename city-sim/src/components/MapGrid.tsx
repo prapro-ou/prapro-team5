@@ -62,7 +62,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
     startRoadDrag,
     updateRoadDrag,
     getClickTile,
-    tileToIsometric
+    tileToIsometric,
+    getTileHeightOffset
   } = usePixiCoordinates({
     size,
     worldRef,
@@ -189,10 +190,6 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
 
       const g = new Graphics();
       world.addChild(g);
-      
-      // ホバー表示用レイヤ
-      const hoverG = new Graphics();
-      world.addChild(hoverG);
 
       const offsetX = width / 2;
       const offsetY = GRID_HEIGHT;
@@ -252,6 +249,13 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
       world.addChild(effectPreviewLayer);
       effectPreviewLayerRef.current = effectPreviewLayer;
 
+      // ホバー表示用レイヤ（最前面）
+      const hoverLayer = new Container();
+      hoverLayer.sortableChildren = true;
+      world.addChild(hoverLayer);
+      const hoverG = new Graphics();
+      hoverLayer.addChild(hoverG);
+
       // 施設テクスチャのプリロード（フックに分離）
       const { loadFacilityTextures } = useFacilityTextures(texturesRef);
       await loadFacilityTextures();
@@ -276,6 +280,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
         updateRoadDrag,
         getClickTile,
         tileToIsometric,
+        getTileHeightOffset,
         drawPreviewLayer,
         drawEffectPreviewLayer,
         drawRoadDragRangeLayer,

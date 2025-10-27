@@ -60,13 +60,24 @@ export const usePixiCoordinates = ({
     return null;
   };
 
-  // タイル座標からアイソメトリック座標に変換
+  // タイル座標からアイソメトリック座標に変換（高さオフセットなしの基本座標）
   const tileToIsometric = (tileX: number, tileY: number): { x: number; y: number } => {
     const { offsetX, offsetY } = offsetsRef.current;
     return {
       x: (tileX - tileY) * (ISO_TILE_WIDTH / 2) + offsetX,
       y: (tileX + tileY) * (ISO_TILE_HEIGHT / 2) + offsetY
     };
+  };
+  
+  // タイルの高さオフセットを取得
+  const getTileHeightOffset = (tileX: number, tileY: number): number => {
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      const tile = heightTerrainMap.get(`${tileX},${tileY}`);
+      if (tile) {
+        return HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[tile.height];
+      }
+    }
+    return 0;
   };
 
   // タイルがグリッド範囲内かチェック
@@ -154,6 +165,7 @@ export const usePixiCoordinates = ({
   return {
     globalToTile,
     tileToIsometric,
+    getTileHeightOffset,
     isTileInBounds,
     updateHoverState,
     startRoadDrag,
