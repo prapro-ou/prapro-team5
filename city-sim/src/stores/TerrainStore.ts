@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
 import type { HeightTerrainTile } from '../types/terrainWithHeight';
-import { generateNaturalTerrainMap, generateHeightTerrainMapFromTerrain } from '../utils/terrainGenerator';
+import { generateNaturalTerrainMap, generateHeightTerrainMapFromTerrain, generateRoadsWithHeight } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 import { canBuildFacility } from '../utils/terrainUtils';
 
@@ -41,16 +41,35 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
   heightTerrainMap: new Map(),
   enableHeightSystem: true,
 
-  // 地形生成（高さマップも自動生成）
+  // 地形生成（高さマップも自動生成、道路も生成）
   generateTerrain: (gridSize: GridSize) => {
-    const result = generateNaturalTerrainMap(gridSize);
-    const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, result.terrainMap);
+    let result;
+    let heightTerrainMap;
+    let generatedRoads: Array<{x: number, y: number, variantIndex: number}>;
+    
+    // マップ生成と再生成処理（最大100回試行）
+    let attempts = 0;
+    do {
+      result = generateNaturalTerrainMap(gridSize);
+      heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, result.terrainMap);
+      generatedRoads = generateRoadsWithHeight(
+        gridSize,
+        result.selectedDirections,
+        result.terrainMap,
+        heightTerrainMap
+      );
+      attempts++;
+    } while (generatedRoads.length < 20 && attempts < 100); // 最低20道路が必要
+    
     set({ 
       terrainMap: result.terrainMap,
-      generatedRoads: result.generatedRoads,
+      generatedRoads,
       heightTerrainMap
     });
-    return result.generatedRoads;
+    
+    console.log(`マップ生成完了 (試行回数: ${attempts}, 道路数: ${generatedRoads.length})`);
+    
+    return generatedRoads;
   },
 
   // 特定の位置の地形を設定
