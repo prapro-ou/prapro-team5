@@ -106,14 +106,6 @@ export function TimeControl() {
           );
         })}
       </div>
-
-      {/* 一時停止中の表示 */}
-      {isPaused && (
-        <div className="flex items-center gap-2 text-amber-600 text-xs font-medium">
-          <TbPlayerStop size={14} />
-          <span>一時停止中</span>
-        </div>
-      )}
     </div>
   );
 } 
