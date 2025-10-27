@@ -399,6 +399,18 @@ const applyShadowToColor = (color: number, shadowFactor: number): number => {
   return (shadowR << 16) | (shadowG << 8) | shadowB;
 };
 
+const applyLightToColor = (color: number, lightFactor: number): number => {
+  const r = (color >> 16) & 0xFF;
+  const g = (color >> 8) & 0xFF;
+  const b = color & 0xFF;
+  
+  const lightR = Math.min(255, Math.floor(r * lightFactor));
+  const lightG = Math.min(255, Math.floor(g * lightFactor));
+  const lightB = Math.min(255, Math.floor(b * lightFactor));
+  
+  return (lightR << 16) | (lightG << 8) | lightB;
+};
+
 const drawSlopeTile = (
   graphics: Graphics,
   tile: HeightTerrainTile,
@@ -415,6 +427,8 @@ const drawSlopeTile = (
     color = applyShadowToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.FACTOR);
   } else if (isSlopeSouthWestFacing(cornerHeights)) {
     color = applyShadowToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.LIGHT_FACTOR);
+  } else {
+    color = applyLightToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.HIGHLIGHT_FACTOR);
   }
   
   const corners = calculateSlopeCorners(cornerHeights, x, y, offsetX, offsetY);

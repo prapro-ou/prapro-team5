@@ -21,5 +21,6 @@ export const HEIGHT_DRAWING_CONSTANTS = {
   SLOPE_SHADOW: {
     FACTOR: 0.6,
     LIGHT_FACTOR: 0.75,
+    HIGHLIGHT_FACTOR: 1.15,
   },
 } as const;
