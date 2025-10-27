@@ -177,7 +177,8 @@ export const usePixiDrawing = ({
       money,
       facilities,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -204,7 +205,8 @@ export const usePixiDrawing = ({
       offsetX,
       offsetY,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -234,7 +236,8 @@ export const usePixiDrawing = ({
       money,
       facilities,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
