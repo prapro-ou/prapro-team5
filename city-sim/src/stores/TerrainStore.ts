@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
-import type { HeightTerrainTile } from '../types/heightTerrain';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { generateNaturalTerrainMap, generateHeightTerrainMapFromTerrain } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
-import { canBuildFacility } from '../utils/heightTerrainUtils';
+import { canBuildFacility } from '../utils/terrainUtils';
 
 interface TerrainStore {
   // 状態
@@ -41,12 +41,14 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
   heightTerrainMap: new Map(),
   enableHeightSystem: true,
 
-  // 地形生成
+  // 地形生成（高さマップも自動生成）
   generateTerrain: (gridSize: GridSize) => {
     const result = generateNaturalTerrainMap(gridSize);
+    const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, result.terrainMap);
     set({ 
       terrainMap: result.terrainMap,
-      generatedRoads: result.generatedRoads
+      generatedRoads: result.generatedRoads,
+      heightTerrainMap
     });
     return result.generatedRoads;
   },

@@ -1,12 +1,12 @@
 import { Graphics, Sprite, Texture, Container } from 'pixi.js';
 import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import type { HeightTerrainTile } from '../types/heightTerrain';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from './roadConnection';
-import { drawHeightTile } from './heightDrawing';
-import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
+import { drawHeightTile } from './terrainDrawing';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 // 地形色の取得
 export const getTerrainColor = (terrain: string): number => {
@@ -88,7 +88,7 @@ export const drawTerrain = (
   getTerrainAt: (x: number, y: number) => string | undefined,
   getPooledGraphics: () => Graphics,
   returnGraphics: (g: Graphics) => void,
-  heightTerrainMap?: Map<string, HeightTerrainTile>
+  heightTerrainMap: Map<string, HeightTerrainTile>
 ) => {
   // 既存のGraphicsオブジェクトをプールに戻す
   layer.children.forEach(child => {
@@ -106,36 +106,20 @@ export const drawTerrain = (
     for (let x = 0; x < maxX; x++) {
       const terrainG = getPooledGraphics();
       
-      if (heightTerrainMap && heightTerrainMap.size > 0) {
-        const heightTile = heightTerrainMap.get(`${x},${y}`);
-        if (heightTile) {
-          drawHeightTile(terrainG, heightTile, x, y, offsetX, offsetY, heightTerrainMap, size, getTerrainAt);
-
-          const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-
-          const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
-          terrainG.zIndex = baseIsoY + heightOffset;
-          layer.addChild(terrainG);
-          continue;
-        }
+      if (!heightTerrainMap || heightTerrainMap.size === 0) {
+        throw new Error('高さマップが初期化されていません');
       }
-      
-      // 通常の地形描画（フォールバック）
-      const terrain = getTerrainAt(x, y) || 'grass';
-      const color = getTerrainColor(terrain);
 
-      const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-      const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      const heightTile = heightTerrainMap.get(`${x},${y}`);
+      if (!heightTile) {
+        continue;
+      }
 
-      terrainG.moveTo(isoX, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX, isoY)
-        .fill({ color, alpha: 0.8 })
-        .stroke({ color: 0x666666, width: 1 });
+      drawHeightTile(terrainG, heightTile, x, y, offsetX, offsetY, heightTerrainMap, size, getTerrainAt);
 
-      terrainG.zIndex = isoY;
+      const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+      terrainG.zIndex = baseIsoY + heightOffset;
       layer.addChild(terrainG);
     }
   }

@@ -1,8 +1,8 @@
 import { Point } from 'pixi.js';
 import { fromIsometric, fromIsometricWithHeight, ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import type { GridSize } from '../types/grid';
-import type { HeightTerrainTile } from '../types/heightTerrain';
-import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 type MutableRef<T> = { current: T };
 

@@ -1,9 +1,9 @@
 import { Graphics } from 'pixi.js';
- import type { HeightTerrainTile, HeightLevel } from '../types/heightTerrain';
+ import type { HeightTerrainTile, HeightLevel } from '../types/terrainWithHeight';
 import type { GridSize } from '../types/grid';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { getHeightColor } from './heightVisuals';
-import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
+import { getHeightColor } from './terrainVisuals';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 // 境界線を描画する共通関数
 const drawBorder = (

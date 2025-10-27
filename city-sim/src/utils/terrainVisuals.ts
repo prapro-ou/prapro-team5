@@ -1,7 +1,7 @@
 // シンプルな高さ視覚表現
 
-import type { HeightLevel } from '../types/heightTerrain';
-import { HEIGHT_DRAWING_CONSTANTS } from '../constants/heightDrawingConstants';
+import type { HeightLevel } from '../types/terrainWithHeight';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 export const HEIGHT_COLORS: Record<HeightLevel, number> = {
   0: 0x2196F3,

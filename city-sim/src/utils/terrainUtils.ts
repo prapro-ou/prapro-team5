@@ -1,6 +1,6 @@
 // 高さ地形システムのユーティリティ関数
 
-import type { HeightLevel, CornerHeights, HeightTerrainTile, SlopeInfo } from '../types/heightTerrain';
+import type { HeightLevel, CornerHeights, HeightTerrainTile, SlopeInfo } from '../types/terrainWithHeight';
 
 // 斜面を判定
 export const isSlope = (cornerHeights: CornerHeights): boolean => {

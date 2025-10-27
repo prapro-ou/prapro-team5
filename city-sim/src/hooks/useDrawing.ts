@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import type { HeightTerrainTile } from '../types/heightTerrain';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { Container, Graphics, Texture } from 'pixi.js';
 import { useRedrawControl } from './useRedrawControl';
 import { 
@@ -17,7 +17,7 @@ type MutableRef<T> = { current: T };
 interface DrawingHooksProps {
   terrainMap: Map<string, string>;
   getTerrainAt: (x: number, y: number) => string | undefined;
-  heightTerrainMap?: Map<string, HeightTerrainTile>;
+  heightTerrainMap: Map<string, HeightTerrainTile>;
   facilitiesRef: MutableRef<Facility[]>;
   selectedFacilityTypeRef: MutableRef<FacilityType | null | undefined>;
   moneyRef: MutableRef<number>;
