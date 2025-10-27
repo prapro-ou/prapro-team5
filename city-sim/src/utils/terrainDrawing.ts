@@ -1,8 +1,9 @@
 import { Graphics } from 'pixi.js';
  import type { HeightTerrainTile, HeightLevel } from '../types/terrainWithHeight';
 import type { GridSize } from '../types/grid';
+import type { TerrainType } from '../types/terrain';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { getHeightColor } from './terrainVisuals';
+import { getHeightColor, getTerrainColor } from './terrainVisuals';
 import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 // 境界線を描画する共通関数
@@ -303,10 +304,15 @@ export const drawHeightTile = (
     drawSideFaces(graphics, tile, x, y, offsetX, offsetY, heightTerrainMap, gridSize, getTerrainAt);
   }
   
-  const color = getHeightColor(tile.height);
+  // 地形タイプに応じた色を取得
+  let color = getHeightColor(tile.height);
+  if (getTerrainAt) {
+    const terrainType = getTerrainAt(x, y) as TerrainType | undefined;
+    color = getTerrainColor(terrainType);
+  }
   
   if (tile.isSlope) {
-    drawSlopeTile(graphics, tile, x, y, offsetX, offsetY);
+    drawSlopeTile(graphics, tile, x, y, offsetX, offsetY, color);
   } else {
     drawFlatTile(graphics, color, x, y, offsetX, offsetY, tile.height);
   }
@@ -361,7 +367,7 @@ const drawFlatTile = (
     .lineTo(isoX + ISO_TILE_WIDTH, adjustedIsoY)
     .lineTo(isoX + ISO_TILE_WIDTH / 2, adjustedIsoY + ISO_TILE_HEIGHT / 2)
     .lineTo(isoX, adjustedIsoY)
-    .fill({ color, alpha: 0.9 });
+    .fill({ color, alpha: 1.0 });
   
   drawBorder(graphics, 'flat');
 };
@@ -399,10 +405,11 @@ const drawSlopeTile = (
   x: number,
   y: number,
   offsetX: number,
-  offsetY: number
+  offsetY: number,
+  baseColor?: number
 ) => {
   const { cornerHeights } = tile;
-  let color = getHeightColor(tile.height);
+  let color = baseColor ?? getHeightColor(tile.height);
   
   if (isSlopeNorthWestFacing(cornerHeights)) {
     color = applyShadowToColor(color, HEIGHT_DRAWING_CONSTANTS.SLOPE_SHADOW.FACTOR);
@@ -417,7 +424,7 @@ const drawSlopeTile = (
     .lineTo(corners.bottomRight.x, corners.bottomRight.y)
     .lineTo(corners.bottomLeft.x, corners.bottomLeft.y)
     .lineTo(corners.topLeft.x, corners.topLeft.y)
-    .fill({ color, alpha: 0.9 });
+    .fill({ color, alpha: 1.0 });
   
   drawBorder(graphics, 'slope');
   
