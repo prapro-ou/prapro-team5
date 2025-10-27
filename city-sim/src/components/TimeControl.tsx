@@ -1,4 +1,4 @@
-import { TbPlayerPause, TbPlayerPlay, TbPlayerStop, TbClock } from 'react-icons/tb';
+import { TbPlayerPause, TbPlayerPlay, TbClock } from 'react-icons/tb';
 import { useTimeControlStore } from '../stores/TimeControlStore';
 import { useUIStore } from '../stores/UIStore';
 import { useEffect } from 'react';
