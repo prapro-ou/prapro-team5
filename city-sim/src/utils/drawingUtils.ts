@@ -1,9 +1,12 @@
 import { Graphics, Sprite, Texture, Container } from 'pixi.js';
 import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
 import { FACILITY_DATA } from '../types/facility';
 import { getRoadConnectionType } from './roadConnection';
+import { drawHeightTile } from './terrainDrawing';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
 
 // 地形色の取得
 export const getTerrainColor = (terrain: string): number => {
@@ -84,7 +87,8 @@ export const drawTerrain = (
   offsetY: number,
   getTerrainAt: (x: number, y: number) => string | undefined,
   getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap: Map<string, HeightTerrainTile>
 ) => {
   // 既存のGraphicsオブジェクトをプールに戻す
   layer.children.forEach(child => {
@@ -100,23 +104,22 @@ export const drawTerrain = (
 
   for (let y = 0; y < maxY; y++) {
     for (let x = 0; x < maxX; x++) {
-      // 地形が未設定の場合はデフォルト（草）を使用
-      const terrain = getTerrainAt(x, y) || 'grass';
-      const color = getTerrainColor(terrain);
-
-      const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-      const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-
       const terrainG = getPooledGraphics();
-      terrainG.moveTo(isoX, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY - ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX + ISO_TILE_WIDTH, isoY)
-        .lineTo(isoX + ISO_TILE_WIDTH / 2, isoY + ISO_TILE_HEIGHT / 2)
-        .lineTo(isoX, isoY)
-        .fill({ color, alpha: 0.8 })
-        .stroke({ color: 0x666666, width: 1 });
+      
+      if (!heightTerrainMap || heightTerrainMap.size === 0) {
+        throw new Error('高さマップが初期化されていません');
+      }
 
-      terrainG.zIndex = isoY;
+      const heightTile = heightTerrainMap.get(`${x},${y}`);
+      if (!heightTile) {
+        continue;
+      }
+
+      drawHeightTile(terrainG, heightTile, x, y, offsetX, offsetY, heightTerrainMap, size, getTerrainAt);
+
+      const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      const heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+      terrainG.zIndex = baseIsoY + heightOffset;
       layer.addChild(terrainG);
     }
   }
@@ -130,7 +133,8 @@ export const drawFacilities = (
   offsetY: number,
   textures: Map<string, Texture>,
   _getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap?: Map<string, HeightTerrainTile>
 ) => {
   // 既存のGraphicsオブジェクトをプールに戻す
   layer.children.forEach(child => {
@@ -162,8 +166,19 @@ export const drawFacilities = (
         if (!texture) return;
 
         const sprite = new Sprite(texture);
-        const isoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const isoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        const baseIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const baseIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        
+        // 高さオフセットを取得して適用
+        let heightOffset = 0;
+        if (heightTerrainMap && heightTerrainMap.size > 0) {
+          const heightTile = heightTerrainMap.get(`${tile.x},${tile.y}`);
+          if (heightTile) {
+            heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+          }
+        }
+        
+        const adjustedIsoY = baseIsoY - heightOffset;
 
         // 道路のサイズ設定
         const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
@@ -174,8 +189,8 @@ export const drawFacilities = (
         sprite.anchor.set(0.5, 0.5);
 
         // 位置設定
-        sprite.x = isoX + ISO_TILE_WIDTH / 2;
-        sprite.y = isoY;
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY;
 
         // 回転の適用
         sprite.rotation = (connection.rotation * Math.PI) / 180;
@@ -185,8 +200,8 @@ export const drawFacilities = (
           sprite.scale.x *= -1;   // 水平反転
         }
 
-        // Z-index
-        sprite.zIndex = isoY;
+        // Z-index（高さオフセットを適用）
+        sprite.zIndex = baseIsoY + heightOffset;
         layer.addChild(sprite);
       });
     } else {
@@ -199,24 +214,35 @@ export const drawFacilities = (
 
       const sprite = new Sprite(texture);
       const center = facility.position;
-      const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-      const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      const baseIsoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const baseIsoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      
+      // 高さオフセットを取得して適用
+      let heightOffset = 0;
+      if (heightTerrainMap && heightTerrainMap.size > 0) {
+        const heightTile = heightTerrainMap.get(`${center.x},${center.y}`);
+        if (heightTile) {
+          heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+        }
+      }
+      
+      const adjustedIsoY = baseIsoY - heightOffset;
 
       // 画像サイズが分かる場合は中央寄せ。なければそのまま
       const size = facilityData.imgSizes?.[0];
       if (size) {
         sprite.anchor.set(0.5, 1.0);
-        sprite.x = isoX + ISO_TILE_WIDTH / 2;
-        sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
         sprite.width = size.width;
         sprite.height = size.height;
       } else {
-        sprite.x = isoX;
-        sprite.y = isoY;
+        sprite.x = baseIsoX;
+        sprite.y = adjustedIsoY;
       }
 
-      // 簡易Z-index
-      sprite.zIndex = isoY;
+      // Z-index（高さオフセットを適用）
+      sprite.zIndex = baseIsoY + heightOffset;
       layer.addChild(sprite);
     }
   });
@@ -233,7 +259,8 @@ export const drawPreview = (
   money: number,
   facilities: Facility[],
   getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap?: Map<string, HeightTerrainTile>
 ) => {
   if (!selectedFacilityType || !hoverPosition) return;
 
@@ -264,8 +291,19 @@ export const drawPreview = (
       const y = center.y + dy;
 
       if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-        const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        const baseIsoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        
+        // 高さオフセットを取得して適用
+        let heightOffset = 0;
+        if (heightTerrainMap && heightTerrainMap.size > 0) {
+          const heightTile = heightTerrainMap.get(`${x},${y}`);
+          if (heightTile) {
+            heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+          }
+        }
+        const isoY = baseIsoY - heightOffset;
+        const isoX = baseIsoX;
 
         const previewG = getPooledGraphics();
         previewG.moveTo(isoX, isoY)
@@ -278,8 +316,17 @@ export const drawPreview = (
         const tileKey = `${x}-${y}`;
         const canAfford = money >= facilityData.cost;
         const isOccupied = facilityMap.has(tileKey);
+        
+        // 斜面チェック
+        let isSlope = false;
+        if (heightTerrainMap && heightTerrainMap.size > 0) {
+          const heightTile = heightTerrainMap.get(`${x},${y}`);
+          if (heightTile && heightTile.isSlope) {
+            isSlope = true;
+          }
+        }
 
-        const { color, alpha } = getPreviewColor(selectedFacilityType, canAfford, isOccupied);
+        const { color, alpha } = getPreviewColor(selectedFacilityType, canAfford, isOccupied || isSlope);
 
         previewG.fill({ color, alpha });
         previewG.stroke({ color: 0xffffff, width: 1 });
@@ -298,7 +345,8 @@ export const drawEffectPreview = (
   offsetX: number,
   offsetY: number,
   getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap?: Map<string, HeightTerrainTile>
 ) => {
   if (!selectedFacilityType || !hoverPosition) return;
 
@@ -326,8 +374,19 @@ export const drawEffectPreview = (
         const y = center.y + dy;
 
         if (x >= 0 && x < size.width && y >= 0 && y < size.height) {
-          const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-          const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+          const baseIsoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+          const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+          
+          // 高さオフセットを取得して適用
+          let heightOffset = 0;
+          if (heightTerrainMap && heightTerrainMap.size > 0) {
+            const heightTile = heightTerrainMap.get(`${x},${y}`);
+            if (heightTile) {
+              heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+            }
+          }
+          const isoY = baseIsoY - heightOffset;
+          const isoX = baseIsoX;
 
           const effectG = getPooledGraphics();
           effectG.moveTo(isoX, isoY)
@@ -360,7 +419,8 @@ export const drawRoadDragRange = (
   money: number,
   facilities: Facility[],
   getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap?: Map<string, HeightTerrainTile>
 ) => {
   if (!isPlacing || !startTile || !endTile || selectedFacilityType !== 'road') return;
 
@@ -417,8 +477,19 @@ export const drawRoadDragRange = (
 
   // ドラッグ範囲を描画
   tiles.forEach(({ x, y }) => {
-    const isoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
-    const isoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+    const baseIsoX = (x - y) * (ISO_TILE_WIDTH / 2) + offsetX;
+    const baseIsoY = (x + y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+    
+    // 高さオフセットを取得して適用
+    let heightOffset = 0;
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      const heightTile = heightTerrainMap.get(`${x},${y}`);
+      if (heightTile) {
+        heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+      }
+    }
+    const isoY = baseIsoY - heightOffset;
+    const isoX = baseIsoX;
 
     const dragG = getPooledGraphics();
     dragG.name = 'road-drag';
@@ -432,8 +503,17 @@ export const drawRoadDragRange = (
     const tileKey = `${x}-${y}`;
     const canAfford = money >= roadData.cost;
     const isOccupied = facilityMap.has(tileKey);
+    
+    // 斜面チェック
+    let isSlope = false;
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      const heightTile = heightTerrainMap.get(`${x},${y}`);
+      if (heightTile && heightTile.isSlope) {
+        isSlope = true;
+      }
+    }
 
-    const { color, alpha, strokeColor } = getRoadDragColor(canAfford, isOccupied);
+    const { color, alpha, strokeColor } = getRoadDragColor(canAfford, isOccupied || isSlope);
 
     dragG.fill({ color, alpha });
     dragG.stroke({ color: strokeColor, width: 2 });

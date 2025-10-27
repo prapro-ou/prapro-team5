@@ -95,7 +95,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   
   checkCanPlace: (position, facilityType, gridSize) => {
     const { facilities } = get();
-    const { getTerrainAt } = useTerrainStore.getState();
+    const { getTerrainAt, canBuildAt } = useTerrainStore.getState();
     
     // もし建設しようとしているのが市役所なら、既に存在しないかチェック
     if (facilityType === 'city_hall') {
@@ -130,6 +130,12 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
         
         if (!getBuildability(terrain)) {
           console.warn(`地形 ${terrain} には建設できません`);
+          return false;
+        }
+        
+        // 斜面チェック
+        if (!canBuildAt(x, y, facilityType)) {
+          console.warn(`斜面には建設できません`);
           return false;
         }
       }

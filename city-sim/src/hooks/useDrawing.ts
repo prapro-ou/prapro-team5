@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { Container, Graphics, Texture } from 'pixi.js';
 import { useRedrawControl } from './useRedrawControl';
 import { 
@@ -16,6 +17,7 @@ type MutableRef<T> = { current: T };
 interface DrawingHooksProps {
   terrainMap: Map<string, string>;
   getTerrainAt: (x: number, y: number) => string | undefined;
+  heightTerrainMap: Map<string, HeightTerrainTile>;
   facilitiesRef: MutableRef<Facility[]>;
   selectedFacilityTypeRef: MutableRef<FacilityType | null | undefined>;
   moneyRef: MutableRef<number>;
@@ -36,6 +38,7 @@ interface DrawingHooksProps {
 export const usePixiDrawing = ({
   terrainMap,
   getTerrainAt,
+  heightTerrainMap,
   facilitiesRef,
   selectedFacilityTypeRef,
   moneyRef,
@@ -67,7 +70,10 @@ export const usePixiDrawing = ({
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
     // 地形データの変更をチェック
-    if (!shouldRedrawTerrain(terrainMap)) {
+    const terrainChanged = shouldRedrawTerrain(terrainMap);
+    const heightChanged = heightTerrainMap && heightTerrainMap.size > 0;
+    
+    if (!terrainChanged && !heightChanged) {
       return; // 変更なしの場合はスキップ
     }
     
@@ -81,7 +87,8 @@ export const usePixiDrawing = ({
       offsetY,
       getTerrainAt,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -97,7 +104,8 @@ export const usePixiDrawing = ({
       offsetY,
       getTerrainAt,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -120,7 +128,8 @@ export const usePixiDrawing = ({
       offsetY,
       texturesRef.current,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -136,7 +145,8 @@ export const usePixiDrawing = ({
       offsetY,
       texturesRef.current,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -167,7 +177,8 @@ export const usePixiDrawing = ({
       money,
       facilities,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -194,7 +205,8 @@ export const usePixiDrawing = ({
       offsetX,
       offsetY,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -224,7 +236,8 @@ export const usePixiDrawing = ({
       money,
       facilities,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 

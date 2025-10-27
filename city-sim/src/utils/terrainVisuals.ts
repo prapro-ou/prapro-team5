@@ -1,0 +1,29 @@
+import type { HeightLevel } from '../types/terrainWithHeight';
+import type { TerrainType } from '../types/terrain';
+import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
+
+export const HEIGHT_COLORS: Record<HeightLevel, number> = {
+  0: 0x2196F3,
+  1: 0xD3C6A6,
+  2: 0xD3C6A6,
+  3: 0xD3C6A6,
+  4: 0xD3C6A6 
+};
+
+export const getTerrainColor = (terrainType: TerrainType | undefined): number => {
+  if (terrainType === 'water') {
+    return 0x2196F3;
+  }
+  if (terrainType === 'beach') {
+    return 0xF5DEB3;
+  }
+  return 0x9DC183;
+};
+
+export const getHeightColor = (height: HeightLevel): number => {
+  return HEIGHT_COLORS[height];
+};
+
+export const getBorderWidth = (height: HeightLevel): number => {
+  return Math.max(HEIGHT_DRAWING_CONSTANTS.BORDER.WIDTH_FLAT, height);
+};

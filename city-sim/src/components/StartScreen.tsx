@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TbDeviceFloppy, TbFolderOpen, TbUsers, TbCash, TbStar, TbClock, TbArrowLeft } from 'react-icons/tb';
 import LoadingScreen from './LoadingScreen';
+import { GRID_WIDTH, GRID_HEIGHT } from '../constants/gridConstants';
 
 type Props = {
   onStart: () => void;
@@ -171,7 +172,7 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
           const { useInfrastructureStore } = await import('../stores/InfrastructureStore');
 
           useFacilityStore.getState().clearRoadConnectivityCache();
-          useFacilityStore.getState().updateRoadConnectivity({ width: 120, height: 120 });
+          useFacilityStore.getState().updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
           useInfrastructureStore.getState().calculateInfrastructure(useFacilityStore.getState().facilities);
         } catch {}
         // 最小表示時間（200ms）を確保

@@ -1,19 +1,31 @@
 import { create } from 'zustand';
 import type { TerrainType } from '../types/terrain';
 import type { GridSize } from '../types/grid';
-import { generateNaturalTerrainMap } from '../utils/terrainGenerator';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
+import { generateNaturalTerrainMap, generateHeightTerrainMapFromTerrain, generateRoadsWithHeight } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { canBuildFacility } from '../utils/terrainUtils';
 
 interface TerrainStore {
   // 状態
   terrainMap: Map<string, TerrainType>;
   generatedRoads: Array<{x: number, y: number, variantIndex: number}>;
   
+  // 高さ地形システム
+  heightTerrainMap: Map<string, HeightTerrainTile>;
+  enableHeightSystem: boolean;
+  
   // アクション
   generateTerrain: (gridSize: GridSize) => Array<{x: number, y: number, variantIndex: number}>;
   setTerrainAt: (x: number, y: number, terrain: TerrainType) => void;
   getTerrainAt: (x: number, y: number) => TerrainType;
   resetTerrain: (gridSize: GridSize) => void;
+  
+  // 高さ地形システムのアクション
+  generateHeightTerrain: (gridSize: GridSize) => void;
+  getHeightTerrainAt: (x: number, y: number) => HeightTerrainTile | null;
+  canBuildAt: (x: number, y: number, facilityType: string) => boolean;
+  toggleHeightSystem: () => void;
   
   // セーブ・ロード機能
   saveState: () => any;
@@ -24,15 +36,38 @@ interface TerrainStore {
 export const useTerrainStore = create<TerrainStore>((set, get) => ({
   terrainMap: new Map(),
   generatedRoads: [],
+  
+  // 高さ地形システム
+  heightTerrainMap: new Map(),
+  enableHeightSystem: true,
 
-  // 地形生成
+  // 地形生成（高さマップも自動生成、道路も生成）
   generateTerrain: (gridSize: GridSize) => {
-    const result = generateNaturalTerrainMap(gridSize);
+    let result;
+    let heightTerrainMap;
+    let generatedRoads: Array<{x: number, y: number, variantIndex: number}>;
+    
+    // マップ生成と再生成処理（最大100回試行）
+    let attempts = 0;
+    do {
+      result = generateNaturalTerrainMap(gridSize);
+      heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, result.terrainMap);
+      generatedRoads = generateRoadsWithHeight(
+        gridSize,
+        result.selectedDirections,
+        result.terrainMap,
+        heightTerrainMap
+      );
+      attempts++;
+    } while (generatedRoads.length < 20 && attempts < 100); // 最低20道路が必要
+    
     set({ 
       terrainMap: result.terrainMap,
-      generatedRoads: result.generatedRoads
+      generatedRoads,
+      heightTerrainMap
     });
-    return result.generatedRoads;
+    
+    return generatedRoads;
   },
 
   // 特定の位置の地形を設定
@@ -80,8 +115,55 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
       });
       
       const generatedRoads = savedState.generatedRoads || [];
-      set({ terrainMap: newTerrainMap, generatedRoads });
+      
+      // マップのサイズを推定（terrainMapの最大x, y座標から）
+      let maxX = 0;
+      let maxY = 0;
+      newTerrainMap.forEach((_, key) => {
+        const [x, y] = key.split(',').map(Number);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      });
+      const gridSize: GridSize = { width: maxX + 1, height: maxY + 1 };
+      
+      // 高さマップを再生成（既存の地形マップから）
+      const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, newTerrainMap);
+      
+      set({ 
+        terrainMap: newTerrainMap, 
+        generatedRoads,
+        heightTerrainMap: new Map() // 一旦クリア
+      });
+      
+      // 高さマップを設定
+      set({ heightTerrainMap });
     }
+  },
+
+  // 高さ地形システムのメソッド
+  generateHeightTerrain: (gridSize: GridSize) => {
+    const { terrainMap } = get();
+    const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, terrainMap);
+    set({ heightTerrainMap });
+  },
+
+  getHeightTerrainAt: (x: number, y: number) => {
+    const { heightTerrainMap } = get();
+    return heightTerrainMap.get(`${x},${y}`) || null;
+  },
+
+  canBuildAt: (x: number, y: number, facilityType: string) => {
+    const { heightTerrainMap } = get();
+    const tile = heightTerrainMap.get(`${x},${y}`);
+    
+    if (!tile) return false;
+    
+    return canBuildFacility(tile, facilityType);
+  },
+
+  toggleHeightSystem: () => {
+    const { enableHeightSystem } = get();
+    set({ enableHeightSystem: !enableHeightSystem });
   }
 }));
 

@@ -26,6 +26,7 @@ interface CreatePointerHandlersParams {
   updateRoadDrag: (gx: number, gy: number, roadDragRef: MutableRef<{ isPlacing: boolean; startTile: Position | null; endTile: Position | null }>) => boolean;
   getClickTile: (gx: number, gy: number) => Position | null;
   tileToIsometric: (tx: number, ty: number) => { x: number; y: number };
+  getTileHeightOffset: (tx: number, ty: number) => number;
 
   // Draw callbacks
   drawPreviewLayer: () => void;
@@ -53,6 +54,7 @@ export function createPointerHandlers(params: CreatePointerHandlersParams) {
     updateRoadDrag,
     getClickTile,
     tileToIsometric,
+    getTileHeightOffset,
     drawPreviewLayer,
     drawEffectPreviewLayer,
     drawRoadDragRangeLayer,
@@ -116,7 +118,13 @@ export function createPointerHandlers(params: CreatePointerHandlersParams) {
       if (hoverRef.current) {
         // 再描画
         hoverG.clear();
-        const { x: hIsoX, y: hIsoY } = tileToIsometric(hoverRef.current.x, hoverRef.current.y);
+        const { x: hIsoX, y: baseIsoY } = tileToIsometric(hoverRef.current.x, hoverRef.current.y);
+        
+        // 高さオフセットを取得して適用
+        const heightOffset = getTileHeightOffset(hoverRef.current.x, hoverRef.current.y);
+        const hIsoY = baseIsoY - heightOffset;
+        
+        // ホバー表示用の菱形を描画（タイル描画と同じ座標）
         hoverG.moveTo(hIsoX, hIsoY)
           .lineTo(hIsoX + ISO_TILE_WIDTH / 2, hIsoY - ISO_TILE_HEIGHT / 2)
           .lineTo(hIsoX + ISO_TILE_WIDTH, hIsoY)
@@ -124,6 +132,9 @@ export function createPointerHandlers(params: CreatePointerHandlersParams) {
           .lineTo(hIsoX, hIsoY)
           .fill({ color: 0xf59e0b, alpha: 0.2 })
           .stroke({ color: 0xf59e0b, width: 2 });
+        
+        // ホバー表示を最前面にする
+        hoverG.zIndex = 10000;
 
         // プレビューも更新
         drawPreviewLayer();
