@@ -87,9 +87,13 @@ export const canBuildOnSlope = (
 };
 
 export const canBuildFacility = (
-  _tile: HeightTerrainTile,
+  tile: HeightTerrainTile,
   _facilityType: string
 ): boolean => {
+  // 斜面タイルの場合は建設不可
+  if (tile.isSlope) {
+    return false;
+  }
 
   return true;
 };

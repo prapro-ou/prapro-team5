@@ -316,8 +316,17 @@ export const drawPreview = (
         const tileKey = `${x}-${y}`;
         const canAfford = money >= facilityData.cost;
         const isOccupied = facilityMap.has(tileKey);
+        
+        // 斜面チェック
+        let isSlope = false;
+        if (heightTerrainMap && heightTerrainMap.size > 0) {
+          const heightTile = heightTerrainMap.get(`${x},${y}`);
+          if (heightTile && heightTile.isSlope) {
+            isSlope = true;
+          }
+        }
 
-        const { color, alpha } = getPreviewColor(selectedFacilityType, canAfford, isOccupied);
+        const { color, alpha } = getPreviewColor(selectedFacilityType, canAfford, isOccupied || isSlope);
 
         previewG.fill({ color, alpha });
         previewG.stroke({ color: 0xffffff, width: 1 });
@@ -494,8 +503,17 @@ export const drawRoadDragRange = (
     const tileKey = `${x}-${y}`;
     const canAfford = money >= roadData.cost;
     const isOccupied = facilityMap.has(tileKey);
+    
+    // 斜面チェック
+    let isSlope = false;
+    if (heightTerrainMap && heightTerrainMap.size > 0) {
+      const heightTile = heightTerrainMap.get(`${x},${y}`);
+      if (heightTile && heightTile.isSlope) {
+        isSlope = true;
+      }
+    }
 
-    const { color, alpha, strokeColor } = getRoadDragColor(canAfford, isOccupied);
+    const { color, alpha, strokeColor } = getRoadDragColor(canAfford, isOccupied || isSlope);
 
     dragG.fill({ color, alpha });
     dragG.stroke({ color: strokeColor, width: 2 });
