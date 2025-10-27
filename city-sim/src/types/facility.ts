@@ -1,7 +1,7 @@
 import type { Position } from "./grid";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
-export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital";
+export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital" | "sawmill" | "farm";
 
 // 製品
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
@@ -210,6 +210,58 @@ export const FACILITY_DATA: Record<FacilityType, FacilityInfo> = {
     productDemand: [10, 0, 0, 0],
     productProduction: [0, 0, 20, 0],
     effectRadius: 11,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
+  },
+  sawmill: {
+    type: 'sawmill',
+    name: '製材所',
+    size: 3,
+    cost: 100,
+    maintenanceCost: 50,
+    description: '原材料を生産する工場',
+    category: 'industrial',
+    imgPaths: ['images/buildings/sawmill.png'],
+    imgSizes: [{ width: 96, height: 52 }],
+    satisfaction: -5,
+    attractiveness: 80,
+    workforceRequired: {
+      min: 1,
+      max: 10,
+      baseProduction: 10,
+      baseConsumption: 0
+    },
+    baseAssetValue: 100,
+    infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [10, 0, 0, 0],
+    effectRadius: 11,
+    unlockCondition: 'initial',
+    initiallyUnlocked: true,
+  },
+  farm: {
+    type: 'farm',
+    name: '農業区画',
+    size: 3,
+    cost: 50,
+    maintenanceCost: 50,
+    description: '農作物を生産する',
+    category: 'industrial',
+    imgPaths: ['images/buildings/farm.png'],
+    imgSizes: [{ width: 96, height: 49 }],
+    satisfaction: 0,
+    attractiveness: 0,
+    workforceRequired: {
+      min: 1,
+      max: 10,
+      baseProduction: 10,
+      baseConsumption: 0
+    },
+    baseAssetValue: 50,
+    infrastructureDemand: { water: 200, electricity: 200 },
+    productDemand: [0, 0, 0, 0],
+    productProduction: [10, 0, 0, 0],
+    effectRadius: 9,
     unlockCondition: 'initial',
     initiallyUnlocked: true,
   },
