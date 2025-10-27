@@ -18,7 +18,7 @@ import type { FacilityType } from './types/facility'
 import { FACILITY_DATA } from './types/facility'
 import { GRID_WIDTH, GRID_HEIGHT } from './constants/gridConstants'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer, TbMessageCircle } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbBulldozer, TbMessageCircle, TbChartBar, TbChecklist } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState } from 'react';
 
@@ -118,7 +118,7 @@ function App() {
   } = useFacilityStore();
 
   const [showAchievementPanel, setShowAchievementPanel] = useState(false);
-  const { achievements, claimAchievement, updateAchievements, hasClaimableAchievements, loadAchievementsFromFile } = useAchievementStore();
+  const { achievements, claimAchievement, updateAchievements, loadAchievementsFromFile } = useAchievementStore();
   
   // 秘書ストア
   const { updateSeasonalClothing } = useSecretaryStore();
@@ -519,32 +519,13 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-900">
-      {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-4 right-5 flex gap-4 z-[1200] items-center">
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowAchievementPanel(v => {
-                playPanelSound(); // 開閉どちらでも同じ音
-                return !v;
-              });
-            }}
-            className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
-          >
-            <TbAward size={24} className="text-yellow-400" />
-          </button>
-          {/* 受け取り可能な報酬がある場合の通知バッジ */}
-          {hasClaimableAchievements() && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
-          )}
-        </div>
-        <button 
-          onClick={openSettings}
-          className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-colors"
-        >
-          <TbSettings size={26} />
-        </button>
-      </div>
+      {/* 情報パネル（統合） */}
+      <InfoPanel 
+        onOpenSettings={openSettings}
+        onShowAchievementPanel={setShowAchievementPanel}
+        showAchievementPanel={showAchievementPanel}
+      />
+      
       {/* 実績パネル */}
       {showAchievementPanel && (
         <AchievementPanel
@@ -553,15 +534,13 @@ function App() {
           onClose={() => setShowAchievementPanel(false)}
         />
       )}
+      
       {/* レベルアップ通知 */}
       {levelUpMessage && (
         <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black text-xl font-bold px-8 py-4 rounded-lg shadow-lg z-[2000] animate-bounce">
           {levelUpMessage}
         </div>
       )}
-      {/* 情報パネル */}
-      <InfoPanel />
-      
       {/* 統計画面ボタン */}
       <button
         onClick={openStatistics}
@@ -579,8 +558,6 @@ function App() {
       >
         <TbChecklist />
       </button>
-
-
 
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
