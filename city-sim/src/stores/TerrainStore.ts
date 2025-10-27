@@ -117,7 +117,28 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
       });
       
       const generatedRoads = savedState.generatedRoads || [];
-      set({ terrainMap: newTerrainMap, generatedRoads });
+      
+      // マップのサイズを推定（terrainMapの最大x, y座標から）
+      let maxX = 0;
+      let maxY = 0;
+      newTerrainMap.forEach((_, key) => {
+        const [x, y] = key.split(',').map(Number);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      });
+      const gridSize: GridSize = { width: maxX + 1, height: maxY + 1 };
+      
+      // 高さマップを再生成（既存の地形マップから）
+      const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, newTerrainMap);
+      
+      set({ 
+        terrainMap: newTerrainMap, 
+        generatedRoads,
+        heightTerrainMap: new Map() // 一旦クリア
+      });
+      
+      // 高さマップを設定
+      set({ heightTerrainMap });
     }
   },
 
