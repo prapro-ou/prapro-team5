@@ -15,7 +15,7 @@ export const HEIGHT_DRAWING_CONSTANTS = {
   },
   
   SIDE_FACE: {
-    COLOR: 0x4E342E,
+    COLOR: 0xADA288,
     ALPHA: 1.0,
   },
   
