@@ -149,7 +149,8 @@ export const drawFacilities = (
   offsetY: number,
   textures: Map<string, Texture>,
   _getPooledGraphics: () => Graphics,
-  returnGraphics: (g: Graphics) => void
+  returnGraphics: (g: Graphics) => void,
+  heightTerrainMap?: Map<string, HeightTerrainTile>
 ) => {
   // 既存のGraphicsオブジェクトをプールに戻す
   layer.children.forEach(child => {
@@ -181,8 +182,19 @@ export const drawFacilities = (
         if (!texture) return;
 
         const sprite = new Sprite(texture);
-        const isoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const isoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        const baseIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const baseIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+        
+        // 高さオフセットを取得して適用
+        let heightOffset = 0;
+        if (heightTerrainMap && heightTerrainMap.size > 0) {
+          const heightTile = heightTerrainMap.get(`${tile.x},${tile.y}`);
+          if (heightTile) {
+            heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+          }
+        }
+        
+        const adjustedIsoY = baseIsoY - heightOffset;
 
         // 道路のサイズ設定
         const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
@@ -193,8 +205,8 @@ export const drawFacilities = (
         sprite.anchor.set(0.5, 0.5);
 
         // 位置設定
-        sprite.x = isoX + ISO_TILE_WIDTH / 2;
-        sprite.y = isoY;
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY;
 
         // 回転の適用
         sprite.rotation = (connection.rotation * Math.PI) / 180;
@@ -204,8 +216,8 @@ export const drawFacilities = (
           sprite.scale.x *= -1;   // 水平反転
         }
 
-        // Z-index
-        sprite.zIndex = isoY;
+        // Z-index（高さオフセットを適用）
+        sprite.zIndex = baseIsoY + heightOffset;
         layer.addChild(sprite);
       });
     } else {
@@ -218,24 +230,35 @@ export const drawFacilities = (
 
       const sprite = new Sprite(texture);
       const center = facility.position;
-      const isoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-      const isoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      const baseIsoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const baseIsoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      
+      // 高さオフセットを取得して適用
+      let heightOffset = 0;
+      if (heightTerrainMap && heightTerrainMap.size > 0) {
+        const heightTile = heightTerrainMap.get(`${center.x},${center.y}`);
+        if (heightTile) {
+          heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+        }
+      }
+      
+      const adjustedIsoY = baseIsoY - heightOffset;
 
       // 画像サイズが分かる場合は中央寄せ。なければそのまま
       const size = facilityData.imgSizes?.[0];
       if (size) {
         sprite.anchor.set(0.5, 1.0);
-        sprite.x = isoX + ISO_TILE_WIDTH / 2;
-        sprite.y = isoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
         sprite.width = size.width;
         sprite.height = size.height;
       } else {
-        sprite.x = isoX;
-        sprite.y = isoY;
+        sprite.x = baseIsoX;
+        sprite.y = adjustedIsoY;
       }
 
-      // 簡易Z-index
-      sprite.zIndex = isoY;
+      // Z-index（高さオフセットを適用）
+      sprite.zIndex = baseIsoY + heightOffset;
       layer.addChild(sprite);
     }
   });

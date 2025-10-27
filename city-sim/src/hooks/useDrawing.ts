@@ -128,7 +128,8 @@ export const usePixiDrawing = ({
       offsetY,
       texturesRef.current,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
@@ -144,7 +145,8 @@ export const usePixiDrawing = ({
       offsetY,
       texturesRef.current,
       getPooledGraphics,
-      returnGraphics
+      returnGraphics,
+      heightTerrainMap
     );
   };
 
