@@ -25,7 +25,7 @@ interface IsometricGridProps {
 }
 
 // グリッド描画
-export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, onReady, facilities = [], selectedFacilityType, money = 0, deleteMode = false }) => {
+export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, onTileClick, onReady, facilities = [], selectedFacilityType, money = 0, deleteMode = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -432,6 +432,14 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
   return (
     <div ref={containerRef} className={`relative overflow-hidden border-2 ${borderColor}`} style={{ width: '100%', height: '100%' }} />
   );
-};
+}, (prevProps, nextProps) => {
+  // カスタム比較関数：重要なpropsのみ比較
+  return prevProps.size.width === nextProps.size.width &&
+         prevProps.size.height === nextProps.size.height &&
+         prevProps.deleteMode === nextProps.deleteMode &&
+         prevProps.money === nextProps.money &&
+         prevProps.selectedFacilityType === nextProps.selectedFacilityType &&
+         JSON.stringify(prevProps.facilities) === JSON.stringify(nextProps.facilities);
+});
 
 export default IsometricGrid;

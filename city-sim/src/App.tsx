@@ -20,7 +20,7 @@ import { GRID_WIDTH, GRID_HEIGHT } from './constants/gridConstants'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbBulldozer, TbMessageCircle, TbChartBar, TbChecklist } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
@@ -207,7 +207,7 @@ function App() {
   const { generateTerrain, generateHeightTerrain } = useTerrainStore();
 
   // 施設配置処理
-  const placeFacility = (position: Position, type: FacilityType) => {
+  const placeFacility = useCallback((position: Position, type: FacilityType) => {
     const facilityData = FACILITY_DATA[type];
     // 配置可能かチェック
     if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
@@ -249,9 +249,9 @@ function App() {
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-  };
+  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound, recalculateSatisfaction]);
 
-  const handleTileClick = (position: Position) => {
+  const handleTileClick = useCallback((position: Position) => {
     const correctedPosition = {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
@@ -287,7 +287,7 @@ function App() {
           placeFacility(correctedPosition, selectedFacilityType);
         }
       }
-  };
+  }, [deleteMode, facilities, addPopulation, removeFacility, selectedTile, setSelectedTile, selectedFacilityType, placeFacility]);
 
   // レベルアップ通知を一定時間で消す
   useEffect(() => {
@@ -524,6 +524,8 @@ function App() {
         onOpenSettings={openSettings}
         onShowAchievementPanel={setShowAchievementPanel}
         showAchievementPanel={showAchievementPanel}
+        isPaused={isPaused}
+        deleteMode={deleteMode}
       />
       
       {/* 実績パネル */}
