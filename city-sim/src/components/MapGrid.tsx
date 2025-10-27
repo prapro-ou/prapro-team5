@@ -4,6 +4,7 @@ import type { Facility, FacilityType } from '../types/facility';
 import { Application, Graphics, Container, Point, Texture } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { useTerrainStore } from '../stores/TerrainStore';
+import { useTimeControlStore } from '../stores/TimeControlStore';
 import { useGraphicsPool } from '../hooks/useGraphicsPool';
 import { usePixiDrawing } from '../hooks/useDrawing';
 import { usePixiCoordinates } from '../hooks/useCoordinates';
@@ -24,7 +25,7 @@ interface IsometricGridProps {
 }
 
 // グリッド描画
-export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, onReady, facilities = [], selectedFacilityType, money = 0 }) => {
+export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick, onReady, facilities = [], selectedFacilityType, money = 0, deleteMode = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const worldRef = useRef<Container | null>(null);
@@ -52,6 +53,9 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
 
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
+  
+  // 時間制御の状態を取得
+  const { isPaused } = useTimeControlStore();
 
   // 地形ストアの使用
   const { terrainMap, getTerrainAt, heightTerrainMap } = useTerrainStore();
@@ -417,8 +421,16 @@ export const IsometricGrid: React.FC<IsometricGridProps> = ({ size, onTileClick,
     };
   }, [size.width, size.height]);
 
+  // ボーダー色を決定
+  let borderColor = 'border-blue-500';
+  if (deleteMode) {
+    borderColor = 'border-red-500';
+  } else if (isPaused) {
+    borderColor = 'border-yellow-500';
+  }
+
   return (
-    <div ref={containerRef} className="relative overflow-hidden border-2 border-blue-500" style={{ width: '100%', height: '100%' }} />
+    <div ref={containerRef} className={`relative overflow-hidden border-2 ${borderColor}`} style={{ width: '100%', height: '100%' }} />
   );
 };
 
