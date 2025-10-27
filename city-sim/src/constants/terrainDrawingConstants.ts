@@ -1,4 +1,3 @@
-// 高さ地形の描画定数
 export const HEIGHT_DRAWING_CONSTANTS = {
   HEIGHT_OFFSETS: {
     0: 0,

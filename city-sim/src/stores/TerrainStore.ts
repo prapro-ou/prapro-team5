@@ -67,8 +67,6 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
       heightTerrainMap
     });
     
-    console.log(`マップ生成完了 (試行回数: ${attempts}, 道路数: ${generatedRoads.length})`);
-    
     return generatedRoads;
   },
 
@@ -144,11 +142,9 @@ export const useTerrainStore = create<TerrainStore>((set, get) => ({
 
   // 高さ地形システムのメソッド
   generateHeightTerrain: (gridSize: GridSize) => {
-    console.log('地形生成開始', gridSize);
     const { terrainMap } = get();
     const heightTerrainMap = generateHeightTerrainMapFromTerrain(gridSize, terrainMap);
     set({ heightTerrainMap });
-    console.log('地形生成完了', heightTerrainMap.size, 'タイル');
   },
 
   getHeightTerrainAt: (x: number, y: number) => {
