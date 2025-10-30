@@ -1,22 +1,10 @@
 import { create } from 'zustand';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
-import { loadFacilitiesFromJSON } from '../utils/facilityLoader';
+import { getFacilityRegistry, loadFacilitiesFromJSON } from '../utils/facilityLoader';
 
-// 段階的移行用のレジストリ（初期は既存の定義、起動後にJSONで上書き）
-let FACILITY_REGISTRY = { ...FACILITY_DATA } as typeof FACILITY_DATA;
-
-// 非同期でJSONを読み込み、成功時にレジストリを差し替え
-void (async () => {
-  const result = await loadFacilitiesFromJSON('data/facilities.json');
-  if (result.success) {
-    FACILITY_REGISTRY = result.registry as typeof FACILITY_DATA;
-    console.log('[Facility] JSONレジストリを適用しました');
-  } else {
-    console.warn('[Facility] JSON読み込みに失敗。従来定義を使用します:', result.error);
-  }
-})();
+// 起動時にJSONを読み込み（レジストリは内部でマージ・更新）
+void loadFacilitiesFromJSON('data/facilities.json');
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
@@ -121,7 +109,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       }
     }
     
-    const facilityData = FACILITY_REGISTRY[facilityType];
+    const facilityData = getFacilityRegistry()[facilityType];
     const radius = Math.floor(facilityData.size / 2);
     
     // 範囲外チェック
@@ -173,7 +161,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   },
 
   createFacility: (position, type) => {
-    const facilityData = FACILITY_REGISTRY[type];
+    const facilityData = getFacilityRegistry()[type];
     const radius = Math.floor(facilityData.size / 2);
     const occupiedTiles: Position[] = [];
     // 占有するタイルを計算

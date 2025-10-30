@@ -46,15 +46,15 @@ export async function loadFacilitiesFromJSON(filePath: string = 'data/facilities
       }
       validList.push(item);
     }
-
-    // type のユニーク性チェック & レジストリ化
-    const registry: Record<FacilityType, FacilityInfo> = {} as Record<FacilityType, FacilityInfo>;
+    
+    const registry: Record<FacilityType, FacilityInfo> = { ...FACILITY_DATA } as Record<FacilityType, FacilityInfo>;
     for (const info of validList) {
       if (registry[info.type as FacilityType]) {
-        console.warn(`重複したfacility.typeをスキップ: ${info.type}`);
-        continue;
+        registry[info.type as FacilityType] = info;
       }
-      registry[info.type as FacilityType] = info;
+      else {
+        registry[info.type as FacilityType] = info;
+      }
     }
 
     const result = {
