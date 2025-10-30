@@ -1,5 +1,4 @@
 import type { FacilityInfo, FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
 
 interface FacilitiesJsonRoot {
   metadata?: Record<string, unknown>;
@@ -12,15 +11,13 @@ export interface FacilityLoadResult {
   error?: string;
 }
 
-let facilityRegistry: Record<FacilityType, FacilityInfo> = { ...FACILITY_DATA } as Record<FacilityType, FacilityInfo>;
+let facilityRegistry: Record<FacilityType, FacilityInfo> = {} as unknown as Record<FacilityType, FacilityInfo>;
 
 export function getFacilityRegistry(): Record<FacilityType, FacilityInfo> {
   return facilityRegistry;
 }
 
-export function getDefaultFacilitiesRegistry(): Record<FacilityType, FacilityInfo> {
-  return { ...FACILITY_DATA };
-}
+// フォールバックは廃止
 
 export async function loadFacilitiesFromJSON(filePath: string = 'data/facilities.json'): Promise<FacilityLoadResult> {
   try {
@@ -46,8 +43,8 @@ export async function loadFacilitiesFromJSON(filePath: string = 'data/facilities
       }
       validList.push(item);
     }
-    
-    const registry: Record<FacilityType, FacilityInfo> = { ...FACILITY_DATA } as Record<FacilityType, FacilityInfo>;
+
+    const registry: Record<FacilityType, FacilityInfo> = {} as unknown as Record<FacilityType, FacilityInfo>;
     for (const info of validList) {
       if (registry[info.type as FacilityType]) {
         registry[info.type as FacilityType] = info;
@@ -67,7 +64,7 @@ export async function loadFacilitiesFromJSON(filePath: string = 'data/facilities
     console.error('施設データの読み込みエラー:', error);
     return {
       success: false,
-      registry: getDefaultFacilitiesRegistry(),
+      registry: {} as unknown as Record<FacilityType, FacilityInfo>,
       error: error instanceof Error ? error.message : '不明なエラーが発生しました',
     };
   }
