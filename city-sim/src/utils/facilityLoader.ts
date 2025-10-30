@@ -12,6 +12,12 @@ export interface FacilityLoadResult {
   error?: string;
 }
 
+let facilityRegistry: Record<FacilityType, FacilityInfo> = { ...FACILITY_DATA } as Record<FacilityType, FacilityInfo>;
+
+export function getFacilityRegistry(): Record<FacilityType, FacilityInfo> {
+  return facilityRegistry;
+}
+
 export function getDefaultFacilitiesRegistry(): Record<FacilityType, FacilityInfo> {
   return { ...FACILITY_DATA };
 }
@@ -51,10 +57,12 @@ export async function loadFacilitiesFromJSON(filePath: string = 'data/facilities
       registry[info.type as FacilityType] = info;
     }
 
-    return {
+    const result = {
       success: true,
       registry,
     };
+    facilityRegistry = registry;
+    return result;
   } catch (error) {
     console.error('施設データの読み込みエラー:', error);
     return {

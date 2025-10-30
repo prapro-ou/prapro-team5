@@ -1,5 +1,5 @@
 import type { Facility, FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 
 // 任意の施設について、effectRadius が定義されていれば
 // 住宅の占有タイルのいずれかが半径内かを判定
@@ -10,7 +10,7 @@ function isResidentialWithinFacilityRadius(residential: Facility, facility: Faci
 	const r = facility.effectRadius;
 
 	// 住宅のAABBを中心とサイズから構築（sizeは奇数、デフォルト3）
-	const size = (FACILITY_DATA[residential.type]?.size ?? 3);
+	const size = (getFacilityRegistry()[residential.type]?.size ?? 3);
 	const half = Math.floor(size / 2);
 	const rx = residential.position.x;
 	const ry = residential.position.y;
@@ -123,7 +123,7 @@ function collectCandidates(index: SpatialIndex, type: string, x: number, y: numb
 }
 
 export function countNearbyAllTypesWithIndex(residential: Facility, index: SpatialIndex): number[] {
-	const size = (FACILITY_DATA[residential.type]?.size ?? 3);
+    const size = (getFacilityRegistry()[residential.type]?.size ?? 3);
 	const half = Math.floor(size / 2);
 	const rx = residential.position.x;
 	const ry = residential.position.y;

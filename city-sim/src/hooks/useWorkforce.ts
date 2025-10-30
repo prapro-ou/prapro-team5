@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import type { Facility } from '../types/facility';
 
 // 労働力配分の結果を表すインターフェース
@@ -11,7 +11,7 @@ export interface WorkforceAllocation {
 
 // 労働力が必要な施設かどうかの判定
 export const needsWorkforce = (facility: Facility): boolean => {
-	return FACILITY_DATA[facility.type].workforceRequired !== undefined;
+	return getFacilityRegistry()[facility.type].workforceRequired !== undefined;
 };
 
 // 労働力が必要な施設のみをフィルタリング
@@ -24,8 +24,8 @@ export const sortFacilitiesByAttractiveness = (facilities: Facility[]): Facility
 	return facilities
 		.filter(needsWorkforce) // 労働力が必要な施設のみ
 		.sort((a, b) => {
-			const attractivenessA = FACILITY_DATA[a.type].attractiveness || 0;
-			const attractivenessB = FACILITY_DATA[b.type].attractiveness || 0;
+			const attractivenessA = getFacilityRegistry()[a.type].attractiveness || 0;
+			const attractivenessB = getFacilityRegistry()[b.type].attractiveness || 0;
 			return attractivenessB - attractivenessA; // 高い順
 		});
 };
@@ -35,7 +35,7 @@ export const calculateWorkforceEfficiency = (
 	assignedWorkforce: number,
 	facility: Facility
 ): number => {
-	const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+	const workforceData = getFacilityRegistry()[facility.type].workforceRequired;
 	if (!workforceData) return 1.0; // 労働力不要な施設は100%効率
 
 	const { min, max } = workforceData;

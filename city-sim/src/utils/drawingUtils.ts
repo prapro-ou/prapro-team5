@@ -3,7 +3,7 @@ import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import type { HeightTerrainTile } from '../types/terrainWithHeight';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from './coordinates';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from './facilityLoader';
 import { getRoadConnectionType } from './roadConnection';
 import { drawHeightTile } from './terrainDrawing';
 import { HEIGHT_DRAWING_CONSTANTS } from '../constants/terrainDrawingConstants';
@@ -34,7 +34,7 @@ export const getPreviewColor = (
   }
 
   // 施設カテゴリ別の色
-  const facilityData = FACILITY_DATA[facilityType];
+  const facilityData = getFacilityRegistry()[facilityType];
   let color = 0x86efac; // デフォルト緑
 
   switch (facilityData.category) {
@@ -153,7 +153,7 @@ export const drawFacilities = (
   });
 
   facilities.forEach(facility => {
-    const facilityData = FACILITY_DATA[facility.type];
+    const facilityData = getFacilityRegistry()[facility.type];
 
     // 道路接続描画処理
     if (facility.type === 'road') {
@@ -272,7 +272,7 @@ export const drawPreview = (
   });
   layer.removeChildren();
 
-  const facilityData = FACILITY_DATA[selectedFacilityType];
+  const facilityData = getFacilityRegistry()[selectedFacilityType];
   const radius = Math.floor(facilityData.size / 2);
   const center = hoverPosition;
 
@@ -358,7 +358,7 @@ export const drawEffectPreview = (
   });
   layer.removeChildren();
 
-  const facilityData = FACILITY_DATA[selectedFacilityType];
+  const facilityData = getFacilityRegistry()[selectedFacilityType];
   const effectRadius = facilityData.effectRadius ?? 0;
 
   if (effectRadius <= 0) return;
@@ -473,7 +473,7 @@ export const drawRoadDragRange = (
   });
 
   // 道路のコストを取得
-  const roadData = FACILITY_DATA['road'];
+  const roadData = getFacilityRegistry()['road'];
 
   // ドラッグ範囲を描画
   tiles.forEach(({ x, y }) => {
