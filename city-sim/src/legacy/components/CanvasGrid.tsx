@@ -12,7 +12,7 @@ import { useHover } from "../hooks/useHover";
 import { useGridConstants } from "../hooks/useGridConstants";
 import { useMouseEvents } from "../hooks/useMouseEvents";
 import { useTileInteraction } from "../hooks/useTileInteraction";
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { TERRAIN_DATA } from '../types/terrain';
 import { 
@@ -225,7 +225,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   const preloadFacilityImages = useCallback(async () => {
     try {
       // 施設マスターデータから画像パスを取得
-      const imagePaths = Object.values(FACILITY_DATA)
+      const imagePaths = Object.values(getFacilityRegistry())
         .filter(facility => facility.imgPaths && facility.imgPaths.length > 0)
         .flatMap(facility => facility.imgPaths!)
         .filter((path, index, array) => array.indexOf(path) === index); // 重複除去

@@ -1,12 +1,12 @@
 import { Assets, Texture } from 'pixi.js';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 
 type MutableRef<T> = { current: T };
 
 export const useFacilityTextures = (texturesRef: MutableRef<Map<string, Texture>>) => {
   const loadFacilityTextures = async (): Promise<void> => {
     const uniquePaths = Array.from(new Set(
-      Object.values(FACILITY_DATA)
+      Object.values(getFacilityRegistry())
         .flatMap(f => f.imgPaths ?? [])
     ));
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import type { Facility } from '../types/facility';
 import type { ProductDemand } from '../types/facility';
 
@@ -26,7 +26,7 @@ export const useProductStore = create<ProductStore>((_set, get) => ({
     const totalDemand: ProductDemand = [0, 0, 0, 0];
     
     facilities.forEach(facility => {
-      const facilityData = FACILITY_DATA[facility.type];
+      const facilityData = getFacilityRegistry()[facility.type];
       if (facilityData.productDemand) {
         for (let i = 0; i < 4; i++) {
           totalDemand[i] += facilityData.productDemand[i];
@@ -42,7 +42,7 @@ export const useProductStore = create<ProductStore>((_set, get) => ({
     const totalProduction: ProductDemand = [0, 0, 0, 0];
     
     facilities.forEach(facility => {
-      const facilityData = FACILITY_DATA[facility.type];
+      const facilityData = getFacilityRegistry()[facility.type];
       if (facilityData.productProduction) {
         for (let i = 0; i < 4; i++) {
           totalProduction[i] += facilityData.productProduction[i];

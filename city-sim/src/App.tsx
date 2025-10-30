@@ -1,5 +1,3 @@
-// import { Grid } from './components/grid'
-// import { CanvasGrid } from './components/CanvasGrid'
 import IsometricGrid from './components/MapGrid'
 import LoadingScreen from './components/LoadingScreen'
 import { FacilitySelector } from './components/FacilitySelector'
@@ -15,7 +13,7 @@ import MissionPanel from './components/MissionPanel';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
-import { FACILITY_DATA } from './types/facility'
+import { getFacilityRegistry } from './utils/facilityLoader'
 import { GRID_WIDTH, GRID_HEIGHT } from './constants/gridConstants'
 import './App.css'
 import { TbCrane ,TbCraneOff, TbBulldozer, TbMessageCircle, TbChartBar, TbChecklist } from "react-icons/tb";
@@ -37,7 +35,6 @@ import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
 
 // SNSフィード表示用ボタンコンポーネント
-
 const SNSFeedButton = () => {
   const [showSNS, setShowSNS] = useState(false);
   return (
@@ -208,7 +205,7 @@ function App() {
 
   // 施設配置処理
   const placeFacility = useCallback((position: Position, type: FacilityType) => {
-    const facilityData = FACILITY_DATA[type];
+    const facilityData = getFacilityRegistry()[type];
     // 配置可能かチェック
     if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
       console.warn(`施設を配置できません`);
@@ -264,7 +261,7 @@ function App() {
         );
         if (facility) {
           // 住宅施設なら人口減算
-          const facilityData = FACILITY_DATA[facility.type];
+          const facilityData = getFacilityRegistry()[facility.type];
           if (facilityData.category === 'residential' && typeof facilityData.basePopulation === 'number') {
             addPopulation(-facilityData.basePopulation);
           }
