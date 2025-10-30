@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "generatedAt": "2025-10-30T00:00:00Z",
+    "source": "manual"
+  },
+  "facilities": [
+    {
+      "type": "residential",
+      "name": "住宅区画",
+      "size": 3,
+      "cost": 100,
+      "maintenanceCost": 30,
+      "description": "一般的な住宅地",
+      "category": "residential",
+      "imgPaths": ["images/buildings/residential.png"],
+      "imgSizes": [{ "width": 96, "height": 79 }],
+      "satisfaction": 0,
+      "baseAssetValue": 100,
+      "infrastructureDemand": { "water": 50, "electricity": 50 },
+      "productDemand": [0, 0, 0, 10],
+      "productProduction": [0, 0, 0, 0],
+      "basePopulation": 100,
+      "unlockCondition": "initial",
+      "initiallyUnlocked": true,
+      "tags": ["starter"],
+      "metadata": { "note": "from json" }
+    },
+    {
+      "type": "large_residential",
+      "name": "大型住宅区画",
+      "size": 3,
+      "cost": 400,
+      "maintenanceCost": 80,
+      "description": "大きめの住宅区画",
+      "category": "residential",
+      "imgPaths": ["images/buildings/residential2.png"],
+      "imgSizes": [{ "width": 96, "height": 120 }],
+      "satisfaction": 0,
+      "baseAssetValue": 300,
+      "infrastructureDemand": { "water": 200, "electricity": 200 },
+      "productDemand": [0, 0, 0, 100],
+      "productProduction": [0, 0, 0, 0],
+      "basePopulation": 500,
+      "effectRadius": 13,
+      "unlockCondition": "initial",
+      "initiallyUnlocked": true,
+      "tags": ["variant"]
+    }
+  ]
+}
+
+
