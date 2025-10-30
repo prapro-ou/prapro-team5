@@ -56,7 +56,7 @@ export const allocateWorkforce = (
 	let remainingWorkforce = availableWorkforce;
 
 	sortedFacilities.forEach(facility => {
-		const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+		const workforceData = getFacilityRegistry()[facility.type].workforceRequired;
 		if (!workforceData) return;
 
 		const { min, max } = workforceData;

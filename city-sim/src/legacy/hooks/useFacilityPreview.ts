@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 
@@ -44,7 +44,7 @@ export const useFacilityPreview = ({
   const previewTiles = React.useMemo(() => {
     if (!selectedFacilityType || !hoveredTile) return new Set<string>();
     
-    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const facilityData = getFacilityRegistry()[selectedFacilityType];
     const radius = Math.floor(facilityData.size / 2);
     const tiles = new Set<string>();
     
@@ -75,7 +75,7 @@ export const useFacilityPreview = ({
     if (isPlacingFacility && dragRange.has(tileKey)) {
       if (!selectedFacilityType) return null;
       
-      const facilityData = FACILITY_DATA[selectedFacilityType];
+      const facilityData = getFacilityRegistry()[selectedFacilityType];
 
       if (facilityData.category !== 'infrastructure') return null;
 
@@ -103,7 +103,7 @@ export const useFacilityPreview = ({
     
     // ホバー中心から離れすぎてたら計算しない
     const distance = Math.abs(x - hoveredTile.x) + Math.abs(y - hoveredTile.y);
-    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const facilityData = getFacilityRegistry()[selectedFacilityType];
     const maxDistance = Math.floor(facilityData.size / 2) + 1;
     
     if (distance > maxDistance) return null;
@@ -165,7 +165,7 @@ export const useFacilityPreview = ({
       );
       
       if (selectedFacility) {
-        const facilityData = FACILITY_DATA[selectedFacility.type];
+        const facilityData = getFacilityRegistry()[selectedFacility.type];
         const effectRadius = facilityData.effectRadius ?? 0;
         
         // 効果範囲がある施設の場合のみ表示
@@ -188,7 +188,7 @@ export const useFacilityPreview = ({
     
     // プレビュー中の施設効果範囲（ホバー時のみ）
     if (selectedFacilityType && hoveredTile && !isPlacingFacility) {
-      const facilityData = FACILITY_DATA[selectedFacilityType];
+      const facilityData = getFacilityRegistry()[selectedFacilityType];
       const effectRadius = facilityData.effectRadius ?? 0;
       
       if (effectRadius > 0) {
@@ -216,7 +216,7 @@ export const useFacilityPreview = ({
   // プレビューが無効かどうかの判定
   const isPreviewInvalid = React.useMemo(() => {
     if (!selectedFacilityType || !hoveredTile) return false;
-    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const facilityData = getFacilityRegistry()[selectedFacilityType];
     const radius = Math.floor(facilityData.size / 2);
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
@@ -257,7 +257,7 @@ export const useFacilityPreview = ({
     
     // 通常のホバープレビュー
     if (!selectedFacilityType || !hoveredTile) return '';
-    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const facilityData = getFacilityRegistry()[selectedFacilityType];
     const radius = Math.floor(facilityData.size / 2);
     if (
       x >= hoveredTile.x - radius && x <= hoveredTile.x + radius &&
