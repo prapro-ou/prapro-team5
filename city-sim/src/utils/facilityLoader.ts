@@ -79,7 +79,7 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
     if (typeof obj[key] !== 'string') return false;
   }
 
-  if (typeof obj.size !== 'number' || obj.size < 3 || obj.size % 2 === 0) return false;
+  if (typeof obj.size !== 'number' || obj.size < 1 || obj.size % 2 === 0) return false;
   if (typeof obj.cost !== 'number' || obj.cost < 0) return false;
   if (typeof obj.maintenanceCost !== 'number' || obj.maintenanceCost < 0) return false;
   if (typeof obj.satisfaction !== 'number') return false;

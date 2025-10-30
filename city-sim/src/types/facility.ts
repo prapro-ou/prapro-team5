@@ -25,7 +25,7 @@ export interface InfrastructureSupply {
 export const FACILITY_CATEGORIES = {
   residential: { name: "住宅" },
   commercial: { name: "商業" },
-  industrial: { name: "工業" },
+  industrial: { name: "産業" },
   infrastructure: { name: "インフラ" },
   government: { name: "公共" }, 
   others: { name: "その他" },
