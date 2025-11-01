@@ -11,7 +11,9 @@
     "deploy": "npm run build && npx gh-pages -d dist"
   },
   "dependencies": {
+    "@pixi/react": "^8.0.0",
     "@tailwindcss/vite": "^4.1.10",
+    "pixi.js": "^8.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",

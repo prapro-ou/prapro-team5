@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { citizenFeedTask } from './CitizenFeedTask';
 import { calculateProduction, calculateConsumptionAndRevenue } from './EconomyStore';
 import { useInfrastructureStore } from './InfrastructureStore';
@@ -77,7 +77,7 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
       return;
     }
     
-    const data = FACILITY_DATA[facility.type];
+    const data = getFacilityRegistry()[facility.type];
     if (data && data.maintenanceCost) {
       totalCost += data.maintenanceCost;
     }
@@ -113,7 +113,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   if (stats.level == 1) {
     growthrate = 0.2;
     for (const res of residentials) {
-      const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
+      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
 
   counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
@@ -130,7 +130,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   } else if (stats.level == 2) {
     growthrate = 0.1;
     for (const res of residentials) {
-      const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
+      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
 
   counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
@@ -147,7 +147,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   } else {
     growthrate = 0.03;
     for (const res of residentials) {
-      const basePop = FACILITY_DATA[res.type].basePopulation || 100; 
+      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
 
   counts = countNearbyAllTypesWithIndex(res, spatialIndex);
       conditionFactor = 1; // 初期化
@@ -354,7 +354,7 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
   let totalMaintenanceCost = 0;
   facilities.forEach(facility => {
     if (facility.isActive) {
-      const data = FACILITY_DATA[facility.type];
+      const data = getFacilityRegistry()[facility.type];
       if (data && data.maintenanceCost) {
         totalMaintenanceCost += data.maintenanceCost;
       }
@@ -654,7 +654,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // 公園の効果を計算
     facilities.forEach(facility => {
       if (facility.type === 'park') {
-        const parkData = FACILITY_DATA[facility.type];
+        const parkData = getFacilityRegistry()[facility.type];
         const effectRadius = parkData.effectRadius || 3;
         
         // 公園の効果範囲内の住宅をカウント

@@ -1,4 +1,4 @@
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import type { Facility } from '../types/facility';
 import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
@@ -131,7 +131,7 @@ export function calculateProduction(stats: GameStats, facilities: Facility[]): n
   let totalProduced = 0;
 
   industrials.forEach(facility => {
-    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    const workforceData = getFacilityRegistry()[facility.type].workforceRequired;
     if (!workforceData || !workforceData.baseProduction) {
       console.log(`${facility.type}: 労働力データまたは生産データが不足`);
       return;
@@ -161,7 +161,7 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
   let totalRevenue = 0;
 
   commercials.forEach(facility => {
-    const workforceData = FACILITY_DATA[facility.type].workforceRequired;
+    const workforceData = getFacilityRegistry()[facility.type].workforceRequired;
     if (!workforceData || !workforceData.baseRevenue) {
       console.log(`${facility.type}: 労働力データまたは収益データが不足`);
       return;
@@ -185,7 +185,7 @@ export function calculateConsumptionAndRevenue(stats: GameStats, facilities: Fac
 
 // 各施設の資産価値を計算
 export function calculateFacilityAssetValue(facility: Facility, satisfaction: number): number {
-  const facilityData = FACILITY_DATA[facility.type];
+  const facilityData = getFacilityRegistry()[facility.type];
   const baseAssetValue = facilityData.baseAssetValue;
   
   if (!baseAssetValue) return 0; // 資産価値が設定されていない施設は0
@@ -217,7 +217,7 @@ export function calculateAverageAssets(facilities: Facility[], satisfaction: num
 
 // 各施設の利益を計算
 export function calculateFacilityProfit(facility: Facility, efficiency: number): number {
-  const facilityData = FACILITY_DATA[facility.type];
+  const facilityData = getFacilityRegistry()[facility.type];
   const workforceData = facilityData.workforceRequired;
   
   if (!workforceData || !workforceData.baseRevenue) return 0; // 収益が設定されていない施設は0
@@ -304,7 +304,7 @@ export function calculateMonthlyBalance(stats: GameStats, facilities: Facility[]
   
   // 維持費（全施設の維持費合計）
   const maintenanceCost = facilities.reduce((total, facility) => {
-    const facilityData = FACILITY_DATA[facility.type];
+    const facilityData = getFacilityRegistry()[facility.type];
     return total + (facilityData.maintenanceCost || 0);
   }, 0);
   

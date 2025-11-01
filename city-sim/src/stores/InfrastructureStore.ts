@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Facility } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
 export interface InfrastructureStatus {
@@ -39,7 +39,7 @@ export const useInfrastructureStore = create<InfrastructureStore>((set, get) => 
     const activeFacilities = facilities.filter(facility => facility.isActive);
 
     activeFacilities.forEach(facility => {
-      const info = FACILITY_DATA[facility.type];
+      const info = getFacilityRegistry()[facility.type];
       
       // 需要の計算
       if (info.infrastructureDemand) {

@@ -1,4 +1,4 @@
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import type { FacilityType } from '../types/facility';
 
 /**
@@ -10,7 +10,7 @@ export class FacilityUnlockManager {
    */
   static getInitialUnlockedFacilities(): Set<FacilityType> {
     return new Set(
-      Object.entries(FACILITY_DATA)
+      Object.entries(getFacilityRegistry())
         .filter(([_, data]) => data.initiallyUnlocked)
         .map(([type, _]) => type as FacilityType)
     );
@@ -20,7 +20,7 @@ export class FacilityUnlockManager {
    * 指定ミッションでアンロックされる施設の一覧を取得
    */
   static getUnlockableByMission(missionId: string): FacilityType[] {
-    return Object.entries(FACILITY_DATA)
+    return Object.entries(getFacilityRegistry())
       .filter(([_, data]) => 
         data.unlockCondition === 'mission' && 
         data.unlockRequirements?.missionId === missionId
@@ -32,7 +32,7 @@ export class FacilityUnlockManager {
    * 指定実績でアンロックされる施設の一覧を取得
    */
   static getUnlockableByAchievement(achievementId: string): FacilityType[] {
-    return Object.entries(FACILITY_DATA)
+    return Object.entries(getFacilityRegistry())
       .filter(([_, data]) => 
         data.unlockCondition === 'achievement' && 
         data.unlockRequirements?.achievementId === achievementId
@@ -44,7 +44,7 @@ export class FacilityUnlockManager {
    * 施設のアンロック条件を取得
    */
   static getUnlockCondition(facilityType: FacilityType) {
-    const facilityData = FACILITY_DATA[facilityType];
+    const facilityData = getFacilityRegistry()[facilityType];
     if (!facilityData) return null;
     
     return {
@@ -60,7 +60,7 @@ export class FacilityUnlockManager {
   static validateUnlockConfiguration(): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
     
-    Object.entries(FACILITY_DATA).forEach(([type, data]) => {
+    Object.entries(getFacilityRegistry()).forEach(([type, data]) => {
       // ミッション条件の場合はmissionIdが必要
       if (data.unlockCondition === 'mission' && !data.unlockRequirements?.missionId) {
         errors.push(`施設「${type}」: ミッション条件にはmissionIdが必要です`);

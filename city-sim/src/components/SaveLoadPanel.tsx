@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TbX, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useSaveLoad } from '../hooks/useSaveLoad';
 import { useGameStore } from '../stores/GameStore';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
-import { useRewardStore } from '../stores/RewardStore';
+import { useAchievementStore } from '../stores/AchievementStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
+import LoadingScreen from './LoadingScreen';
 
 interface SaveSlot {
   id: string;
@@ -23,6 +24,9 @@ interface SaveLoadPanelProps {
 export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingKind, setLoadingKind] = useState<'idle' | 'load' | 'save'>('idle');
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const progressTimerRef = useRef<number | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   // ストアから状態を取得
@@ -30,7 +34,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
   const facilities = useFacilityStore(state => state.facilities);
   const terrainMap = useTerrainStore(state => state.terrainMap);
   const infrastructureStatus = useInfrastructureStore(state => state.status);
-  const rewards = useRewardStore(state => state.rewards);
+  const achievements = useAchievementStore(state => state.achievements);
   
   // セーブ・ロードフック
   const { saveGame, loadGame, exportGame } = useSaveLoad();
@@ -86,6 +90,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
 
   const handleSave = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('save');
     setMessage(null);
     
     try {
@@ -94,7 +99,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         facilities,
         terrainMap,
         infrastructureStatus,
-        rewards,
+        achievements,
         {
           isPaused: false,
           gameSpeed: 1,
@@ -118,21 +123,37 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
     }
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
   const handleLoad = async (_slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('load');
     setMessage(null);
+    setLoadingProgress(10);
+    // プログレスのハートビート（最大95%まで自動前進）
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      setLoadingProgress((p) => (p < 95 ? Math.min(95, p + 3) : p));
+    }, 120);
+    // 次フレームで描画させてから重い処理を開始
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     
     try {
       const result = await loadGame();
+      setLoadingProgress(55);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       
       if (result.success && result.data) {
         // 管理システムを使用して全ストアを復元
         saveLoadRegistry.loadAllStores(result.data);
+        setLoadingProgress(90);
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         
         setMessage({ type: 'success', text: 'ゲームを読み込みました' });
+        setLoadingProgress(100);
+        await new Promise<void>((resolve) => setTimeout(resolve, 100));
         onClose(); // パネルを閉じる
       } 
       else {
@@ -143,7 +164,13 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
       setMessage({ type: 'error', text: 'ロードに失敗しました' });
     }
     finally {
+      if (progressTimerRef.current) {
+        window.clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+      setLoadingProgress(100);
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
@@ -154,7 +181,7 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         facilities,
         terrainMap,
         infrastructureStatus,
-        rewards,
+        achievements,
         {
           isPaused: false,
           gameSpeed: 1,
@@ -294,12 +321,12 @@ export const SaveLoadPanel: React.FC<SaveLoadPanelProps> = ({ onClose }) => {
         </div>
 
         {/* ローディング表示 */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <div className="text-white">処理中...</div>
-            </div>
-          </div>
+        {isLoading && loadingKind === 'load' && (
+          <LoadingScreen
+            isVisible={true}
+            message={message?.text || 'データを読み込んでいます...'}
+            progress={loadingProgress}
+          />
         )}
       </div>
     </div>

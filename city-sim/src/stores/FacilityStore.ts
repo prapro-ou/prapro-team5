@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import type { Position } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry, loadFacilitiesFromJSON } from '../utils/facilityLoader';
+
+// 起動時にJSONを読み込み（レジストリは内部でマージ・更新）
+void loadFacilitiesFromJSON('data/facilities.json');
 import { useTerrainStore } from './TerrainStore';
 import { getBuildability } from '../utils/terrainGenerator';
 import { saveLoadRegistry } from './SaveLoadRegistry';
@@ -95,7 +98,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   
   checkCanPlace: (position, facilityType, gridSize) => {
     const { facilities } = get();
-    const { getTerrainAt } = useTerrainStore.getState();
+    const { getTerrainAt, canBuildAt } = useTerrainStore.getState();
     
     // もし建設しようとしているのが市役所なら、既に存在しないかチェック
     if (facilityType === 'city_hall') {
@@ -106,7 +109,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       }
     }
     
-    const facilityData = FACILITY_DATA[facilityType];
+    const facilityData = getFacilityRegistry()[facilityType];
     const radius = Math.floor(facilityData.size / 2);
     
     // 範囲外チェック
@@ -132,6 +135,12 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
           console.warn(`地形 ${terrain} には建設できません`);
           return false;
         }
+        
+        // 斜面チェック
+        if (!canBuildAt(x, y, facilityType)) {
+          console.warn(`斜面には建設できません`);
+          return false;
+        }
       }
     }
     
@@ -152,7 +161,7 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
   },
 
   createFacility: (position, type) => {
-    const facilityData = FACILITY_DATA[type];
+    const facilityData = getFacilityRegistry()[type];
     const radius = Math.floor(facilityData.size / 2);
     const occupiedTiles: Position[] = [];
     // 占有するタイルを計算

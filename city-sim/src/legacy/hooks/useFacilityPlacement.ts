@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Position } from '../types/grid';
 import type { FacilityType } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 
 interface UseFacilityPlacementProps {
   size: { width: number; height: number };
@@ -63,7 +63,7 @@ export const useFacilityPlacement = ({
   const startPlacement = (gridPos: Position) => {
     if (!selectedFacilityType) return false;
     
-    const facilityData = FACILITY_DATA[selectedFacilityType];
+    const facilityData = getFacilityRegistry()[selectedFacilityType];
     if (facilityData.category === 'infrastructure') {
       setIsPlacingFacility(true);
       setDragStartTile(gridPos);

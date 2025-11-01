@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Facility } from '../types/facility';
-import { FACILITY_DATA } from '../types/facility';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { toIsometric } from '../utils/coordinates';
 import { getRoadConnectionType } from '../utils/roadConnection';
 
@@ -16,7 +16,7 @@ export const useFacilityDisplay = ({
 
   // 施設の画像情報を取得
   const getFacilityImageData = React.useCallback((facility: Facility) => {
-    const facilityData = FACILITY_DATA[facility.type];
+    const facilityData = getFacilityRegistry()[facility.type];
     const idx = facility.variantIndex ?? 0;
     const size = facilityData.size;
     const imgPath = facilityData.imgPaths?.[idx] ?? "";
@@ -28,7 +28,7 @@ export const useFacilityDisplay = ({
   // 道路接続の画像情報を取得
   const getRoadImageData = React.useCallback((facility: Facility, x: number, y: number) => {
     const connection = getRoadConnectionType(facilityMap, x, y);
-    const facilityData = FACILITY_DATA[facility.type];
+    const facilityData = getFacilityRegistry()[facility.type];
     
     const imgPath = facilityData.imgPaths?.[connection.variantIndex] ?? "";
     const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
@@ -97,7 +97,7 @@ export const useFacilityDisplay = ({
 
   // 施設サイズを考慮したZ-index計算
   const calculateFacilityZIndex = React.useCallback((facility: Facility): number => {
-    const facilityData = FACILITY_DATA[facility.type];
+    const facilityData = getFacilityRegistry()[facility.type];
     const size = facilityData.size;
     
     return calculateIsometricZIndex(facility.position.x, facility.position.y, size);

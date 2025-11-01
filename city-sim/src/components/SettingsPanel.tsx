@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { BGMPlayer } from './SoundSettings';
 import { TbX, TbFileText, TbDeviceFloppy, TbFolderOpen, TbDownload, TbUsers, TbCash, TbStar, TbClock } from 'react-icons/tb';
 import { useGameStore } from '../stores/GameStore';
+import { useUIStore } from '../stores/UIStore';
 import { saveLoadRegistry } from '../stores/SaveLoadRegistry';
+import LoadingScreen from './LoadingScreen';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -14,16 +16,23 @@ interface SettingsPanelProps {
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCredits, isGameStarted, onReturnToTitle }) => {
   const [isSaveLoadOpen, setIsSaveLoadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingKind, setLoadingKind] = useState<'idle' | 'load' | 'save'>('idle');
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const progressTimerRef = useRef<number | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   // ゲーム状態を取得
   const gameStats = useGameStore(state => state.stats);
+  
+  // UI設定を取得
+  const { showOpeningSequence, setShowOpeningSequence } = useUIStore();
 
   // ゲーム中かどうかを判定（スタート画面が閉じられている）
   const isGameInProgress = isGameStarted;
 
   const handleSave = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('save');
     setMessage(null);
     
     try {
@@ -48,12 +57,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
     } 
     finally {
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
   const handleLoad = async (slotId: string) => {
     setIsLoading(true);
+    setLoadingKind('load');
     setMessage(null);
+    setLoadingProgress(10);
+
+    if (progressTimerRef.current) window.clearInterval(progressTimerRef.current);
+    progressTimerRef.current = window.setInterval(() => {
+      setLoadingProgress((p) => (p < 95 ? Math.min(95, p + 3) : p));
+    }, 120);
+    // 次フレームで描画させてから重い処理を開始
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     
     try {
       const slotKey = `city-sim-save-${slotId}`;
@@ -65,18 +84,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
       }
 
       const saveData = JSON.parse(saveDataString);
+      setLoadingProgress(50);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       
       // 全ストアの状態を復元
       saveLoadRegistry.loadAllStores(saveData);
+      setLoadingProgress(85);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       
       setMessage({ type: 'success', text: 'ゲームを読み込みました' });
+      setLoadingProgress(100);
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
       onClose(); // 設定パネルを閉じる
     } 
     catch (error) {
       setMessage({ type: 'error', text: 'ロードに失敗しました' });
     } 
     finally {
+      if (progressTimerRef.current) {
+        window.clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+      setLoadingProgress(100);
       setIsLoading(false);
+      setLoadingKind('idle');
     }
   };
 
@@ -250,13 +281,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
             })}
           </div>
 
-          {/* ローディング表示 */}
-          {isLoading && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <div className="text-white">処理中...</div>
-              </div>
-            </div>
+          {/* ローディング画面（タイトル/設定からのロード/セーブ中のみ） */}
+          {isLoading && loadingKind === 'load' && (
+            <LoadingScreen
+              isVisible={true}
+              message={message?.text || 'データを読み込んでいます...'}
+              progress={loadingProgress}
+            />
           )}
         </div>
       </div>
@@ -276,6 +307,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose, onShowCre
         <div className="space-y-4">
           {/* 既存のBGMプレイヤー */}
           <BGMPlayer />
+
+          {/* オープニングシークエンス設定（タイトル画面でのみ表示） */}
+          {!isGameInProgress && (
+            <div className="bg-gray-700/50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-medium">オープニング</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showOpeningSequence}
+                    onChange={(e) => setShowOpeningSequence(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">
+                新規ゲーム開始時にオープニングを表示するかどうかを設定します
+              </p>
+            </div>
+          )}
 
           {/* ゲーム中のみセーブ・ロードボタンを表示 */}
           {isGameInProgress && (

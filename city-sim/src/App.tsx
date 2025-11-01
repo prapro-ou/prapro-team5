@@ -1,30 +1,31 @@
-// import { Grid } from './components/grid'
-import { CanvasGrid } from './components/CanvasGrid'
+import IsometricGrid from './components/MapGrid'
+import LoadingScreen from './components/LoadingScreen'
 import { FacilitySelector } from './components/FacilitySelector'
 import { InfoPanel } from './components/InfoPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CreditsPanel } from './components/CreditsPanel'
 import StartScreen from './components/StartScreen'
 import OpeningSequence from './components/OpeningSequence'
-import RewardPanel from './components/RewardPanel';
+import AchievementPanel from './components/AchievementPanel';
 import { StatisticsPanel } from './components/StatisticsScreen';
 import { YearlyEvaluationResult } from './components/YearlyEvaluationResult';
 import MissionPanel from './components/MissionPanel';
 
 import type { Position } from './types/grid'
 import type { FacilityType } from './types/facility'
-import { FACILITY_DATA } from './types/facility'
+import { getFacilityRegistry } from './utils/facilityLoader'
+import { GRID_WIDTH, GRID_HEIGHT } from './constants/gridConstants'
 import './App.css'
-import { TbCrane ,TbCraneOff, TbSettings, TbAward, TbChartBar, TbChecklist, TbBulldozer, TbMessageCircle } from "react-icons/tb";
+import { TbCrane ,TbCraneOff, TbBulldozer, TbMessageCircle, TbChartBar, TbChecklist } from "react-icons/tb";
 import CitizenFeed from "./components/CitizenFeed";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { useGameStore } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { useMissionStore } from './stores/MissionStore';
 import { playBuildSound, playPanelSound } from './components/SoundSettings';
-import { useRewardStore } from './stores/RewardStore';
+import { useAchievementStore } from './stores/AchievementStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
@@ -34,7 +35,6 @@ import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
 
 // SNSフィード表示用ボタンコンポーネント
-
 const SNSFeedButton = () => {
   const [showSNS, setShowSNS] = useState(false);
   return (
@@ -83,8 +83,16 @@ function App() {
   // オープニングシーケンスの表示状態
   const [showOpeningSequence, setShowOpeningSequence] = useState(false);
   
+  // UI設定からオープニングシークエンスの表示設定を取得
+  const { showOpeningSequence: uiShowOpeningSequence } = useUIStore();
+  
   // 強制初期化完了フラグ
   const [isInitializationComplete, setIsInitializationComplete] = useState(false);
+
+  // グリッド初期描画ローディング
+  const [isGridLoading, setIsGridLoading] = useState(false);
+  const [gridLoadingStartedAt, setGridLoadingStartedAt] = useState<number | null>(null);
+  const [gridKey, setGridKey] = useState(0);
 
   // 施設削除モード状態
   const [deleteMode, setDeleteMode] = useState(false);
@@ -95,28 +103,46 @@ function App() {
   // 時間制御
   const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
 
-  const GRID_WIDTH = 120;  // グリッドの幅
-  const GRID_HEIGHT = 120; // グリッドの高さ
-
   // 施設状態
   const { 
     facilities, 
     selectedFacilityType, 
     setSelectedFacilityType, 
-  addFacility,
-  checkCanPlace,
-  createFacility,
-  removeFacility
+    addFacility,
+    checkCanPlace,
+    createFacility,
+    removeFacility
   } = useFacilityStore();
 
-  // 報酬パネル表示状態のみAppで管理
-  const [showRewardPanel, setShowRewardPanel] = useState(false);
-  const { rewards, claimReward, updateAchievements, hasClaimableRewards } = useRewardStore();
+  const [showAchievementPanel, setShowAchievementPanel] = useState(false);
+  const { achievements, claimAchievement, updateAchievements, loadAchievementsFromFile } = useAchievementStore();
   
   // 秘書ストア
   const { updateSeasonalClothing } = useSecretaryStore();
   
-  // 報酬達成判定はゲーム状態が変わるたびに呼ぶ
+  // 実績システムの初期化
+  useEffect(() => {
+    if (isInitializationComplete) {
+      console.log('実績システムを初期化中...');
+      loadAchievementsFromFile();
+    }
+  }, [isInitializationComplete, loadAchievementsFromFile]);
+  
+  // ゲーム開始時の実績読み込み（フォールバック）
+  useEffect(() => {
+    if (!isInitializationComplete && !showStartScreen && !showOpeningSequence) {
+      console.log('ゲーム開始時の実績読み込み...');
+      loadAchievementsFromFile();
+    }
+  }, [showStartScreen, showOpeningSequence, loadAchievementsFromFile, isInitializationComplete]);
+  
+  // アプリ起動時の実績読み込み（最終フォールバック）
+  useEffect(() => {
+    console.log('アプリ起動時の実績読み込み...');
+    loadAchievementsFromFile();
+  }, [loadAchievementsFromFile]);
+  
+  // 実績達成判定はゲーム状態が変わるたびに呼ぶ
   useEffect(() => {
     if (!isInitializationComplete) return;
     updateAchievements();
@@ -163,21 +189,23 @@ function App() {
   // 道路接続状態の更新（施設が変更された時のみ）
   useEffect(() => {
     if (!isInitializationComplete) return;
-    if (!showStartScreen || !showOpeningSequence || facilities.length === 0) return;
+    if (showStartScreen || showOpeningSequence) return;
+    if (facilities.length === 0) return;
     const { updateRoadConnectivity } = useFacilityStore.getState();
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
    useEffect(() => {
-     if (!isInitializationComplete || !showStartScreen || !showOpeningSequence) return;
+     if (!isInitializationComplete) return;
+     if (showStartScreen || showOpeningSequence) return;
      startHappinessDecayTask();
    }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
   // 地形生成
-  const { generateTerrain } = useTerrainStore();
+  const { generateTerrain, generateHeightTerrain } = useTerrainStore();
 
   // 施設配置処理
-  const placeFacility = (position: Position, type: FacilityType) => {
-    const facilityData = FACILITY_DATA[type];
+  const placeFacility = useCallback((position: Position, type: FacilityType) => {
+    const facilityData = getFacilityRegistry()[type];
     // 配置可能かチェック
     if (!checkCanPlace(position, type, { width: GRID_WIDTH, height: GRID_HEIGHT })) {
       console.warn(`施設を配置できません`);
@@ -218,9 +246,9 @@ function App() {
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-  };
+  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound, recalculateSatisfaction]);
 
-  const handleTileClick = (position: Position) => {
+  const handleTileClick = useCallback((position: Position) => {
     const correctedPosition = {
       x: Math.max(0, Math.min(GRID_WIDTH - 1, position.x)),
       y: Math.max(0, Math.min(GRID_HEIGHT - 1, position.y))
@@ -233,7 +261,7 @@ function App() {
         );
         if (facility) {
           // 住宅施設なら人口減算
-          const facilityData = FACILITY_DATA[facility.type];
+          const facilityData = getFacilityRegistry()[facility.type];
           if (facilityData.category === 'residential' && typeof facilityData.basePopulation === 'number') {
             addPopulation(-facilityData.basePopulation);
           }
@@ -256,7 +284,7 @@ function App() {
           placeFacility(correctedPosition, selectedFacilityType);
         }
       }
-  };
+  }, [deleteMode, facilities, addPopulation, removeFacility, selectedTile, setSelectedTile, selectedFacilityType, placeFacility]);
 
   // レベルアップ通知を一定時間で消す
   useEffect(() => {
@@ -273,8 +301,8 @@ function App() {
     return (
       <OpeningSequence 
                 onComplete={() => {
-          // 初期化完了フラグを一時的に無効化
-          setIsInitializationComplete(false);
+          // 初期化完了フラグを有効化
+          setIsInitializationComplete(true);
           
           // ゲーム状態を初期化（SaveLoadRegistryの影響を回避するため強制初期化）
           // 副作用はクソ，何もわからん
@@ -321,7 +349,7 @@ function App() {
           useFacilityStore.getState().resetToInitial();
           useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
           useInfrastructureStore.getState().resetToInitial();
-          useRewardStore.getState().resetToInitial();
+          useAchievementStore.getState().resetToInitial();
           useMissionStore.getState().resetToInitial();
           useTimeControlStore.getState().resetToInitial();
           useSecretaryStore.getState().resetToInitial();
@@ -339,13 +367,16 @@ function App() {
             });
           }
           
-          // オープニング状態を変更
-          setShowOpeningSequence(false);
+          // 高さ地形を自動生成
+          generateHeightTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           
-          // 初期化完了フラグを有効化
-          setTimeout(() => {
-            setIsInitializationComplete(true);
-          }, 100);
+          // オープニング状態を変更
+        // グリッド初期描画のローディングを開始
+        setIsGridLoading(true);
+        setGridLoadingStartedAt(Date.now());
+        setShowOpeningSequence(false);
+          
+          // 初期化完了フラグは既に有効化済み
         }}
       />
     );
@@ -359,14 +390,94 @@ function App() {
           onStart={() => {
             localStorage.removeItem('city-sim-loaded');
             setShowStartScreen(false);
-            setShowOpeningSequence(true);
+            // UI設定に応じてオープニングを表示するかどうかを決定
+            if (uiShowOpeningSequence) {
+              setShowOpeningSequence(true);
+            }
+            else {
+              // オープニングなしの場合は直接初期化完了に移行
+              
+              // ゲーム状態を初期化
+              useGameStore.setState({
+                stats: {
+                  level: 1,
+                  money: 10000,
+                  population: 0,
+                  satisfaction: 50,
+                  workforceAllocations: [],
+                  date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
+                  monthlyBalance: { income: 0, expense: 0, balance: 0 },
+                  yearlyEvaluation: null,
+                  yearlyStats: null,
+                  previousYearStats: null,
+                  previousYearEvaluation: null,
+                  monthlyAccumulation: {
+                    year: 2024,
+                    monthlyTaxRevenue: new Array(12).fill(0),
+                    monthlyMaintenanceCost: new Array(12).fill(0),
+                    monthlyPopulation: new Array(12).fill(0),
+                    monthlySatisfaction: new Array(12).fill(50),
+                    monthlySupportRatings: {
+                      central_government: new Array(12).fill(50),
+                      citizens: new Array(12).fill(50),
+                      chamber_of_commerce: new Array(12).fill(50)
+                    }
+                  },
+                  supportSystem: {
+                    factionSupports: [
+                      { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
+                      { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+                    ],
+                    monthlyHistory: [],
+                    yearlyHistory: [],
+                    lastCalculationDate: { year: 2024, month: 1 }
+                  }
+                },
+                levelUpMessage: null
+              });
+              
+              // 他のストアをリセット
+              useFacilityStore.getState().resetToInitial();
+              useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              useInfrastructureStore.getState().resetToInitial();
+              useAchievementStore.getState().resetToInitial();
+              useMissionStore.getState().resetToInitial();
+              useTimeControlStore.getState().resetToInitial();
+              useSecretaryStore.getState().resetToInitial();
+              useSupportStore.getState().resetToInitial();
+              useYearlyEvaluationStore.getState().resetToInitial();
+
+              // 地形生成と道路配置
+              const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              if (generatedRoads.length > 0) {
+                const { addFacility, createFacility } = useFacilityStore.getState();
+                generatedRoads.forEach(road => {
+                  const roadFacility = createFacility({ x: road.x, y: road.y }, 'road');
+                  roadFacility.variantIndex = road.variantIndex;
+                  roadFacility.isConnected = true;
+                  addFacility(roadFacility);
+                });
+              }
+              
+              // 高さ地形を自動生成
+              generateHeightTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
+              
+              setIsInitializationComplete(true);
+              setIsGridLoading(true);
+              setGridLoadingStartedAt(Date.now());
+            }
+            setGridKey(k => k + 1);
           }} 
           onShowSettings={openSettings}
           onLoadGame={() => {
+            // タイトルからロード後、グリッド初期描画のローディングを先に開始
+            setIsGridLoading(true);
+            setGridLoadingStartedAt(Date.now());
+            // 設定画面は自動で開かない
             setShowStartScreen(false);
-            setTimeout(() => {
-              openSettings();
-            }, 100);
+            // Gridを確実に再マウント
+            setGridKey(k => k + 1);
           }}
         />
         {/* スタート画面中でも設定パネルを表示可能にする */}
@@ -405,49 +516,30 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-900">
-      {/* 右上に設定ボタンと報酬ボタンを並べて配置 */}
-      <div className="fixed top-4 right-5 flex gap-4 z-[1200] items-center">
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowRewardPanel(v => {
-                playPanelSound(); // 開閉どちらでも同じ音
-                return !v;
-              });
-            }}
-            className="bg-gray-600 hover:bg-gray-700 text-white w-20 h-12 rounded-lg shadow-lg transition-colors flex items-center justify-center"
-          >
-            <TbAward size={24} className="text-yellow-400" />
-          </button>
-          {/* 受け取り可能な報酬がある場合の通知バッジ */}
-          {hasClaimableRewards() && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
-          )}
-        </div>
-        <button 
-          onClick={openSettings}
-          className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-colors"
-        >
-          <TbSettings size={26} />
-        </button>
-      </div>
-      {/* 報酬パネル */}
-      {showRewardPanel && (
-        <RewardPanel
-          rewards={rewards}
-          onClaim={claimReward}
-          onClose={() => setShowRewardPanel(false)}
+      {/* 情報パネル（統合） */}
+      <InfoPanel 
+        onOpenSettings={openSettings}
+        onShowAchievementPanel={setShowAchievementPanel}
+        showAchievementPanel={showAchievementPanel}
+        isPaused={isPaused}
+        deleteMode={deleteMode}
+      />
+      
+      {/* 実績パネル */}
+      {showAchievementPanel && (
+        <AchievementPanel
+          achievements={achievements}
+          onClaim={claimAchievement}
+          onClose={() => setShowAchievementPanel(false)}
         />
       )}
+      
       {/* レベルアップ通知 */}
       {levelUpMessage && (
         <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-black text-xl font-bold px-8 py-4 rounded-lg shadow-lg z-[2000] animate-bounce">
           {levelUpMessage}
         </div>
       )}
-      {/* 情報パネル */}
-      <InfoPanel />
-      
       {/* 統計画面ボタン */}
       <button
         onClick={openStatistics}
@@ -466,14 +558,22 @@ function App() {
         <TbChecklist />
       </button>
 
-
-
       {/* ゲームグリッド */}
       <div className="pt-20 w-full h-full overflow-hidden">
         <div className="w-full h-full">
-          <CanvasGrid 
+          <IsometricGrid
+            key={gridKey}
             size={{ width: GRID_WIDTH, height: GRID_HEIGHT }}
             onTileClick={handleTileClick}
+            onReady={async () => {
+              // 最小表示時間200msを確保
+              const started = gridLoadingStartedAt ?? Date.now();
+              const elapsed = Date.now() - started;
+              const remain = Math.max(0, 200 - elapsed);
+              if (remain > 0) await new Promise((r) => setTimeout(r, remain));
+              setIsGridLoading(false);
+              setGridLoadingStartedAt(null);
+            }}
             selectedPosition={selectedTile}
             facilities={facilities}
             selectedFacilityType={selectedFacilityType}
@@ -533,7 +633,7 @@ function App() {
               useFacilityStore.getState().resetToInitial();
               useTerrainStore.getState().resetToInitial({ width: GRID_WIDTH, height: GRID_HEIGHT });
               useInfrastructureStore.getState().resetToInitial();
-              useRewardStore.getState().resetToInitial();
+              useAchievementStore.getState().resetToInitial();
               useMissionStore.getState().resetToInitial();
               
               // 設定パネルを閉じて、スタート画面を表示
@@ -554,6 +654,15 @@ function App() {
       {/* ミッションパネル */}
       {isMissionPanelOpen && (
         <MissionPanel onClose={closeMissionPanel} />
+      )}
+
+      {/* グリッド初期描画時のローディング */}
+      {isGridLoading && (
+        <LoadingScreen
+          isVisible={true}
+          message={'環境を準備しています...'}
+          progress={90}
+        />
       )}
     </div>
     

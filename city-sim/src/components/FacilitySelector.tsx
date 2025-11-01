@@ -1,5 +1,6 @@
 import type { CategoryKey, FacilityType } from "../types/facility";
-import { FACILITY_DATA, FACILITY_CATEGORIES } from "../types/facility";
+import { FACILITY_CATEGORIES } from "../types/facility";
+import { getFacilityRegistry } from "../utils/facilityLoader";
 import { useState, useEffect } from "react";
 import { TbCash, TbLock } from "react-icons/tb";
 import { playPanelSound, playSelectSound, playSelect1Sound } from "./SoundSettings";
@@ -21,12 +22,12 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
     setDetailType(null);
   }, [category, selectedType]);
 
-  const categorizedFacilities = Object.values(FACILITY_DATA).reduce((acc, facility) => {
+  const categorizedFacilities = Object.values(getFacilityRegistry()).reduce((acc, facility) => {
     const category = facility.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push(facility);
     return acc;
-  }, {} as Record<CategoryKey, typeof FACILITY_DATA[keyof typeof FACILITY_DATA][]>);
+  }, {} as Record<CategoryKey, ReturnType<typeof getFacilityRegistry>[keyof ReturnType<typeof getFacilityRegistry>][]>);
 
 
   return (
@@ -121,13 +122,13 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
           >
             閉じる
           </button>
-          <div><b>{FACILITY_DATA[detailType].name}</b></div>
-          <div>コスト: ¥{FACILITY_DATA[detailType].cost?.toLocaleString() ?? '-'}</div>
-          <div>維持費: ¥{FACILITY_DATA[detailType].maintenanceCost?.toLocaleString() ?? '-'}/月</div>
-          {FACILITY_DATA[detailType].workforceRequired && (
-            <div>必要労働力: {FACILITY_DATA[detailType].workforceRequired?.min}-{FACILITY_DATA[detailType].workforceRequired?.max}人</div>
+          <div><b>{getFacilityRegistry()[detailType].name}</b></div>
+          <div>コスト: ¥{getFacilityRegistry()[detailType].cost?.toLocaleString() ?? '-'}</div>
+          <div>維持費: ¥{getFacilityRegistry()[detailType].maintenanceCost?.toLocaleString() ?? '-'}/月</div>
+          {getFacilityRegistry()[detailType].workforceRequired && (
+            <div>必要労働力: {getFacilityRegistry()[detailType].workforceRequired?.min}-{getFacilityRegistry()[detailType].workforceRequired?.max}人</div>
           )}
-          <div>満足度: {FACILITY_DATA[detailType].satisfaction ?? 0}</div>
+          <div>満足度: {getFacilityRegistry()[detailType].satisfaction ?? 0}</div>
         </div>
       )}
     </div>

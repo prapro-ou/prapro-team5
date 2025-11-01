@@ -1,7 +1,7 @@
 # team5 G5：Revitalize
 
 <div align="center" style="background-color: white; display: inline-block; padding: 10px; border-radius: 8px;">
-  <img src="city-sim/public/logo.svg" alt="logo" width="500" height="100">
+  <img src="city-sim/public/logo.png" alt="logo" width="1000" height="200">
 </div>
 
 ## プロジェクト概要
