@@ -185,6 +185,48 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         </div>
       </div>
 
+      {/* 都市状態 */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-teal-300 flex items-center gap-2">
+          <TbChartBar className="text-teal-400" />
+          都市状態（現在値・前月比）
+        </h3>
+        {(() => {
+          const cp = stats.cityParameters;
+          const acc = stats.monthlyAccumulation;
+          const monthIdx = Math.max(0, (stats.date.month - 1) | 0);
+          const prevIdx = Math.max(0, monthIdx - 1);
+          const prev = acc.monthlyCityParameters && acc.monthlyCityParameters[prevIdx];
+          const items: { key: string; name: string; value: number; diff: number }[] = [
+            { key: 'entertainment', name: '娯楽', value: cp?.entertainment ?? 50, diff: prev ? (cp?.entertainment ?? 50) - prev.entertainment : 0 },
+            { key: 'security', name: '治安', value: cp?.security ?? 50, diff: prev ? (cp?.security ?? 50) - prev.security : 0 },
+            { key: 'sanitation', name: '衛生', value: cp?.sanitation ?? 50, diff: prev ? (cp?.sanitation ?? 50) - prev.sanitation : 0 },
+            { key: 'transit', name: '交通利便性', value: cp?.transit ?? 50, diff: prev ? (cp?.transit ?? 50) - prev.transit : 0 },
+            { key: 'environment', name: '環境', value: cp?.environment ?? 50, diff: prev ? (cp?.environment ?? 50) - prev.environment : 0 },
+            { key: 'education', name: '教育', value: cp?.education ?? 50, diff: prev ? (cp?.education ?? 50) - prev.education : 0 },
+            { key: 'disaster_prevention', name: '防災', value: cp?.disaster_prevention ?? 50, diff: prev ? (cp?.disaster_prevention ?? 50) - prev.disaster_prevention : 0 },
+            { key: 'tourism', name: '観光', value: cp?.tourism ?? 50, diff: prev ? (cp?.tourism ?? 50) - prev.tourism : 0 },
+          ];
+          const getDiffColor = (d: number) => d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-400';
+          const getDiffLabel = (d: number) => d === 0 ? '±0' : `${d > 0 ? '+' : ''}${Math.round(d)}`;
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {items.map(item => (
+                <div key={item.key} className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                  <div className="text-sm text-gray-300 mb-1">{item.name}</div>
+                  <div className="flex items-baseline justify-between">
+                    <div className="text-2xl font-bold text-teal-300">{Math.round(item.value)}</div>
+                    <div className={`text-sm font-bold ${getDiffColor(item.diff)}`}>
+                      {getDiffLabel(item.diff)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
       {/* 前年度評価結果セクション */}
       {stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-600 shadow-lg">
