@@ -128,7 +128,6 @@ export function FacilitySelector({ selectedType, onSelectType, money }: Facility
           {getFacilityRegistry()[detailType].workforceRequired && (
             <div>必要労働力: {getFacilityRegistry()[detailType].workforceRequired?.min}-{getFacilityRegistry()[detailType].workforceRequired?.max}人</div>
           )}
-          <div>満足度: {getFacilityRegistry()[detailType].satisfaction ?? 0}</div>
         </div>
       )}
     </div>

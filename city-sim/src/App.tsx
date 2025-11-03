@@ -29,7 +29,6 @@ import { useAchievementStore } from './stores/AchievementStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
-import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
 import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
@@ -99,7 +98,7 @@ function App() {
   const [deleteMode, setDeleteMode] = useState(false);
 
   // ゲーム統計情報・レベルアップ通知
-  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
+  const { stats, spendMoney, advanceTime, addPopulation, levelUpMessage, setLevelUpMessage } = useGameStore();
   
   // 時間制御
   const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
@@ -196,11 +195,7 @@ function App() {
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
-   useEffect(() => {
-     if (!isInitializationComplete) return;
-     if (showStartScreen || showOpeningSequence) return;
-     startHappinessDecayTask();
-   }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
+  
   // 地形生成
   const { generateTerrain, generateHeightTerrain } = useTerrainStore();
 
@@ -239,15 +234,13 @@ function App() {
         }
       }
     }
-    // 施設を設置した後に満足度を再計算する
-    // この時、更新後の施設リストを取得して渡す
-    recalculateSatisfaction(useFacilityStore.getState().facilities);
+    // 満足度は月次で再計算される
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
 
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound, recalculateSatisfaction]);
+  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound]);
 
   const handleTileClick = useCallback((position: Position) => {
     const correctedPosition = {

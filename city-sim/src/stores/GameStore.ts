@@ -30,7 +30,7 @@ interface GameStore {
   spendMoney: (amount: number) => boolean;
   advanceTime: () => void;
   addPopulation: (count: number) => void;
-  recalculateSatisfaction: (facilities: Facility[]) => void;
+  
   monthlyTasks: MonthlyTask[];
   levelUpMessage: string | null;
   setLevelUpMessage: (msg: string | null) => void;
@@ -200,30 +200,7 @@ const processInfrastructure: MonthlyTask = (get, set) => {
   calculateInfrastructure(facilities);
   
   // インフラ不足
-  const shortage = getInfrastructureShortage();
-  let satisfactionPenalty = 0;
-  
-  // 水道不足
-  if (shortage.water > 0) {
-    satisfactionPenalty += Math.min(20, shortage.water / 10);
-  }
-  
-  // 電気不足
-  if (shortage.electricity > 0) {
-    satisfactionPenalty += Math.min(20, shortage.electricity / 10);
-  }
-  
-  // 満足度更新
-  if (satisfactionPenalty > 0) {
-    const currentStats = get().stats;
-    const newSatisfaction = Math.max(0, currentStats.satisfaction - satisfactionPenalty);
-    set({
-      stats: {
-        ...currentStats,
-        satisfaction: newSatisfaction
-      }
-    });
-  }
+  const _shortage = getInfrastructureShortage();
 };
 
 // 月次収支を計算し、統計に反映するタスク
@@ -674,12 +651,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 週の進行のみの場合
       set({ stats: newStats });
     }
-    
-    // 満足度の再計算
-    const facilities = useFacilityStore.getState().facilities;
-    const { recalculateSatisfaction } = get();
-    recalculateSatisfaction(facilities);
-    
+
     // レベルアップチェック
     checkLevelUp(get().stats, set);
 
@@ -714,11 +686,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  recalculateSatisfaction: (_facilities) => {
-    const { stats } = get();
-    const newSatisfaction = calculateSatisfactionFromParameters(stats.cityParameters, stats.happinessPenalty);
-    set({ stats: { ...stats, satisfaction: newSatisfaction, happinessPenalty: 0 } });
-  },
+  
 
   // セーブ・ロード機能
   saveState: () => {

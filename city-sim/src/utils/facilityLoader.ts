@@ -82,7 +82,6 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
   if (typeof obj.size !== 'number' || obj.size < 1 || obj.size % 2 === 0) return false;
   if (typeof obj.cost !== 'number' || obj.cost < 0) return false;
   if (typeof obj.maintenanceCost !== 'number' || obj.maintenanceCost < 0) return false;
-  if (typeof obj.satisfaction !== 'number') return false;
   if (typeof obj.initiallyUnlocked !== 'boolean') return false;
 
   // 任意フィールドの軽い整合性

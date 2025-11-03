@@ -46,7 +46,6 @@ export interface FacilityInfo {
   category: CategoryKey;    // カテゴリ
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
-  satisfaction: number;
   attractiveness?: number;   // 魅力度（労働力配分の優先度、労働力が必要な施設のみ）
   // --- インフラ用プロパティ ---
   infrastructureDemand?: InfrastructureDemand; // インフラ需要
