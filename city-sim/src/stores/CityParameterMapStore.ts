@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { CityParameterType } from '../types/cityParameter';
+import { useFacilityStore } from './FacilityStore';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 
 // 都市パラメータマップの設定
 export interface CityParameterMapsConfig {
@@ -119,10 +121,39 @@ export const useCityParameterMapStore = create<CityParameterMapsStore>((set, get
     set({ maps, dirtyChunks: new Set(dirtyChunks) });
   },
 
-  applyFacility: (_facilityId, _mode) => {
+  applyFacility: (facilityId, mode) => {
+    const facility = useFacilityStore.getState().facilities.find(f => f.id === facilityId);
+    if (!facility) return;
+    const info = getFacilityRegistry()[facility.type];
+    if (!info || !info.parameterContributions) return;
+    const cx = facility.position.x;
+    const cy = facility.position.y;
+    for (const [param, contrib] of Object.entries(info.parameterContributions)) {
+      if (!contrib) continue;
+      if (contrib.requiresActive && !facility.isActive) continue;
+      const radius = typeof contrib.radius === 'number' ? contrib.radius : (facility.effectRadius ?? 0);
+      if (!radius || !Number.isFinite(radius) || radius <= 0) continue;
+      const strength = typeof contrib.baseValue === 'number' ? contrib.baseValue : 0;
+      if (!strength) continue;
+      (get().applyStamp as any)(param as ParameterKey, cx, cy, Math.floor(radius), strength, mode);
+    }
   },
 
-  moveFacility: (_facilityId, _from, _to) => {
+  moveFacility: (facilityId, from, to) => {
+    const facility = useFacilityStore.getState().facilities.find(f => f.id === facilityId);
+    if (!facility) return;
+    const info = getFacilityRegistry()[facility.type];
+    if (!info || !info.parameterContributions) return;
+    for (const [param, contrib] of Object.entries(info.parameterContributions)) {
+      if (!contrib) continue;
+      if (contrib.requiresActive && !facility.isActive) continue;
+      const radius = typeof contrib.radius === 'number' ? contrib.radius : (facility.effectRadius ?? 0);
+      if (!radius || !Number.isFinite(radius) || radius <= 0) continue;
+      const strength = typeof contrib.baseValue === 'number' ? contrib.baseValue : 0;
+      if (!strength) continue;
+      (get().applyStamp as any)(param as ParameterKey, from.x, from.y, Math.floor(radius), strength, 'sub');
+      (get().applyStamp as any)(param as ParameterKey, to.x, to.y, Math.floor(radius), strength, 'add');
+    }
   },
 
   sampleAt: (param, x, y) => {
