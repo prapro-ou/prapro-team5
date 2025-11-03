@@ -47,6 +47,17 @@ const PARAMS: ParameterKey[] = [
   'tourism',
 ];
 
+const LUT_SIZE = 256;
+function buildLinearLUT(): Float32Array {
+  const lut = new Float32Array(LUT_SIZE);
+  for (let i = 0; i < LUT_SIZE; i++) {
+    const u = i / (LUT_SIZE - 1); // 0..1
+    lut[i] = Math.max(0, 1 - u);  // 線形減衰（最近傍参照）
+  }
+  return lut;
+}
+const ATTENUATION_LUT = buildLinearLUT();
+
 function newMaps(width: number, height: number): Record<ParameterKey, Float32Array> {
   const len = width * height;
   const m = {} as Record<ParameterKey, Float32Array>;
@@ -68,7 +79,44 @@ export const useCityParameterMapStore = create<CityParameterMapsStore>((set, get
   })),
 
   applyStamp: (param, cx, cy, radius, strength, mode) => {
-    void param; void cx; void cy; void radius; void strength; void mode;
+    const { config, maps, dirtyChunks } = get();
+    const { width, height, chunkSize } = config;
+    if (width <= 0 || height <= 0) return;
+    if (radius <= 0 || strength === 0) return;
+
+    const map = maps[param];
+    const r = Math.floor(radius);
+    const minX = Math.max(0, cx - r);
+    const maxX = Math.min(width - 1, cx + r);
+    const minY = Math.max(0, cy - r);
+    const maxY = Math.min(height - 1, cy + r);
+    const rInv = 1 / Math.max(1, radius);
+    const sign = mode === 'sub' ? -1 : 1;
+
+    for (let y = minY; y <= maxY; y++) {
+      const dy = y - cy;
+      for (let x = minX; x <= maxX; x++) {
+        const dx = x - cx;
+        const dist = Math.hypot(dx, dy);
+        if (dist > radius) continue;
+        const u = dist * rInv; // 0..1
+        const idx = (u >= 1) ? (LUT_SIZE - 1) : (u <= 0 ? 0 : (u * (LUT_SIZE - 1)) | 0);
+        const a = ATTENUATION_LUT[idx];
+        const delta = sign * strength * a;
+        map[y * width + x] += delta;
+      }
+    }
+
+    const minChunkX = Math.floor(minX / chunkSize);
+    const maxChunkX = Math.floor(maxX / chunkSize);
+    const minChunkY = Math.floor(minY / chunkSize);
+    const maxChunkY = Math.floor(maxY / chunkSize);
+    for (let cyi = minChunkY; cyi <= maxChunkY; cyi++) {
+      for (let cxi = minChunkX; cxi <= maxChunkX; cxi++) {
+        dirtyChunks.add(chunkKey(cxi, cyi));
+      }
+    }
+    set({ maps, dirtyChunks: new Set(dirtyChunks) });
   },
 
   applyFacility: (_facilityId, _mode) => {
