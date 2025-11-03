@@ -212,8 +212,19 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           const mcp = acc.monthlyCityParameters ?? new Array(12).fill(null).map(() => ({
             entertainment: 50, security: 50, sanitation: 50, transit: 50, environment: 50, education: 50, disaster_prevention: 50, tourism: 50,
           }));
-          const satSeries = acc.monthlySatisfaction ?? new Array(12).fill(50);
-          const toSeries = (key: keyof typeof mcp[number]) => mcp.map(m => m ? (m as any)[key] as number : 50);
+          const satSeriesRaw = acc.monthlySatisfaction ?? new Array(12).fill(50);
+          // 右端が最新（現在の月）になるように12ヶ月ロール
+          const buildRolling = (arr: number[]) => {
+            const idx = monthIdx; // 0..11（現在の月-1）
+            const out: number[] = [];
+            for (let i = 11; i >= 0; i--) {
+              const k = (idx - i + 12) % 12;
+              out.push(arr[k] ?? 50);
+            }
+            return out;
+          };
+          const toSeries = (key: keyof typeof mcp[number]) => buildRolling(mcp.map(m => m ? (m as any)[key] as number : 50));
+          const satSeries = buildRolling(satSeriesRaw as number[]);
           const getDiffColor = (d: number) => d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-400';
           const getDiffLabel = (d: number) => d === 0 ? '±0' : `${d > 0 ? '+' : ''}${Math.round(d)}`;
 
