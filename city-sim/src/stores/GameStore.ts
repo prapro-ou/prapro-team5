@@ -481,6 +481,17 @@ const INITIAL_STATS: GameStats = {
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
     monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
+    // 都市パラメータ初期値
+    cityParameters: {
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50
+    },
     yearlyEvaluation: null, // 年次評価データ（初期値はnull）
     yearlyStats: null, // 年次統計データ（初期値はnull）
     previousYearStats: null, // 前年度統計データ（初期値はnull）
@@ -495,7 +506,18 @@ const INITIAL_STATS: GameStats = {
         central_government: new Array(12).fill(50),
         citizens: new Array(12).fill(50),
         chamber_of_commerce: new Array(12).fill(50)
-      }
+      },
+      // 都市パラメータの月次履歴
+      monthlyCityParameters: new Array(12).fill(null).map(() => ({
+        entertainment: 50,
+        security: 50,
+        sanitation: 50,
+        transit: 50,
+        environment: 50,
+        education: 50,
+        disaster_prevention: 50,
+        tourism: 50
+      }))
     },
     supportSystem: {
       factionSupports: [
@@ -708,16 +730,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const validatedStats: GameStats = {
         ...INITIAL_STATS, // デフォルト値を設定
         ...savedStats,
-      yearlyEvaluation: savedStats.yearlyEvaluation || null,
-      yearlyStats: savedStats.yearlyStats || null,
-      previousYearStats: savedStats.previousYearStats || null,
-      previousYearEvaluation: savedStats.previousYearEvaluation || null,
+        yearlyEvaluation: savedStats.yearlyEvaluation || null,
+        yearlyStats: savedStats.yearlyStats || null,
+        previousYearStats: savedStats.previousYearStats || null,
+        previousYearEvaluation: savedStats.previousYearEvaluation || null,
+        cityParameters: savedStats.cityParameters || {
+          entertainment: 50,
+          security: 50,
+          sanitation: 50,
+          transit: 50,
+          environment: 50,
+          education: 50,
+          disaster_prevention: 50,
+          tourism: 50
+        },
         monthlyAccumulation: savedStats.monthlyAccumulation || {
           year: savedStats.date?.year || 2024,
           monthlyTaxRevenue: new Array(12).fill(0),
           monthlyMaintenanceCost: new Array(12).fill(0),
           monthlyPopulation: new Array(12).fill(0),
-          monthlySatisfaction: new Array(12).fill(50)
+          monthlySatisfaction: new Array(12).fill(50),
+          monthlyCityParameters: new Array(12).fill(null).map(() => ({
+            entertainment: 50,
+            security: 50,
+            sanitation: 50,
+            transit: 50,
+            environment: 50,
+            education: 50,
+            disaster_prevention: 50,
+            tourism: 50
+          }))
         }
       };
       
