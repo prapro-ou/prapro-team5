@@ -1,4 +1,5 @@
 import type { Position } from "./grid";
+import type { CityParameterType } from "./cityParameter";
 export type PreviewStatus = 'valid' | 'occupied' | 'insufficient-funds' | 'out-of-bounds' | 'terrain-unbuildable' | null;
 
 export type FacilityType = "residential" | "large_residential" | "commercial" | "large_commercial" | "industrial" | "road" | "city_hall" | "park" | "electric_plant" | "water_plant" | "police" | "hospital" | "sawmill" | "farm";
@@ -45,7 +46,6 @@ export interface FacilityInfo {
   category: CategoryKey;    // カテゴリ
   imgPaths?: string[];      // 画像パス（バリエーションのため複数枚指定可能）
   imgSizes?: { width: number; height: number }[]; // 画像サイズ
-  satisfaction: number;
   attractiveness?: number;   // 魅力度（労働力配分の優先度、労働力が必要な施設のみ）
   // --- インフラ用プロパティ ---
   infrastructureDemand?: InfrastructureDemand; // インフラ需要
@@ -65,6 +65,14 @@ export interface FacilityInfo {
   // --- 公園など範囲効果用 ---
   effectRadius?: number;      // 効果範囲（公園など）
   baseAssetValue?: number;    // 基本資産価値
+  
+  // --- 都市パラメータへの寄与 ---
+  parameterContributions?: Partial<Record<CityParameterType, {
+    baseValue: number;          // 基本寄与値
+    radius?: number;            // 効果範囲（セル）
+    radiusContribution?: number;// 範囲内寄与
+    requiresActive?: boolean;   // 活動中のみ有効
+  }>>;
   
   // --- アンロック管理 ---
   unlockCondition: 'initial' | 'mission' | 'achievement' | 'custom';

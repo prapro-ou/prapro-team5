@@ -29,10 +29,10 @@ import { useAchievementStore } from './stores/AchievementStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
-import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
 import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
+import { useCityParameterMapStore } from './stores/CityParameterMapStore';
 
 // SNSフィード表示用ボタンコンポーネント
 const SNSFeedButton = () => {
@@ -98,7 +98,7 @@ function App() {
   const [deleteMode, setDeleteMode] = useState(false);
 
   // ゲーム統計情報・レベルアップ通知
-  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
+  const { stats, spendMoney, advanceTime, addPopulation, levelUpMessage, setLevelUpMessage } = useGameStore();
   
   // 時間制御
   const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
@@ -195,11 +195,7 @@ function App() {
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
-   useEffect(() => {
-     if (!isInitializationComplete) return;
-     if (showStartScreen || showOpeningSequence) return;
-     startHappinessDecayTask();
-   }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
+  
   // 地形生成
   const { generateTerrain, generateHeightTerrain } = useTerrainStore();
 
@@ -238,15 +234,13 @@ function App() {
         }
       }
     }
-    // 施設を設置した後に満足度を再計算する
-    // この時、更新後の施設リストを取得して渡す
-    recalculateSatisfaction(useFacilityStore.getState().facilities);
+    // 満足度は月次で再計算される
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
 
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound, recalculateSatisfaction]);
+  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound]);
 
   const handleTileClick = useCallback((position: Position) => {
     const correctedPosition = {
@@ -355,6 +349,7 @@ function App() {
           useSecretaryStore.getState().resetToInitial();
           useSupportStore.getState().resetToInitial();
           useYearlyEvaluationStore.getState().resetToInitial();
+          useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
           const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           if (generatedRoads.length > 0) {
@@ -447,6 +442,7 @@ function App() {
               useSecretaryStore.getState().resetToInitial();
               useSupportStore.getState().resetToInitial();
               useYearlyEvaluationStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
               // 地形生成と道路配置
               const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
@@ -635,6 +631,7 @@ function App() {
               useInfrastructureStore.getState().resetToInitial();
               useAchievementStore.getState().resetToInitial();
               useMissionStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
               
               // 設定パネルを閉じて、スタート画面を表示
               closeSettings();

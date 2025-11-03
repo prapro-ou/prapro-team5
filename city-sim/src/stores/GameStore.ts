@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
-import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { getFacilityRegistry } from '../utils/facilityLoader';
 import { citizenFeedTask } from './CitizenFeedTask';
@@ -18,6 +17,9 @@ import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
 import { useMissionStore } from './MissionStore';
+import { useCityParameterMapStore } from './CityParameterMapStore';
+import { calculateSatisfactionWithFactors } from '../utils/satisfaction';
+import { useEconomyStore } from './EconomyStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -28,7 +30,7 @@ interface GameStore {
   spendMoney: (amount: number) => boolean;
   advanceTime: () => void;
   addPopulation: (count: number) => void;
-  recalculateSatisfaction: (facilities: Facility[]) => void;
+  
   monthlyTasks: MonthlyTask[];
   levelUpMessage: string | null;
   setLevelUpMessage: (msg: string | null) => void;
@@ -40,9 +42,7 @@ interface GameStore {
 
 // --- 月次処理の具体的なロジックを独立した関数として定義 ---
 
-/**
- * 税収を計算し、資金に加算するタスク
- */
+// 税収を計算し、資金に加算するタスク
 const calculateTaxRevenue: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -63,9 +63,7 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
   }
 };
 
-/**
- * 施設の維持費を合計し、資金から差し引くタスク
- */
+// 施設の維持費を合計し、資金から差し引くタスク
 const payMaintenanceCost: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -93,9 +91,8 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
     });
   }
 };
-/**
- * レベルに応じて人口を増減させるタスク
- */
+
+// レベルに応じて人口を増減させるタスク
 const adjustPopulationByGrowth: MonthlyTask = (get) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -167,9 +164,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   get().addPopulation(totalIncrease);
 };
 
-/**
- * 新しい経済サイクルを処理するタスク
- */
+// 新しい経済サイクルを処理するタスク
 const processEconomicCycle: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   let currentStats = get().stats;
@@ -196,46 +191,16 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   set({ stats: currentStats });
 };
 
-/**
- * インフラ計算タスク
- */
-const processInfrastructure: MonthlyTask = (get, set) => {
+// インフラ計算タスク
+const processInfrastructure: MonthlyTask = (_get, _set) => {
   const facilities = useFacilityStore.getState().facilities;
-  const { calculateInfrastructure, getInfrastructureShortage } = useInfrastructureStore.getState();
+  const { calculateInfrastructure } = useInfrastructureStore.getState();
   
   // インフラ状況を計算
   calculateInfrastructure(facilities);
-  
-  // インフラ不足
-  const shortage = getInfrastructureShortage();
-  let satisfactionPenalty = 0;
-  
-  // 水道不足
-  if (shortage.water > 0) {
-    satisfactionPenalty += Math.min(20, shortage.water / 10);
-  }
-  
-  // 電気不足
-  if (shortage.electricity > 0) {
-    satisfactionPenalty += Math.min(20, shortage.electricity / 10);
-  }
-  
-  // 満足度更新
-  if (satisfactionPenalty > 0) {
-    const currentStats = get().stats;
-    const newSatisfaction = Math.max(0, currentStats.satisfaction - satisfactionPenalty);
-    set({
-      stats: {
-        ...currentStats,
-        satisfaction: newSatisfaction
-      }
-    });
-  }
 };
 
-/**
- * 月次収支を計算し、統計に反映するタスク
- */
+// 月次収支を計算し、統計に反映するタスク
 const processMonthlyBalance: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -249,17 +214,105 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
   });
 };
 
-/**
- * ミッション条件チェックタスク
- */
+// 影響マップから都市パラメータを算出して反映するタスク
+const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  const mapStore = useCityParameterMapStore.getState();
+
+  // サンプリング対象（住宅中心）無ければ全体平均代替（ここでは50固定）
+  const residentials = facilities.filter(f => f.type === 'residential' || f.type === 'large_residential');
+
+  let newParams: any;
+  if (residentials.length === 0) {
+    newParams = {
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50,
+    };
+  } else {
+    // 住宅中心座標で平均サンプル
+    const positions = residentials.map(r => ({ x: r.position.x, y: r.position.y }));
+    newParams = {
+      entertainment: mapStore.sampleAverage('entertainment', positions),
+      security: mapStore.sampleAverage('security', positions),
+      sanitation: mapStore.sampleAverage('sanitation', positions),
+      transit: mapStore.sampleAverage('transit', positions),
+      environment: mapStore.sampleAverage('environment', positions),
+      education: mapStore.sampleAverage('education', positions),
+      disaster_prevention: mapStore.sampleAverage('disaster_prevention', positions),
+      tourism: mapStore.sampleAverage('tourism', positions),
+    };
+    // 正規化（0-100にクリップ）現在はマップ値をそのまま使う前提だが安全のため
+    (Object.keys(newParams) as Array<keyof typeof newParams>).forEach((key) => {
+      const v = newParams[key] as number;
+      (newParams as any)[key] = Math.max(0, Math.min(100, Math.round(v)));
+    });
+  }
+
+  // インフラ要素の取得
+  const { getInfrastructureStatus } = useInfrastructureStore.getState();
+  const infraStatus = getInfrastructureStatus();
+  const infraFactors = {
+    waterDemand: infraStatus.water.demand,
+    waterSupply: infraStatus.water.supply,
+    electricityDemand: infraStatus.electricity.demand,
+    electricitySupply: infraStatus.electricity.supply,
+  };
+
+  // 経済要素の取得（住民税・失業率）
+  const taxRates = useEconomyStore.getState().taxRates;
+  const population = stats.population || 0;
+  const workforce = Math.floor(population * 0.6);
+  const employed = stats.workforceAllocations.reduce((acc, a) => acc + (a.assignedWorkforce || 0), 0);
+  const unemploymentRate = workforce > 0 ? Math.max(0, (workforce - employed) / workforce) : 0;
+  const economyFactors = {
+    citizenTaxRate: taxRates.citizenTax,
+    unemploymentRate,
+  };
+
+  // 満足度を再合成
+  const newSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+
+  // 月次履歴に反映
+  const currentMonth = stats.date.month - 1;
+  const newAccum = { ...stats.monthlyAccumulation };
+  if (!newAccum.monthlyCityParameters) {
+    newAccum.monthlyCityParameters = new Array(12).fill(null).map(() => ({
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50,
+    }));
+  }
+  newAccum.monthlyCityParameters[currentMonth] = { ...newParams };
+
+  set({
+    stats: {
+      ...stats,
+      cityParameters: newParams,
+      satisfaction: newSatisfaction,
+      monthlyAccumulation: newAccum,
+    }
+  });
+};
+
+// ミッション条件チェックタスク
 const checkMissionConditions: MonthlyTask = (_get, _set) => {
   const { checkMissionConditions } = useMissionStore.getState();
   checkMissionConditions();
 };
 
-/**
- * 支持率を更新するタスク
- */
+// 支持率を更新するタスク
 const updateSupportRatings: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -311,9 +364,7 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   });
 };
 
-/**
- * 月次データを累積するタスク
- */
+// 月次データを累積するタスク
 const accumulateMonthlyData: MonthlyTask = (get, set) => {
   const { stats } = get();
   const currentMonth = stats.date.month - 1; // 配列のインデックスは0ベース
@@ -375,9 +426,7 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
   
 };
 
-/**
- * 年末評価処理タスク
- */
+// 年末評価処理タスク
 const processYearlyEvaluation: MonthlyTask = (get, set) => {
   const { stats } = get();
   
@@ -439,9 +488,7 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
   }
 };
 
-/*
- * 人口が一定数を超えたらレベルアップするタスク
- */
+// 人口が一定数を超えたらレベルアップするタスク
 // レベルアップ判定関数（人口や満足度など複数条件に対応可能）
 function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => void) {
   // レベルごとの人口閾値
@@ -470,8 +517,6 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
     });
   }
 }
-// --- ストアの作成 ---
-
 
 const INITIAL_STATS: GameStats = {
     level: 1, 
@@ -481,6 +526,17 @@ const INITIAL_STATS: GameStats = {
     workforceAllocations: [], // 労働力配分情報（初期値は空配列）
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
     monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
+    // 都市パラメータ初期値
+    cityParameters: {
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50
+    },
     yearlyEvaluation: null, // 年次評価データ（初期値はnull）
     yearlyStats: null, // 年次統計データ（初期値はnull）
     previousYearStats: null, // 前年度統計データ（初期値はnull）
@@ -495,7 +551,18 @@ const INITIAL_STATS: GameStats = {
         central_government: new Array(12).fill(50),
         citizens: new Array(12).fill(50),
         chamber_of_commerce: new Array(12).fill(50)
-      }
+      },
+      // 都市パラメータの月次履歴
+      monthlyCityParameters: new Array(12).fill(null).map(() => ({
+        entertainment: 50,
+        security: 50,
+        sanitation: 50,
+        transit: 50,
+        environment: 50,
+        education: 50,
+        disaster_prevention: 50,
+        tourism: 50
+      }))
     },
     supportSystem: {
       factionSupports: [
@@ -541,6 +608,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processInfrastructure,
     processMonthlyBalance,
     processYearlyEvaluation,
+    updateCityParametersFromMaps,
     accumulateMonthlyData,
     adjustPopulationByGrowth,
     citizenFeedTask,
@@ -603,12 +671,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 週の進行のみの場合
       set({ stats: newStats });
     }
-    
-    // 満足度の再計算
-    const facilities = useFacilityStore.getState().facilities;
-    const { recalculateSatisfaction } = get();
-    recalculateSatisfaction(facilities);
-    
+
     // レベルアップチェック
     checkLevelUp(get().stats, set);
 
@@ -643,53 +706,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  recalculateSatisfaction: (facilities) => {
-    const { stats } = get();
-    let totalSatisfaction = stats.satisfaction;
-    // ペナルティ分を反映
-    if (typeof stats.happinessPenalty === 'number') {
-      totalSatisfaction -= stats.happinessPenalty;
-    }
-    
-    // 公園の効果を計算
-    facilities.forEach(facility => {
-      if (facility.type === 'park') {
-        const parkData = getFacilityRegistry()[facility.type];
-        const effectRadius = parkData.effectRadius || 3;
-        
-        // 公園の効果範囲内の住宅をカウント
-        let affectedHouses = 0;
-        facilities.forEach(otherFacility => {
-          if (otherFacility.type === 'residential') {
-            const distance = Math.sqrt(
-              Math.pow(facility.position.x - otherFacility.position.x, 2) +
-              Math.pow(facility.position.y - otherFacility.position.y, 2)
-            );
-            if (distance <= effectRadius) {
-              affectedHouses++;
-            }
-          }
-        });
-        
-        totalSatisfaction += affectedHouses * 1; // 公園1つにつき1ポイント
-      }
-    });
-    
-    // 工業区画の環境悪化効果
-    const industrialCount = facilities.filter(f => f.type === 'industrial').length;
-    totalSatisfaction -= industrialCount * 1;
-    
-    // 満足度を0-100の範囲に制限
-    totalSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
-    
-    set({
-      stats: {
-        ...stats,
-        satisfaction: totalSatisfaction
-  ,happinessPenalty: 0 // ペナルティ値をリセット
-      }
-    });
-  },
+  
 
   // セーブ・ロード機能
   saveState: () => {
@@ -708,16 +725,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const validatedStats: GameStats = {
         ...INITIAL_STATS, // デフォルト値を設定
         ...savedStats,
-      yearlyEvaluation: savedStats.yearlyEvaluation || null,
-      yearlyStats: savedStats.yearlyStats || null,
-      previousYearStats: savedStats.previousYearStats || null,
-      previousYearEvaluation: savedStats.previousYearEvaluation || null,
+        yearlyEvaluation: savedStats.yearlyEvaluation || null,
+        yearlyStats: savedStats.yearlyStats || null,
+        previousYearStats: savedStats.previousYearStats || null,
+        previousYearEvaluation: savedStats.previousYearEvaluation || null,
+        cityParameters: savedStats.cityParameters || {
+          entertainment: 50,
+          security: 50,
+          sanitation: 50,
+          transit: 50,
+          environment: 50,
+          education: 50,
+          disaster_prevention: 50,
+          tourism: 50
+        },
         monthlyAccumulation: savedStats.monthlyAccumulation || {
           year: savedStats.date?.year || 2024,
           monthlyTaxRevenue: new Array(12).fill(0),
           monthlyMaintenanceCost: new Array(12).fill(0),
           monthlyPopulation: new Array(12).fill(0),
-          monthlySatisfaction: new Array(12).fill(50)
+          monthlySatisfaction: new Array(12).fill(50),
+          monthlyCityParameters: new Array(12).fill(null).map(() => ({
+            entertainment: 50,
+            security: 50,
+            sanitation: 50,
+            transit: 50,
+            environment: 50,
+            education: 50,
+            disaster_prevention: 50,
+            tourism: 50
+          }))
         }
       };
       

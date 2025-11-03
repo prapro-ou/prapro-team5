@@ -185,6 +185,84 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         </div>
       </div>
 
+      {/* 都市状態 */}
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+        <h3 className="text-lg font-bold mb-3 text-teal-300 flex items-center gap-2">
+          <TbChartBar className="text-teal-400" />
+          都市状態（現在値・前月比・12ヶ月推移）
+        </h3>
+        {(() => {
+          type SparkProps = { data: number[]; color: string; };
+          const Spark = ({ data, color }: SparkProps) => {
+            const w = 180, h = 40, pad = 3;
+            const n = Math.max(1, data.length);
+            const sx = (w - pad * 2) / Math.max(1, n - 1);
+            const clamp01 = (v: number) => Math.max(0, Math.min(100, v));
+            const toY = (v: number) => pad + (h - pad * 2) * (1 - clamp01(v) / 100);
+            const toX = (i: number) => pad + sx * i;
+            const path = data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(v)}`).join(' ');
+            return <svg width={w} height={h}><path d={path} fill="none" stroke={color} strokeWidth={2} /></svg>;
+          };
+
+          const cp = stats.cityParameters;
+          const acc = stats.monthlyAccumulation;
+          const monthIdx = Math.max(0, (stats.date.month - 1) | 0);
+          const prevIdx = Math.max(0, monthIdx - 1);
+          const prev = acc.monthlyCityParameters && acc.monthlyCityParameters[prevIdx];
+          const mcp = acc.monthlyCityParameters ?? new Array(12).fill(null).map(() => ({
+            entertainment: 50, security: 50, sanitation: 50, transit: 50, environment: 50, education: 50, disaster_prevention: 50, tourism: 50,
+          }));
+          const satSeriesRaw = acc.monthlySatisfaction ?? new Array(12).fill(50);
+          // 右端が最新（現在の月）になるように12ヶ月ロール
+          const buildRolling = (arr: number[]) => {
+            const idx = monthIdx; // 0..11（現在の月-1）
+            const out: number[] = [];
+            for (let i = 11; i >= 0; i--) {
+              const k = (idx - i + 12) % 12;
+              out.push(arr[k] ?? 50);
+            }
+            return out;
+          };
+          const toSeries = (key: keyof typeof mcp[number]) => buildRolling(mcp.map(m => m ? (m as any)[key] as number : 50));
+          const satSeries = buildRolling(satSeriesRaw as number[]);
+          const getDiffColor = (d: number) => d > 0 ? 'text-green-400' : d < 0 ? 'text-red-400' : 'text-gray-400';
+          const getDiffLabel = (d: number) => d === 0 ? '±0' : `${d > 0 ? '+' : ''}${Math.round(d)}`;
+
+          const cards = [
+            {
+              key: 'satisfaction', name: '満足度', value: stats.satisfaction,
+              diff: (acc.monthlySatisfaction?.[monthIdx] ?? stats.satisfaction) - (acc.monthlySatisfaction?.[prevIdx] ?? stats.satisfaction),
+              series: satSeries, color: '#fbbf24'
+            },
+            { key: 'entertainment', name: '娯楽', value: cp?.entertainment ?? 50, diff: prev ? (cp?.entertainment ?? 50) - prev.entertainment : 0, series: toSeries('entertainment'), color: '#22d3ee' },
+            { key: 'security', name: '治安', value: cp?.security ?? 50, diff: prev ? (cp?.security ?? 50) - prev.security : 0, series: toSeries('security'), color: '#60a5fa' },
+            { key: 'sanitation', name: '衛生', value: cp?.sanitation ?? 50, diff: prev ? (cp?.sanitation ?? 50) - prev.sanitation : 0, series: toSeries('sanitation'), color: '#34d399' },
+            { key: 'transit', name: '交通利便性', value: cp?.transit ?? 50, diff: prev ? (cp?.transit ?? 50) - prev.transit : 0, series: toSeries('transit'), color: '#93c5fd' },
+            { key: 'environment', name: '環境', value: cp?.environment ?? 50, diff: prev ? (cp?.environment ?? 50) - prev.environment : 0, series: toSeries('environment'), color: '#10b981' },
+            { key: 'education', name: '教育', value: cp?.education ?? 50, diff: prev ? (cp?.education ?? 50) - prev.education : 0, series: toSeries('education'), color: '#a78bfa' },
+            { key: 'disaster_prevention', name: '防災', value: cp?.disaster_prevention ?? 50, diff: prev ? (cp?.disaster_prevention ?? 50) - prev.disaster_prevention : 0, series: toSeries('disaster_prevention'), color: '#f87171' },
+            { key: 'tourism', name: '観光', value: cp?.tourism ?? 50, diff: prev ? (cp?.tourism ?? 50) - prev.tourism : 0, series: toSeries('tourism'), color: '#fb7185' },
+          ];
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cards.map(card => (
+                <div key={card.key} className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                  <div className="text-sm text-gray-300 mb-1">{card.name}</div>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <div className="text-2xl font-bold text-teal-300">{Math.round(card.value)}</div>
+                    <div className={`text-sm font-bold ${getDiffColor(card.diff)}`}>{getDiffLabel(card.diff)}</div>
+                  </div>
+                  <Spark data={card.series as number[]} color={card.color} />
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      
+
       {/* 前年度評価結果セクション */}
       {stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-600 shadow-lg">
