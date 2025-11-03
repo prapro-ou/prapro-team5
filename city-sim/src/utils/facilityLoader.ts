@@ -104,5 +104,18 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
 
   if (obj.effectRadius !== undefined && (typeof obj.effectRadius !== 'number' || obj.effectRadius <= 0)) return false;
 
+  // parameterContributions
+  if (obj.parameterContributions !== undefined) {
+    if (typeof obj.parameterContributions !== 'object' || obj.parameterContributions === null || Array.isArray(obj.parameterContributions)) return false;
+    for (const key of Object.keys(obj.parameterContributions)) {
+      const contrib = obj.parameterContributions[key];
+      if (typeof contrib !== 'object' || contrib === null) return false;
+      if (typeof contrib.baseValue !== 'number') return false;
+      if (contrib.radius !== undefined && (typeof contrib.radius !== 'number' || contrib.radius <= 0)) return false;
+      if (contrib.radiusContribution !== undefined && typeof contrib.radiusContribution !== 'number') return false;
+      if (contrib.requiresActive !== undefined && typeof contrib.requiresActive !== 'boolean') return false;
+    }
+  }
+
   return true;
 }
