@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { GameStats } from '../types/game';
-import type { Facility } from '../types/facility';
 import { useFacilityStore } from './FacilityStore';
 import { getFacilityRegistry } from '../utils/facilityLoader';
 import { citizenFeedTask } from './CitizenFeedTask';
@@ -19,7 +18,8 @@ import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
 import { useMissionStore } from './MissionStore';
 import { useCityParameterMapStore } from './CityParameterMapStore';
-import { calculateSatisfactionFromParameters } from '../utils/satisfaction';
+import { calculateSatisfactionWithFactors } from '../utils/satisfaction';
+import { useEconomyStore } from './EconomyStore';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -192,15 +192,12 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
 };
 
 // インフラ計算タスク
-const processInfrastructure: MonthlyTask = (get, set) => {
+const processInfrastructure: MonthlyTask = (_get, _set) => {
   const facilities = useFacilityStore.getState().facilities;
-  const { calculateInfrastructure, getInfrastructureShortage } = useInfrastructureStore.getState();
+  const { calculateInfrastructure } = useInfrastructureStore.getState();
   
   // インフラ状況を計算
   calculateInfrastructure(facilities);
-  
-  // インフラ不足
-  const _shortage = getInfrastructureShortage();
 };
 
 // 月次収支を計算し、統計に反映するタスク
@@ -258,6 +255,30 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
     });
   }
 
+  // インフラ要素の取得
+  const { getInfrastructureStatus } = useInfrastructureStore.getState();
+  const infraStatus = getInfrastructureStatus();
+  const infraFactors = {
+    waterDemand: infraStatus.water.demand,
+    waterSupply: infraStatus.water.supply,
+    electricityDemand: infraStatus.electricity.demand,
+    electricitySupply: infraStatus.electricity.supply,
+  };
+
+  // 経済要素の取得（住民税・失業率）
+  const taxRates = useEconomyStore.getState().taxRates;
+  const population = stats.population || 0;
+  const workforce = Math.floor(population * 0.6);
+  const employed = stats.workforceAllocations.reduce((acc, a) => acc + (a.assignedWorkforce || 0), 0);
+  const unemploymentRate = workforce > 0 ? Math.max(0, (workforce - employed) / workforce) : 0;
+  const economyFactors = {
+    citizenTaxRate: taxRates.citizenTax,
+    unemploymentRate,
+  };
+
+  // 満足度を再合成
+  const newSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+
   // 月次履歴に反映
   const currentMonth = stats.date.month - 1;
   const newAccum = { ...stats.monthlyAccumulation };
@@ -279,8 +300,7 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
     stats: {
       ...stats,
       cityParameters: newParams,
-      // 簡易満足度: 都市パラメータの重み付き平均（初期重み）
-      satisfaction: calculateSatisfactionFromParameters(newParams, stats.happinessPenalty),
+      satisfaction: newSatisfaction,
       monthlyAccumulation: newAccum,
     }
   });
