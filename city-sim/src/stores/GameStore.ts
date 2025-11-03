@@ -19,7 +19,7 @@ import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
 import { useMissionStore } from './MissionStore';
 import { useCityParameterMapStore } from './CityParameterMapStore';
-import type { CityParameters } from '../types/cityParameter';
+import { calculateSatisfactionFromParameters } from '../utils/satisfaction';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -41,35 +41,6 @@ interface GameStore {
 }
 
 // --- 月次処理の具体的なロジックを独立した関数として定義 ---
-
-// 満足度の簡易重み付け
-const PARAM_WEIGHTS = {
-  entertainment: 0.2,
-  security: 0.2,
-  sanitation: 0.2,
-  transit: 0.1,
-  environment: 0.2,
-  education: 0.1,
-  disaster_prevention: 0.15,
-  tourism: 0.1,
-} as const;
-
-function calculateSatisfactionFromParameters(params?: CityParameters, penalty?: number): number {
-  if (!params) return 50;
-  let sum = 0;
-  let wsum = 0;
-  (Object.keys(PARAM_WEIGHTS) as (keyof typeof PARAM_WEIGHTS)[]).forEach((k) => {
-    const w = PARAM_WEIGHTS[k] as number;
-    const v = params[k] as number;
-    sum += v * w;
-    wsum += w;
-  });
-  let sat = wsum > 0 ? sum / wsum : 50;
-  if (typeof penalty === 'number') sat -= penalty;
-  if (Number.isNaN(sat)) sat = 50;
-  return Math.max(0, Math.min(100, Math.round(sat)));
-}
-
 
 // 税収を計算し、資金に加算するタスク
 const calculateTaxRevenue: MonthlyTask = (get, set) => {
@@ -278,7 +249,7 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
   // サンプリング対象（住宅中心）無ければ全体平均代替（ここでは50固定）
   const residentials = facilities.filter(f => f.type === 'residential' || f.type === 'large_residential');
 
-  let newParams: CityParameters;
+  let newParams: any;
   if (residentials.length === 0) {
     newParams = {
       entertainment: 50,
@@ -304,10 +275,10 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
       tourism: mapStore.sampleAverage('tourism', positions),
     };
     // 正規化（0-100にクリップ）現在はマップ値をそのまま使う前提だが安全のため
-    for (const key of Object.keys(newParams) as (keyof CityParameters)[]) {
-      const v = newParams[key];
-      newParams[key] = Math.max(0, Math.min(100, Math.round(v)));
-    }
+    (Object.keys(newParams) as Array<keyof typeof newParams>).forEach((key) => {
+      const v = newParams[key] as number;
+      (newParams as any)[key] = Math.max(0, Math.min(100, Math.round(v)));
+    });
   }
 
   // 月次履歴に反映
