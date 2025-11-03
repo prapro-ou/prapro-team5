@@ -33,6 +33,7 @@ import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
 import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
+import { useCityParameterMapStore } from './stores/CityParameterMapStore';
 
 // SNSフィード表示用ボタンコンポーネント
 const SNSFeedButton = () => {
@@ -355,6 +356,7 @@ function App() {
           useSecretaryStore.getState().resetToInitial();
           useSupportStore.getState().resetToInitial();
           useYearlyEvaluationStore.getState().resetToInitial();
+          useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
           const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           if (generatedRoads.length > 0) {
@@ -447,6 +449,7 @@ function App() {
               useSecretaryStore.getState().resetToInitial();
               useSupportStore.getState().resetToInitial();
               useYearlyEvaluationStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
               // 地形生成と道路配置
               const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
@@ -635,6 +638,7 @@ function App() {
               useInfrastructureStore.getState().resetToInitial();
               useAchievementStore.getState().resetToInitial();
               useMissionStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
               
               // 設定パネルを閉じて、スタート画面を表示
               closeSettings();
