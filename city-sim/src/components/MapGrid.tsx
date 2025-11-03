@@ -12,6 +12,7 @@ import { useWheelZoom } from '../hooks/useWheelZoom';
 import { useFacilityTextures } from '../hooks/useFacilityTextures';
 import { useKeyboardPan } from '../hooks/useKeyboardPan';
 import { GRID_WIDTH, GRID_HEIGHT } from '../constants/gridConstants';
+import { useUIStore } from '../stores/UIStore';
 
 interface IsometricGridProps {
   size: GridSize;
@@ -50,6 +51,12 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
   const facilitiesRef = useRef<Facility[]>(facilities);
   const onReadyRef = useRef<(() => void) | undefined>(onReady);
   const readyNotifiedRef = useRef(false);
+
+  // UIストアからカメラ状態取得/保存
+  const cameraX = useUIStore(state => state.cameraX);
+  const cameraY = useUIStore(state => state.cameraY);
+  const cameraScaleFromStore = useUIStore(state => state.cameraScale);
+  const setCameraState = useUIStore(state => state.setCameraState);
 
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
@@ -221,6 +228,9 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       }
 
       // 初期カメラ適用
+      cameraRef.current.x = cameraX ?? 0;
+      cameraRef.current.y = cameraY ?? 0;
+      cameraRef.current.scale = cameraScaleFromStore ?? 1;
       world.position.set(cameraRef.current.x, cameraRef.current.y);
       world.scale.set(cameraRef.current.scale);
 
@@ -367,6 +377,9 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const app = appRef.current;
       appRef.current = null;
       isInitializedRef.current = false;
+
+      // 現在のカメラ状態を保存
+      try { setCameraState(cameraRef.current.x, cameraRef.current.y, cameraRef.current.scale); } catch {}
       
       // init 完了していない場合は destroy を呼ばない
       if (didInit && app) {
