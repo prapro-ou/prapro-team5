@@ -42,9 +42,36 @@ interface GameStore {
 
 // --- 月次処理の具体的なロジックを独立した関数として定義 ---
 
-/**
- * 税収を計算し、資金に加算するタスク
- */
+// 満足度の簡易重み付け
+const PARAM_WEIGHTS = {
+  entertainment: 0.2,
+  security: 0.2,
+  sanitation: 0.2,
+  transit: 0.1,
+  environment: 0.2,
+  education: 0.1,
+  disaster_prevention: 0.15,
+  tourism: 0.1,
+} as const;
+
+function calculateSatisfactionFromParameters(params?: CityParameters, penalty?: number): number {
+  if (!params) return 50;
+  let sum = 0;
+  let wsum = 0;
+  (Object.keys(PARAM_WEIGHTS) as (keyof typeof PARAM_WEIGHTS)[]).forEach((k) => {
+    const w = PARAM_WEIGHTS[k] as number;
+    const v = params[k] as number;
+    sum += v * w;
+    wsum += w;
+  });
+  let sat = wsum > 0 ? sum / wsum : 50;
+  if (typeof penalty === 'number') sat -= penalty;
+  if (Number.isNaN(sat)) sat = 50;
+  return Math.max(0, Math.min(100, Math.round(sat)));
+}
+
+
+// 税収を計算し、資金に加算するタスク
 const calculateTaxRevenue: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -65,9 +92,7 @@ const calculateTaxRevenue: MonthlyTask = (get, set) => {
   }
 };
 
-/**
- * 施設の維持費を合計し、資金から差し引くタスク
- */
+// 施設の維持費を合計し、資金から差し引くタスク
 const payMaintenanceCost: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -95,9 +120,8 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
     });
   }
 };
-/**
- * レベルに応じて人口を増減させるタスク
- */
+
+// レベルに応じて人口を増減させるタスク
 const adjustPopulationByGrowth: MonthlyTask = (get) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -169,9 +193,7 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
   get().addPopulation(totalIncrease);
 };
 
-/**
- * 新しい経済サイクルを処理するタスク
- */
+// 新しい経済サイクルを処理するタスク
 const processEconomicCycle: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   let currentStats = get().stats;
@@ -198,9 +220,7 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   set({ stats: currentStats });
 };
 
-/**
- * インフラ計算タスク
- */
+// インフラ計算タスク
 const processInfrastructure: MonthlyTask = (get, set) => {
   const facilities = useFacilityStore.getState().facilities;
   const { calculateInfrastructure, getInfrastructureShortage } = useInfrastructureStore.getState();
@@ -235,9 +255,7 @@ const processInfrastructure: MonthlyTask = (get, set) => {
   }
 };
 
-/**
- * 月次収支を計算し、統計に反映するタスク
- */
+// 月次収支を計算し、統計に反映するタスク
 const processMonthlyBalance: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -313,22 +331,20 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
     stats: {
       ...stats,
       cityParameters: newParams,
+      // 簡易満足度: 都市パラメータの重み付き平均（初期重み）
+      satisfaction: calculateSatisfactionFromParameters(newParams, stats.happinessPenalty),
       monthlyAccumulation: newAccum,
     }
   });
 };
 
-/**
- * ミッション条件チェックタスク
- */
+// ミッション条件チェックタスク
 const checkMissionConditions: MonthlyTask = (_get, _set) => {
   const { checkMissionConditions } = useMissionStore.getState();
   checkMissionConditions();
 };
 
-/**
- * 支持率を更新するタスク
- */
+// 支持率を更新するタスク
 const updateSupportRatings: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
@@ -380,9 +396,7 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   });
 };
 
-/**
- * 月次データを累積するタスク
- */
+// 月次データを累積するタスク
 const accumulateMonthlyData: MonthlyTask = (get, set) => {
   const { stats } = get();
   const currentMonth = stats.date.month - 1; // 配列のインデックスは0ベース
@@ -444,9 +458,7 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
   
 };
 
-/**
- * 年末評価処理タスク
- */
+// 年末評価処理タスク
 const processYearlyEvaluation: MonthlyTask = (get, set) => {
   const { stats } = get();
   
@@ -508,9 +520,7 @@ const processYearlyEvaluation: MonthlyTask = (get, set) => {
   }
 };
 
-/*
- * 人口が一定数を超えたらレベルアップするタスク
- */
+// 人口が一定数を超えたらレベルアップするタスク
 // レベルアップ判定関数（人口や満足度など複数条件に対応可能）
 function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => void) {
   // レベルごとの人口閾値
@@ -539,8 +549,6 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
     });
   }
 }
-// --- ストアの作成 ---
-
 
 const INITIAL_STATS: GameStats = {
     level: 1, 
@@ -735,52 +743,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  recalculateSatisfaction: (facilities) => {
+  recalculateSatisfaction: (_facilities) => {
     const { stats } = get();
-    let totalSatisfaction = stats.satisfaction;
-    // ペナルティ分を反映
-    if (typeof stats.happinessPenalty === 'number') {
-      totalSatisfaction -= stats.happinessPenalty;
-    }
-    
-    // 公園の効果を計算
-    facilities.forEach(facility => {
-      if (facility.type === 'park') {
-        const parkData = getFacilityRegistry()[facility.type];
-        const effectRadius = parkData.effectRadius || 3;
-        
-        // 公園の効果範囲内の住宅をカウント
-        let affectedHouses = 0;
-        facilities.forEach(otherFacility => {
-          if (otherFacility.type === 'residential') {
-            const distance = Math.sqrt(
-              Math.pow(facility.position.x - otherFacility.position.x, 2) +
-              Math.pow(facility.position.y - otherFacility.position.y, 2)
-            );
-            if (distance <= effectRadius) {
-              affectedHouses++;
-            }
-          }
-        });
-        
-        totalSatisfaction += affectedHouses * 1; // 公園1つにつき1ポイント
-      }
-    });
-    
-    // 工業区画の環境悪化効果
-    const industrialCount = facilities.filter(f => f.type === 'industrial').length;
-    totalSatisfaction -= industrialCount * 1;
-    
-    // 満足度を0-100の範囲に制限
-    totalSatisfaction = Math.max(0, Math.min(100, totalSatisfaction));
-    
-    set({
-      stats: {
-        ...stats,
-        satisfaction: totalSatisfaction
-  ,happinessPenalty: 0 // ペナルティ値をリセット
-      }
-    });
+    const newSatisfaction = calculateSatisfactionFromParameters(stats.cityParameters, stats.happinessPenalty);
+    set({ stats: { ...stats, satisfaction: newSatisfaction, happinessPenalty: 0 } });
   },
 
   // セーブ・ロード機能
