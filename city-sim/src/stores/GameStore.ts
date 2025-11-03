@@ -18,6 +18,8 @@ import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
 import type { CityStateForSupport } from '../types/support';
 import { useMissionStore } from './MissionStore';
+import { useCityParameterMapStore } from './CityParameterMapStore';
+import type { CityParameters } from '../types/cityParameter';
 
 // --- 月次処理の型定義 ---
 export type MonthlyTask = (get: () => GameStore, set: (partial: Partial<GameStore>) => void) => void;
@@ -245,6 +247,73 @@ const processMonthlyBalance: MonthlyTask = (get, set) => {
     stats: {
       ...stats,
       monthlyBalance: { income, expense, balance }
+    }
+  });
+};
+
+// 影響マップから都市パラメータを算出して反映するタスク
+const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
+  const { stats } = get();
+  const facilities = useFacilityStore.getState().facilities;
+  const mapStore = useCityParameterMapStore.getState();
+
+  // サンプリング対象（住宅中心）無ければ全体平均代替（ここでは50固定）
+  const residentials = facilities.filter(f => f.type === 'residential' || f.type === 'large_residential');
+
+  let newParams: CityParameters;
+  if (residentials.length === 0) {
+    newParams = {
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50,
+    };
+  } else {
+    // 住宅中心座標で平均サンプル
+    const positions = residentials.map(r => ({ x: r.position.x, y: r.position.y }));
+    newParams = {
+      entertainment: mapStore.sampleAverage('entertainment', positions),
+      security: mapStore.sampleAverage('security', positions),
+      sanitation: mapStore.sampleAverage('sanitation', positions),
+      transit: mapStore.sampleAverage('transit', positions),
+      environment: mapStore.sampleAverage('environment', positions),
+      education: mapStore.sampleAverage('education', positions),
+      disaster_prevention: mapStore.sampleAverage('disaster_prevention', positions),
+      tourism: mapStore.sampleAverage('tourism', positions),
+    };
+    // 正規化（0-100にクリップ）現在はマップ値をそのまま使う前提だが安全のため
+    for (const key of Object.keys(newParams) as (keyof CityParameters)[]) {
+      const v = newParams[key];
+      newParams[key] = Math.max(0, Math.min(100, Math.round(v)));
+    }
+  }
+
+  // 月次履歴に反映
+  const currentMonth = stats.date.month - 1;
+  const newAccum = { ...stats.monthlyAccumulation };
+  if (!newAccum.monthlyCityParameters) {
+    newAccum.monthlyCityParameters = new Array(12).fill(null).map(() => ({
+      entertainment: 50,
+      security: 50,
+      sanitation: 50,
+      transit: 50,
+      environment: 50,
+      education: 50,
+      disaster_prevention: 50,
+      tourism: 50,
+    }));
+  }
+  newAccum.monthlyCityParameters[currentMonth] = { ...newParams };
+
+  set({
+    stats: {
+      ...stats,
+      cityParameters: newParams,
+      monthlyAccumulation: newAccum,
     }
   });
 };
@@ -563,6 +632,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processInfrastructure,
     processMonthlyBalance,
     processYearlyEvaluation,
+    updateCityParametersFromMaps,
     accumulateMonthlyData,
     adjustPopulationByGrowth,
     citizenFeedTask,
