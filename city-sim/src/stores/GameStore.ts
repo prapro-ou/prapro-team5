@@ -179,7 +179,7 @@ const processEconomicCycle: MonthlyTask = (get, set) => {
   if (consumed > 0) {
     currentStats = {
       ...currentStats,
-      money: currentStats.money + revenue
+      money: Math.floor(currentStats.money + revenue)
     };
   }
   
@@ -618,7 +618,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   levelUpMessage: null,
   setLevelUpMessage: (msg) => set({ levelUpMessage: msg }),
 
-  addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: state.stats.money + amount }})),
+  addMoney: (amount) => set((state) => ({ stats: { ...state.stats, money: Math.floor(state.stats.money + amount) }})),
   
   spendMoney: (amount) => {
     const currentMoney = get().stats.money;
@@ -626,7 +626,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set((state) => ({
         stats: {
           ...state.stats,
-          money: currentMoney - amount
+          money: Math.floor(currentMoney - amount)
         }
       }));
       return true;
