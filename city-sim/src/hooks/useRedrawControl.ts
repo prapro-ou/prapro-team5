@@ -1,21 +1,43 @@
 import { useRef } from 'react';
+import type { HeightTerrainTile } from '../types/terrainWithHeight';
 
 // 再描画制御用のフック
 export const useRedrawControl = () => {
   const lastTerrainMapRef = useRef<string | null>(null);
+  const lastHeightTerrainMapRef = useRef<string | null>(null);
   const lastFacilitiesRef = useRef<string | null>(null);
   const lastPreviewMousePositionRef = useRef<{ x: number; y: number } | null>(null);
   const lastEffectPreviewMousePositionRef = useRef<{ x: number; y: number } | null>(null);
 
+  // 高さマップの簡易ハッシュ計算
+  const computeHeightTerrainHash = (heightTerrainMap: Map<string, HeightTerrainTile> | null | undefined): string => {
+    if (!heightTerrainMap || heightTerrainMap.size === 0) {
+      return 'empty';
+    }
+    let hash = 0 | 0;
+    let count = 0;
+    for (const [key, tile] of heightTerrainMap) {
+      if (count >= 10) break;
+      const h = (tile.height | 0) >>> 0;
+      const s = (tile.isSlope ? 1 : 0) >>> 0;
+      hash = (((hash * 31) | 0) ^ h ^ s ^ ((key.charCodeAt(0) * 73856093) | 0)) | 0;
+      count++;
+    }
+    return `${heightTerrainMap.size}:${hash}`;
+  };
+
   // 地形データの変更をチェック
-  const shouldRedrawTerrain = (terrainMap: any): boolean => {
+  const shouldRedrawTerrain = (terrainMap: any, heightTerrainMap?: Map<string, HeightTerrainTile> | null): boolean => {
     const terrainHash = terrainMap instanceof Map
       ? `size:${terrainMap.size}`
       : JSON.stringify(terrainMap);
-    if (lastTerrainMapRef.current !== null && terrainHash === lastTerrainMapRef.current) {
+    const heightHash = computeHeightTerrainHash(heightTerrainMap);
+    const combinedHash = `${terrainHash}|${heightHash}`;
+    
+    if (lastTerrainMapRef.current !== null && combinedHash === lastTerrainMapRef.current) {
       return false; // 変更なしの場合はスキップ
     }
-    lastTerrainMapRef.current = terrainHash;
+    lastTerrainMapRef.current = combinedHash;
     return true;
   };
 
@@ -75,6 +97,7 @@ export const useRedrawControl = () => {
   // 地形の再描画判定をリセット
   const resetTerrainState = (): void => {
     lastTerrainMapRef.current = null;
+    lastHeightTerrainMapRef.current = null;
   };
 
   return {

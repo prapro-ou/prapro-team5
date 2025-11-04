@@ -210,7 +210,7 @@ const StartScreen: React.FC<Props> = ({ onStart, onShowSettings, onLoadGame }) =
     if (!stats) return null;
     return {
       population: stats.population?.toLocaleString() || '0',
-      money: stats.money?.toLocaleString() || '0',
+      money: (Number.isFinite(stats.money) ? Math.floor(stats.money) : 0).toLocaleString(),
       level: stats.level || '1',
       date: stats.date ? `${stats.date.year}/${stats.date.month}/${stats.date.week}` : '1/1/1'
     };

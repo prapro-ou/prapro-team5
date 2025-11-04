@@ -46,7 +46,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = React.memo(({ onOpenSettings,
         <div className="flex items-center gap-2 bg-gray-600 rounded-lg p-2">
           <TbCash className="text-green-400 text-xl" />
           <div className="text-lg font-bold text-white">
-            {money.toLocaleString()}
+            {Math.floor(money).toLocaleString()}
           </div>
         </div>
         {/* 人口 */}

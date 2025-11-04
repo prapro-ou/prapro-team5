@@ -147,7 +147,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
               <div className="text-xs text-gray-400">月次収支</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{stats.money.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-purple-400">{Math.floor(stats.money).toLocaleString()}</div>
               <div className="text-xs text-gray-400">資金</div>
             </div>
           </div>
@@ -453,7 +453,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
             <span className="text-gray-300">現在の資金</span>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-yellow-400">{stats.money.toLocaleString()}</span>
+              <span className="text-lg font-bold text-yellow-400">{Math.floor(stats.money).toLocaleString()}</span>
               <span className="text-xs text-gray-400">円</span>
             </div>
           </div>

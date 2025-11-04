@@ -2,11 +2,12 @@ import { useRef } from 'react';
 import type { GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
 import type { HeightTerrainTile } from '../types/terrainWithHeight';
-import { Container, Graphics, Texture } from 'pixi.js';
+import { Container, Graphics, Texture, Sprite } from 'pixi.js';
 import { useRedrawControl } from './useRedrawControl';
 import { 
   drawTerrain, 
   drawFacilities, 
+  updateFacilitiesIncremental,
   drawPreview, 
   drawEffectPreview, 
   drawRoadDragRange 
@@ -55,10 +56,11 @@ export const usePixiDrawing = ({
   const facilitiesLayerRef = useRef<Container | null>(null);
   const previewLayerRef = useRef<Container | null>(null);
   const effectPreviewLayerRef = useRef<Container | null>(null);
+  const facilitySpriteMapRef = useRef<Map<string, Sprite[]>>(new Map());
+  const previousFacilitiesRef = useRef<Facility[]>([]);
 
   const { 
     shouldRedrawTerrain, 
-    shouldRedrawFacilities, 
     shouldRedrawPreview, 
     shouldRedrawEffectPreview, 
     resetPreviewStates,
@@ -69,11 +71,10 @@ export const usePixiDrawing = ({
   const drawTerrainLayer = () => {
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
-    // 地形データの変更をチェック
-    const terrainChanged = shouldRedrawTerrain(terrainMap);
-    const heightChanged = heightTerrainMap && heightTerrainMap.size > 0;
+    // 地形データの変更をチェック（地形マップ + 高さマップの両方を判定）
+    const needsRedraw = shouldRedrawTerrain(terrainMap, heightTerrainMap);
     
-    if (!terrainChanged && !heightChanged) {
+    if (!needsRedraw) {
       return; // 変更なしの場合はスキップ
     }
     
@@ -109,28 +110,46 @@ export const usePixiDrawing = ({
     );
   };
 
-  // 施設描画関数
+  // 施設描画関数（部分更新対応）
   const drawFacilitiesLayer = () => {
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
     
-    // 施設データの変更をチェック
     const facilities = facilitiesRef.current;
-    if (!shouldRedrawFacilities(facilities)) {
-      return; // 変更なしの場合はスキップ
+    const previousFacilities = previousFacilitiesRef.current;
+    
+    // 施設数が大きく変わった場合は全再描画（部分更新のオーバーヘッドが大きいため）
+    const facilityCountDiff = Math.abs(facilities.length - previousFacilities.length);
+    if (facilityCountDiff > facilities.length * 0.5 || facilities.length === 0) {
+      // 全再描画
+      drawFacilities(
+        facilitiesLayerRef.current,
+        facilities,
+        offsetsRef.current.offsetX,
+        offsetsRef.current.offsetY,
+        texturesRef.current,
+        getPooledGraphics,
+        returnGraphics,
+        heightTerrainMap
+      );
+      // スプライトマップを再構築
+      facilitySpriteMapRef.current.clear();
+      previousFacilitiesRef.current = facilities;
+      return;
     }
     
-    const { offsetX, offsetY } = offsetsRef.current;
-    
-    drawFacilities(
+    // 部分更新
+    updateFacilitiesIncremental(
       facilitiesLayerRef.current,
       facilities,
-      offsetX,
-      offsetY,
+      previousFacilities,
+      facilitySpriteMapRef.current,
+      offsetsRef.current.offsetX,
+      offsetsRef.current.offsetY,
       texturesRef.current,
-      getPooledGraphics,
-      returnGraphics,
       heightTerrainMap
     );
+    
+    previousFacilitiesRef.current = [...facilities];
   };
 
   // 施設を強制描画
@@ -138,6 +157,18 @@ export const usePixiDrawing = ({
     if (!facilitiesLayerRef.current || !isInitializedRef.current) return;
     const { offsetX, offsetY } = offsetsRef.current;
     const facilities = facilitiesRef.current;
+    
+    // スプライトマップをクリアして全再描画
+    facilitySpriteMapRef.current.forEach(sprites => {
+      sprites.forEach(sprite => {
+        if (sprite.parent) {
+          sprite.parent.removeChild(sprite);
+        }
+        sprite.destroy();
+      });
+    });
+    facilitySpriteMapRef.current.clear();
+    
     drawFacilities(
       facilitiesLayerRef.current,
       facilities,
@@ -148,6 +179,8 @@ export const usePixiDrawing = ({
       returnGraphics,
       heightTerrainMap
     );
+    
+    previousFacilitiesRef.current = [...facilities];
   };
 
   // プレビュー描画関数
