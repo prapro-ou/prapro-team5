@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics, Container, Point, Texture } from 'pixi.js';
+import { Application, Graphics, Container, Point, Texture, Rectangle } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useTimeControlStore } from '../stores/TimeControlStore';
@@ -181,17 +181,26 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const app = new Application();
       const width = Math.min(window.innerWidth, 1280);
       const height = Math.min(window.innerHeight, 720);
-      await app.init({ canvas, width, height, backgroundAlpha: 1, background: 0x111827 }); // gray-900
+      // PixiJSの最適化設定
+      await app.init({ 
+        canvas, 
+        width, 
+        height, 
+        backgroundAlpha: 1, 
+        background: 0x111827,
+        antialias: false, 
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        powerPreference: 'high-performance'
+      });
       
       appRef.current = app;
       didInit = true;
 
-      // キャンバスにフォーカス可能属性とポインター設定を付与
       const canvasEl = app.renderer.canvas as HTMLCanvasElement;
       canvasEl.tabIndex = 0;
       canvasEl.style.outline = 'none';
       canvasEl.style.pointerEvents = 'auto';
-      // 初回フォーカス＆クリック時に確実にフォーカス
       const ensureFocus = () => { try { canvasEl.focus(); } catch {} };
       ensureFocus();
 
@@ -243,6 +252,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const terrainLayer = new Container();
       terrainLayer.sortableChildren = false;
       terrainLayer.interactiveChildren = false;
+      terrainLayer.cullable = true; // ビューポート外の自動カリングを有効化
+      terrainLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3); // カリング範囲を設定
       world.addChild(terrainLayer);
       terrainLayerRef.current = terrainLayer;
 
@@ -250,6 +261,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const facilitiesLayer = new Container();
       facilitiesLayer.sortableChildren = false;
       facilitiesLayer.interactiveChildren = false;
+      facilitiesLayer.cullable = true; // ビューポート外の自動カリングを有効化
+      facilitiesLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(facilitiesLayer);
       facilitiesLayerRef.current = facilitiesLayer;
 
@@ -257,6 +270,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const previewLayer = new Container();
       previewLayer.sortableChildren = true;
       previewLayer.interactiveChildren = false;
+      previewLayer.cullable = true;
+      previewLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(previewLayer);
       previewLayerRef.current = previewLayer;
 
@@ -264,6 +279,8 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const effectPreviewLayer = new Container();
       effectPreviewLayer.sortableChildren = true;
       effectPreviewLayer.interactiveChildren = false;
+      effectPreviewLayer.cullable = true;
+      effectPreviewLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(effectPreviewLayer);
       effectPreviewLayerRef.current = effectPreviewLayer;
 
@@ -271,6 +288,7 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const hoverLayer = new Container();
       hoverLayer.sortableChildren = true;
       hoverLayer.interactiveChildren = false;
+      hoverLayer.cullable = false; // ホバーは常に表示するためカリングしない
       world.addChild(hoverLayer);
       const hoverG = new Graphics();
       hoverLayer.addChild(hoverG);
@@ -355,6 +373,21 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
         const w = Math.min(window.innerWidth, 1280);
         const h = Math.min(window.innerHeight, 720);
         app.renderer.resize(w, h);
+        
+        // カリングエリアを更新
+        const cullArea = new Rectangle(-w, -h, w * 3, h * 3);
+        if (terrainLayerRef.current) {
+          terrainLayerRef.current.cullArea = cullArea;
+        }
+        if (facilitiesLayerRef.current) {
+          facilitiesLayerRef.current.cullArea = cullArea;
+        }
+        if (previewLayerRef.current) {
+          previewLayerRef.current.cullArea = cullArea;
+        }
+        if (effectPreviewLayerRef.current) {
+          effectPreviewLayerRef.current.cullArea = cullArea;
+        }
       };
       window.addEventListener('resize', handleResize);
       
