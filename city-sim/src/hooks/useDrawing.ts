@@ -69,11 +69,10 @@ export const usePixiDrawing = ({
   const drawTerrainLayer = () => {
     if (!terrainLayerRef.current || !isInitializedRef.current) return;
     
-    // 地形データの変更をチェック
-    const terrainChanged = shouldRedrawTerrain(terrainMap);
-    const heightChanged = heightTerrainMap && heightTerrainMap.size > 0;
+    // 地形データの変更をチェック（地形マップ + 高さマップの両方を判定）
+    const needsRedraw = shouldRedrawTerrain(terrainMap, heightTerrainMap);
     
-    if (!terrainChanged && !heightChanged) {
+    if (!needsRedraw) {
       return; // 変更なしの場合はスキップ
     }
     
