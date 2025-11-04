@@ -241,31 +241,36 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
 
       // 地形用レイヤ（最下層）
       const terrainLayer = new Container();
-      terrainLayer.sortableChildren = true;
+      terrainLayer.sortableChildren = false;
+      terrainLayer.interactiveChildren = false;
       world.addChild(terrainLayer);
       terrainLayerRef.current = terrainLayer;
 
       // 施設用レイヤ
       const facilitiesLayer = new Container();
-      facilitiesLayer.sortableChildren = true;
+      facilitiesLayer.sortableChildren = false;
+      facilitiesLayer.interactiveChildren = false;
       world.addChild(facilitiesLayer);
       facilitiesLayerRef.current = facilitiesLayer;
 
       // プレビュー用レイヤ（施設レイヤーの上）
       const previewLayer = new Container();
       previewLayer.sortableChildren = true;
+      previewLayer.interactiveChildren = false;
       world.addChild(previewLayer);
       previewLayerRef.current = previewLayer;
 
       // 効果範囲プレビュー用レイヤ（プレビューレイヤーの上）
       const effectPreviewLayer = new Container();
       effectPreviewLayer.sortableChildren = true;
+      effectPreviewLayer.interactiveChildren = false;
       world.addChild(effectPreviewLayer);
       effectPreviewLayerRef.current = effectPreviewLayer;
 
       // ホバー表示用レイヤ（最前面）
       const hoverLayer = new Container();
       hoverLayer.sortableChildren = true;
+      hoverLayer.interactiveChildren = false;
       world.addChild(hoverLayer);
       const hoverG = new Graphics();
       hoverLayer.addChild(hoverG);
