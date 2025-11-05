@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/GameStore';
 import { useEconomyStore } from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
+import type { ProductType } from '../types/facility';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { useSupportStore } from '../stores/SupportStore';
@@ -467,8 +468,14 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     // 製品の需給状況を取得
     const { demand, production, efficiency } = getProductSupplyDemandStatus(facilities);
     
-    // 製品カテゴリ名
-    const productCategories = ['原材料', '中間製品', '最終製品', 'サービス'];
+    // 製品カテゴリの定義
+    const productTypes: ProductType[] = ['raw_material', 'intermediate_product', 'final_product', 'service'];
+    const productNames: Record<ProductType, string> = {
+      raw_material: '原材料',
+      intermediate_product: '中間製品',
+      final_product: '最終製品',
+      service: 'サービス'
+    };
     
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -554,19 +561,19 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
             </div>
             
             {/* 製品カテゴリ別の需給 */}
-            {productCategories.map((category, index) => (
-              <div key={index} className="bg-gray-700 rounded-lg p-3">
+            {productTypes.map((productType) => (
+              <div key={productType} className="bg-gray-700 rounded-lg p-3">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-300">{category}</span>
+                  <span className="text-gray-300">{productNames[productType]}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-blue-400">需要:</span>
-                    <span className="text-blue-400">{demand[index]}</span>
+                    <span className="text-blue-400">{demand[productType]}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-green-400">供給:</span>
-                    <span className="text-green-400">{production[index]}</span>
+                    <span className="text-green-400">{production[productType]}</span>
                   </div>
                 </div>
               </div>

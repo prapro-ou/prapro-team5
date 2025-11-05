@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { getFacilityRegistry } from '../utils/facilityLoader';
 import type { Facility } from '../types/facility';
-import type { ProductDemand } from '../types/facility';
+import type { ProductDemand, ProductType } from '../types/facility';
 
 // 製品ストアの状態
 interface ProductStore {
@@ -23,13 +23,19 @@ interface ProductStore {
 export const useProductStore = create<ProductStore>((_set, get) => ({
   // 製品需要の合計を計算
   calculateProductDemand: (facilities: Facility[]): ProductDemand => {
-    const totalDemand: ProductDemand = [0, 0, 0, 0];
+    const totalDemand: ProductDemand = {
+      raw_material: 0,
+      intermediate_product: 0,
+      final_product: 0,
+      service: 0
+    };
     
     facilities.forEach(facility => {
       const facilityData = getFacilityRegistry()[facility.type];
       if (facilityData.productDemand) {
-        for (let i = 0; i < 4; i++) {
-          totalDemand[i] += facilityData.productDemand[i];
+        const productTypes: ProductType[] = ['raw_material', 'intermediate_product', 'final_product', 'service'];
+        for (const productType of productTypes) {
+          totalDemand[productType] += facilityData.productDemand[productType];
         }
       }
     });
@@ -39,13 +45,19 @@ export const useProductStore = create<ProductStore>((_set, get) => ({
   
   // 製品生産の合計を計算
   calculateProductProduction: (facilities: Facility[]): ProductDemand => {
-    const totalProduction: ProductDemand = [0, 0, 0, 0];
+    const totalProduction: ProductDemand = {
+      raw_material: 0,
+      intermediate_product: 0,
+      final_product: 0,
+      service: 0
+    };
     
     facilities.forEach(facility => {
       const facilityData = getFacilityRegistry()[facility.type];
       if (facilityData.productProduction) {
-        for (let i = 0; i < 4; i++) {
-          totalProduction[i] += facilityData.productProduction[i];
+        const productTypes: ProductType[] = ['raw_material', 'intermediate_product', 'final_product', 'service'];
+        for (const productType of productTypes) {
+          totalProduction[productType] += facilityData.productProduction[productType];
         }
       }
     });
@@ -58,9 +70,10 @@ export const useProductStore = create<ProductStore>((_set, get) => ({
     let totalEfficiency = 0;
     let validProducts = 0;
     
-    for (let i = 0; i < 4; i++) {
-      if (demand[i] > 0) {
-        const ratio = production[i] / demand[i];
+    const productTypes: ProductType[] = ['raw_material', 'intermediate_product', 'final_product', 'service'];
+    for (const productType of productTypes) {
+      if (demand[productType] > 0) {
+        const ratio = production[productType] / demand[productType];
         const efficiency = Math.min(1.0, ratio); // 100%を超えない
         totalEfficiency += efficiency;
         validProducts++;
