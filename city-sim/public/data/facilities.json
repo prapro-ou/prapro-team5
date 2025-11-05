@@ -149,8 +149,8 @@
       "satisfaction": 15,
       "attractiveness": 200,
       "workforceRequired": {
-        "min": 10,
-        "max": 50,
+        "min": 100,
+        "max": 500,
         "baseRevenue": 500,
         "baseConsumption": 20
       },
@@ -209,8 +209,8 @@
         }
       },
       "workforceRequired": {
-        "min": 5,
-        "max": 50,
+        "min": 50,
+        "max": 200,
         "baseProduction": 20,
         "baseConsumption": 0
       },
@@ -255,15 +255,15 @@
       "satisfaction": -5,
       "attractiveness": 80,
       "workforceRequired": {
-        "min": 1,
-        "max": 10,
+        "min": 5,
+        "max": 20,
         "baseProduction": 10,
         "baseConsumption": 0
       },
       "baseAssetValue": 100,
       "infrastructureDemand": {
-        "water": 200,
-        "electricity": 200
+        "water": 100,
+        "electricity": 100
       },
       "productDemand": [
         0,
@@ -301,15 +301,15 @@
       "satisfaction": 0,
       "attractiveness": 0,
       "workforceRequired": {
-        "min": 1,
-        "max": 10,
+        "min": 5,
+        "max": 20,
         "baseProduction": 10,
         "baseConsumption": 0
       },
       "baseAssetValue": 50,
       "infrastructureDemand": {
-        "water": 200,
-        "electricity": 200
+        "water": 100,
+        "electricity": 100
       },
       "productDemand": [
         0,
@@ -331,8 +331,8 @@
       "type": "road",
       "name": "道路",
       "size": 1,
-      "cost": 50,
-      "maintenanceCost": 10,
+      "cost": 10,
+      "maintenanceCost": 5,
       "description": "一般的な道路",
       "category": "infrastructure",
       "imgPaths": [
