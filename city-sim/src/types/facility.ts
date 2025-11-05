@@ -8,8 +8,19 @@ export type FacilityType = "residential" | "large_residential" | "commercial" | 
 export type ProductType = "raw_material" | "intermediate_product" | "final_product" | "service";
 
 // 製品需要・生産
-export type ProductDemand = [number, number, number, number];
-export type ProductProduction = [number, number, number, number];
+export interface ProductDemand {
+  raw_material: number;
+  intermediate_product: number;
+  final_product: number;
+  service: number;
+}
+
+export interface ProductProduction {
+  raw_material: number;
+  intermediate_product: number;
+  final_product: number;
+  service: number;
+}
 
 // インフラ需要・供給
 export interface InfrastructureDemand {
