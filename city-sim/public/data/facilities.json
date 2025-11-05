@@ -27,18 +27,18 @@
         "water": 50,
         "electricity": 50
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        10
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 10
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "basePopulation": 100,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -66,18 +66,18 @@
         "water": 200,
         "electricity": 200
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        100
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 100
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "basePopulation": 500,
       "effectRadius": 13,
       "unlockCondition": "initial",
@@ -113,18 +113,18 @@
         "water": 100,
         "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        10,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        10
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 10,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 10
+      },
       "effectRadius": 9,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -159,18 +159,18 @@
         "water": 300,
         "electricity": 300
       },
-      "productDemand": [
-        0,
-        0,
-        50,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        100
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 50,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 100
+      },
       "effectRadius": 18,
       "parameterContributions": {
         "entertainment": {
@@ -219,18 +219,18 @@
         "water": 200,
         "electricity": 200
       },
-      "productDemand": [
-        10,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        20,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 20,
+        "service": 0
+      },
       "effectRadius": 11,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -265,18 +265,18 @@
         "water": 100,
         "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        10,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "effectRadius": 11,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -311,18 +311,18 @@
         "water": 100,
         "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        10,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "effectRadius": 9,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
