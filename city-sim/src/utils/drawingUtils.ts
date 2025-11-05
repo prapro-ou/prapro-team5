@@ -287,13 +287,15 @@ export const updateFacilitiesIncremental = (
     }
   });
 
-  // 追加・更新された施設を描画
+  // まず、更新が必要な施設と、その結果影響を受ける隣接道路を特定する
+  const changedFacilities: Facility[] = [];
+  const changedIds = new Set<string>();
+  const neighborRoadIds = new Set<string>();
+
   currentFacilities.forEach(facility => {
     const wasPresent = previousIds.has(facility.id);
     const previousFacility = previousFacilities.find(f => f.id === facility.id);
-    
-    // 施設が変更されたかチェック
-    const needsUpdate = !wasPresent || 
+    const needsUpdate = !wasPresent ||
       !previousFacility ||
       previousFacility.type !== facility.type ||
       previousFacility.position.x !== facility.position.x ||
@@ -301,100 +303,159 @@ export const updateFacilitiesIncremental = (
       JSON.stringify(previousFacility.occupiedTiles) !== JSON.stringify(facility.occupiedTiles);
 
     if (needsUpdate) {
-      // 既存のスプライトを削除
-      const existingSprites = facilitySpriteMap.get(facility.id);
-      if (existingSprites) {
-        existingSprites.forEach(sprite => {
-          if (sprite.parent) {
-            sprite.parent.removeChild(sprite);
-          }
-          sprite.destroy();
-        });
-        facilitySpriteMap.delete(facility.id);
-      }
+      changedFacilities.push(facility);
+      changedIds.add(facility.id);
 
-      // 新しいスプライトを作成
-      const facilityData = getFacilityRegistry()[facility.type];
-      const newSprites: Sprite[] = [];
-
+      // 道路が変更された場合は、隣接する道路も再描画対象に含める
       if (facility.type === 'road') {
-        // 道路の各タイルを描画
         facility.occupiedTiles.forEach(tile => {
-          const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
-          const imgPath = facilityData.imgPaths?.[connection.variantIndex];
-          if (!imgPath) return;
-
-          const texture = textures.get(imgPath);
-          if (!texture) return;
-
-          const sprite = new Sprite(texture);
-          const baseIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-          const baseIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-          
-          let heightOffset = 0;
-          if (heightTerrainMap && heightTerrainMap.size > 0) {
-            const heightTile = heightTerrainMap.get(`${tile.x},${tile.y}`);
-            if (heightTile) {
-              heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
+          const neighbors = [
+            { x: tile.x - 1, y: tile.y },
+            { x: tile.x + 1, y: tile.y },
+            { x: tile.x, y: tile.y - 1 },
+            { x: tile.x, y: tile.y + 1 },
+          ];
+          neighbors.forEach(n => {
+            const neighbor = facilityMap.get(`${n.x}-${n.y}`);
+            if (neighbor && neighbor.type === 'road') {
+              neighborRoadIds.add(neighbor.id);
             }
-          }
-          
-          const adjustedIsoY = baseIsoY - heightOffset;
-          const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
-          sprite.width = imgSize.width;
-          sprite.height = imgSize.height;
-          sprite.anchor.set(0.5, 0.5);
-          sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
-          sprite.y = adjustedIsoY;
-          sprite.rotation = (connection.rotation * Math.PI) / 180;
-          if (connection.flip) {
-            sprite.scale.x *= -1;
-          }
-          sprite.zIndex = baseIsoY + heightOffset;
-          layer.addChild(sprite);
-          newSprites.push(sprite);
+          });
         });
-      } else {
-        // 通常の施設
-        const imgPath = facilityData.imgPaths?.[0];
-        if (!imgPath) return;
+      }
+    }
+  });
 
+  // 変更された施設を描画
+  changedFacilities.forEach(facility => {
+    const existingSprites = facilitySpriteMap.get(facility.id);
+    if (existingSprites) {
+      existingSprites.forEach(sprite => {
+        if (sprite.parent) {
+          sprite.parent.removeChild(sprite);
+        }
+        sprite.destroy();
+      });
+      facilitySpriteMap.delete(facility.id);
+    }
+
+    const facilityData = getFacilityRegistry()[facility.type];
+    const newSprites: Sprite[] = [];
+
+    if (facility.type === 'road') {
+      facility.occupiedTiles.forEach(tile => {
+        const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
+        const imgPath = facilityData.imgPaths?.[connection.variantIndex];
+        if (!imgPath) return;
         const texture = textures.get(imgPath);
         if (!texture) return;
-
         const sprite = new Sprite(texture);
-        const center = facility.position;
-        const baseIsoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
-        const baseIsoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
-        
+        const baseIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+        const baseIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
         let heightOffset = 0;
         if (heightTerrainMap && heightTerrainMap.size > 0) {
-          const heightTile = heightTerrainMap.get(`${center.x},${center.y}`);
+          const heightTile = heightTerrainMap.get(`${tile.x},${tile.y}`);
           if (heightTile) {
             heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
           }
         }
-        
         const adjustedIsoY = baseIsoY - heightOffset;
-        const size = facilityData.imgSizes?.[0];
-        if (size) {
-          sprite.anchor.set(0.5, 1.0);
-          sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
-          sprite.y = adjustedIsoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
-          sprite.width = size.width;
-          sprite.height = size.height;
-        } else {
-          sprite.x = baseIsoX;
-          sprite.y = adjustedIsoY;
-        }
+        const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
+        sprite.width = imgSize.width;
+        sprite.height = imgSize.height;
+        sprite.anchor.set(0.5, 0.5);
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY;
+        sprite.rotation = (connection.rotation * Math.PI) / 180;
+        if (connection.flip) sprite.scale.x *= -1;
         sprite.zIndex = baseIsoY + heightOffset;
         layer.addChild(sprite);
         newSprites.push(sprite);
+      });
+    } else {
+      const imgPath = facilityData.imgPaths?.[0];
+      if (!imgPath) return;
+      const texture = textures.get(imgPath);
+      if (!texture) return;
+      const sprite = new Sprite(texture);
+      const center = facility.position;
+      const baseIsoX = (center.x - center.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const baseIsoY = (center.x + center.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      let heightOffset = 0;
+      if (heightTerrainMap && heightTerrainMap.size > 0) {
+        const heightTile = heightTerrainMap.get(`${center.x},${center.y}`);
+        if (heightTile) heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
       }
+      const adjustedIsoY = baseIsoY - heightOffset;
+      const size = facilityData.imgSizes?.[0];
+      if (size) {
+        sprite.anchor.set(0.5, 1.0);
+        sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+        sprite.y = adjustedIsoY + (ISO_TILE_HEIGHT / 2) + ISO_TILE_HEIGHT * Math.floor(facilityData.size / 2);
+        sprite.width = size.width;
+        sprite.height = size.height;
+      } else {
+        sprite.x = baseIsoX;
+        sprite.y = adjustedIsoY;
+      }
+      sprite.zIndex = baseIsoY + heightOffset;
+      layer.addChild(sprite);
+      newSprites.push(sprite);
+    }
 
-      if (newSprites.length > 0) {
-        facilitySpriteMap.set(facility.id, newSprites);
+    if (newSprites.length > 0) {
+      facilitySpriteMap.set(facility.id, newSprites);
+    }
+  });
+
+  // 隣接道路も再描画（変更対象と重複するものはスキップ）
+  neighborRoadIds.forEach(roadId => {
+    if (changedIds.has(roadId)) return;
+    const facility = currentFacilities.find(f => f.id === roadId);
+    if (!facility || facility.type !== 'road') return;
+
+    const existingSprites = facilitySpriteMap.get(facility.id);
+    if (existingSprites) {
+      existingSprites.forEach(sprite => {
+        if (sprite.parent) sprite.parent.removeChild(sprite);
+        sprite.destroy();
+      });
+      facilitySpriteMap.delete(facility.id);
+    }
+
+    const facilityData = getFacilityRegistry()[facility.type];
+    const newSprites: Sprite[] = [];
+
+    facility.occupiedTiles.forEach(tile => {
+      const connection = getRoadConnectionType(facilityMap, tile.x, tile.y);
+      const imgPath = facilityData.imgPaths?.[connection.variantIndex];
+      if (!imgPath) return;
+      const texture = textures.get(imgPath);
+      if (!texture) return;
+      const sprite = new Sprite(texture);
+      const baseIsoX = (tile.x - tile.y) * (ISO_TILE_WIDTH / 2) + offsetX;
+      const baseIsoY = (tile.x + tile.y) * (ISO_TILE_HEIGHT / 2) + offsetY;
+      let heightOffset = 0;
+      if (heightTerrainMap && heightTerrainMap.size > 0) {
+        const heightTile = heightTerrainMap.get(`${tile.x},${tile.y}`);
+        if (heightTile) heightOffset = HEIGHT_DRAWING_CONSTANTS.HEIGHT_OFFSETS[heightTile.height];
       }
+      const adjustedIsoY = baseIsoY - heightOffset;
+      const imgSize = facilityData.imgSizes?.[connection.variantIndex] ?? { width: 32, height: 16 };
+      sprite.width = imgSize.width;
+      sprite.height = imgSize.height;
+      sprite.anchor.set(0.5, 0.5);
+      sprite.x = baseIsoX + ISO_TILE_WIDTH / 2;
+      sprite.y = adjustedIsoY;
+      sprite.rotation = (connection.rotation * Math.PI) / 180;
+      if (connection.flip) sprite.scale.x *= -1;
+      sprite.zIndex = baseIsoY + heightOffset;
+      layer.addChild(sprite);
+      newSprites.push(sprite);
+    });
+
+    if (newSprites.length > 0) {
+      facilitySpriteMap.set(facility.id, newSprites);
     }
   });
 };
