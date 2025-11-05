@@ -7,7 +7,7 @@ import { calculateProduction, calculateConsumptionAndRevenue } from './EconomySt
 import { useInfrastructureStore } from './InfrastructureStore';
 import { playLevelUpSound } from '../components/SoundSettings';
 import { saveLoadRegistry } from './SaveLoadRegistry';
-import { buildSpatialIndex, countNearbyAllTypesWithIndex } from '../utils/areaEffect';
+import { calculatePopulationChange } from '../utils/populationCalculation';
 import { executeMonthlyWorkforceAllocation } from './EconomyStore';
 import { calculateTotalTaxRevenue, calculateMonthlyBalance } from './EconomyStore';
 import { useProductStore } from './ProductStore';
@@ -92,76 +92,47 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
   }
 };
 
-// レベルに応じて人口を増減させるタスク
+// 人口を新モデルで増減させるタスク
 const adjustPopulationByGrowth: MonthlyTask = (get) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
-  // isActive のみを対象にする
-  const activeFacilities = facilities.filter(f => f.isActive);
-  const residentials = activeFacilities.filter(f => f.type === 'residential');
-  // 近傍探索の高速化: 空間インデックスを構築（アクティブ施設のみ）
-  const spatialIndex = buildSpatialIndex(activeFacilities);
-  let totalIncrease = 0;
-  let growthrate = 0;
-  let random = Math.random()*0.2 + 0.9;
-  let counts: number[] = [];
-  let conditionFactor = 1;
 
-  if (stats.level == 1) {
-    growthrate = 0.2;
-    for (const res of residentials) {
-      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
+  // インフラ状況を取得
+  const infraStatus = useInfrastructureStore.getState().getInfrastructureStatus();
+  const infraFactors = {
+    waterDemand: infraStatus.water.demand,
+    waterSupply: infraStatus.water.supply,
+    electricityDemand: infraStatus.electricity.demand,
+    electricitySupply: infraStatus.electricity.supply,
+  };
 
-  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
-      conditionFactor = 1; // 初期化
-      conditionFactor += counts[0]*0.3; // 商業施設による加点
-      conditionFactor -= counts[1]*0.1; // 工業施設による減点
-      conditionFactor += counts[2]*0.2; // 市役所による加点
-      conditionFactor += counts[3]*0.1; // 公園による加点
-      conditionFactor -= counts[4]*0.1; // 発電所による減点
-      conditionFactor -= counts[5]*0.1; // 浄水所による減点
+  // 失業率を算出（労働力=人口の60%ベース）
+  const population = stats.population || 0;
+  const workforce = Math.floor(population * 0.6);
+  const employed = stats.workforceAllocations.reduce((acc, a) => acc + (a.assignedWorkforce || 0), 0);
+  const unemploymentRate = workforce > 0 ? Math.max(0, (workforce - employed) / workforce) : 0;
 
-      totalIncrease += Math.floor(basePop * growthrate * random * conditionFactor);
-    }
+  // 新人口モデルを適用
+  const result = calculatePopulationChange({
+    population,
+    satisfaction: stats.satisfaction,
+    unemploymentRate,
+    facilities,
+    cityParameters: stats.cityParameters,
+    infra: infraFactors,
+  });
 
-  } else if (stats.level == 2) {
-    growthrate = 0.1;
-    for (const res of residentials) {
-      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
+  if (result.delta !== 0) {
+    get().addPopulation(result.delta);
+  }
 
-  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
-      conditionFactor = 1; // 初期化
-      conditionFactor += counts[0]*0.25; // 商業施設による加点
-      conditionFactor -= counts[1]*0.13; // 工業施設による減点
-      conditionFactor += counts[2]*0.2; // 市役所による加点
-      conditionFactor += counts[3]*0.1; // 公園による加点
-      conditionFactor -= counts[4]*0.2; // 発電所による減点
-      conditionFactor -= counts[5]*0.2; // 浄水所による減点
-
-      totalIncrease += Math.floor(basePop * growthrate * random * conditionFactor);
-    }
-
-  } else {
-    growthrate = 0.03;
-    for (const res of residentials) {
-      const basePop = getFacilityRegistry()[res.type].basePopulation || 100; 
-
-  counts = countNearbyAllTypesWithIndex(res, spatialIndex);
-      conditionFactor = 1; // 初期化
-      conditionFactor += counts[0]*0.10; // 商業施設による加点
-      conditionFactor -= counts[1]*0.13; // 工業施設による減点
-      conditionFactor += counts[2]*0.2; // 市役所による加点
-      conditionFactor += counts[3]*0.1; // 公園による加点
-      conditionFactor -= counts[4]*0.3; // 発電所による減点
-      conditionFactor -= counts[5]*0.3; // 浄水所による減点
-
-      totalIncrease += Math.floor(basePop * growthrate * random * conditionFactor);
-    }
-
-  } 
-  console.log(`Population Growth: +${totalIncrease} (Growth Rate: ${growthrate}, Random Factor: ${random}`);
-
-  get().addPopulation(totalIncrease);
+  console.log(
+    `Population Δ=${result.delta} (B:${result.births} D:${result.deaths} In:${result.inflow} Out:${result.outflow}) ` +
+    `A=${result.details.attractiveness.toFixed(2)} H=${result.details.healthIndex.toFixed(2)} ` +
+    `Emp=${result.details.employmentScore.toFixed(2)} Cap=${result.details.housingCapacity} ` +
+    `Vac=${result.details.vacancyRate.toFixed(2)} InM=${result.details.inflowMultiplier.toFixed(2)} OutM=${result.details.outflowMultiplier.toFixed(2)} ` +
+    `${result.appliedHousingCap ? '[CAP]' : ''}`
+  );
 };
 
 // 新しい経済サイクルを処理するタスク

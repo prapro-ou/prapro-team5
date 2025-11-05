@@ -217,22 +217,11 @@ function App() {
     addFacility(newFacility);
     // 設置音を鳴らす
     playBuildSound();
-    // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
+    // もし設置した施設が住宅なら、道路接続状態を更新（人口は月次で増減）
     if (facilityData.category === 'residential') {
       // 道路接続状態を更新
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
-      
-      // 更新された施設リストを取得
-      const updatedFacilities = useFacilityStore.getState().facilities;
-      const placedFacility = updatedFacilities.find(f => f.id === newFacility.id);
-      
-      // 道路に接続されている場合のみ人口を増やす
-      if (placedFacility && placedFacility.isConnected) {
-        if (typeof facilityData.basePopulation === 'number') {
-          addPopulation(facilityData.basePopulation);
-        }
-      }
     }
     // 満足度は月次で再計算される
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
@@ -254,10 +243,10 @@ function App() {
           f.occupiedTiles.some(tile => tile.x === correctedPosition.x && tile.y === correctedPosition.y)
         );
         if (facility) {
-          // 住宅施設なら人口減算
+          // 住宅施設でも人口の即時減算は行わない（住宅容量のみ減る）
           const facilityData = getFacilityRegistry()[facility.type];
-          if (facilityData.category === 'residential' && typeof facilityData.basePopulation === 'number') {
-            addPopulation(-facilityData.basePopulation);
+          if (facilityData.category === 'residential') {
+            // no-op: 人口は月次計算で反映
           }
           removeFacility(facility.id);
           // setDeleteMode(false); // 削除後も削除モードを維持
