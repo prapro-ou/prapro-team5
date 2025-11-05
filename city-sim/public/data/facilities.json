@@ -377,7 +377,7 @@
       "type": "city_hall",
       "name": "市役所",
       "size": 5,
-      "cost": 5000,
+      "cost": 1000,
       "maintenanceCost": 100,
       "description": "都市行政の中心となる",
       "category": "government",
