@@ -10,6 +10,15 @@ import { useSupportStore } from '../stores/SupportStore';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
 import { getSeasonalMessages } from '../stores/SecretaryStore';
+import { 
+  calculatePopulationChange, 
+  calculateAttractiveness, 
+  calculateHealthIndex, 
+  calculateEmploymentScore, 
+  calculateHousingCapacity,
+  calculateVacancyRate,
+  type InfraFactors 
+} from '../utils/populationCalculation';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -262,7 +271,156 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         })()}
       </div>
 
-      
+      {/* 人口詳細セクション */}
+      {(() => {
+        // 人口計算に必要なデータを準備
+        const infraStatus = getInfrastructureStatus();
+        const infraFactors: InfraFactors = {
+          waterDemand: infraStatus.water.demand,
+          waterSupply: infraStatus.water.supply,
+          electricityDemand: infraStatus.electricity.demand,
+          electricitySupply: infraStatus.electricity.supply,
+        };
+
+        const population = stats.population || 0;
+        const workforce = Math.floor(population * 0.6);
+        const employed = stats.workforceAllocations.reduce((acc, a) => acc + (a.assignedWorkforce || 0), 0);
+        const unemploymentRate = workforce > 0 ? Math.max(0, (workforce - employed) / workforce) : 0;
+
+        // 人口増減を計算
+        const populationResult = calculatePopulationChange({
+          population,
+          satisfaction: stats.satisfaction,
+          unemploymentRate,
+          facilities,
+          cityParameters: stats.cityParameters,
+          infra: infraFactors,
+        });
+
+        // 各パラメータを計算
+        const attractiveness = calculateAttractiveness(stats.satisfaction);
+        const healthIndex = calculateHealthIndex(stats.cityParameters, infraFactors);
+        const employmentScore = calculateEmploymentScore(unemploymentRate);
+        const housingCapacity = calculateHousingCapacity(facilities);
+        const vacancyRate = calculateVacancyRate(population, housingCapacity);
+
+        return (
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-cyan-300 flex items-center gap-2">
+              <TbUsers className="text-cyan-400" />
+              人口詳細
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 人口増減カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">月次人口増減</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">出生</span>
+                    <span className="text-lg font-bold text-green-400">+{populationResult.births.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">死亡</span>
+                    <span className="text-lg font-bold text-red-400">-{populationResult.deaths.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">転入</span>
+                    <span className="text-lg font-bold text-blue-400">+{populationResult.inflow.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">転出</span>
+                    <span className="text-lg font-bold text-orange-400">-{populationResult.outflow.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-gray-600 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-200 font-semibold">月次増減</span>
+                      <span className={`text-xl font-bold ${populationResult.delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {populationResult.delta >= 0 ? '+' : ''}{populationResult.delta.toLocaleString()}
+                      </span>
+                    </div>
+                    {populationResult.appliedHousingCap && (
+                      <div className="text-xs text-yellow-400 mt-1">⚠️ 住宅容量制限により制限されています</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 人口パラメータカード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口パラメータ</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">魅力度</span>
+                    <span className="text-lg font-bold text-purple-400">{(attractiveness * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">健康指数</span>
+                    <span className="text-lg font-bold text-green-400">{(healthIndex * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">雇用スコア</span>
+                    <span className="text-lg font-bold text-blue-400">{(employmentScore * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">失業率</span>
+                    <span className="text-lg font-bold text-red-400">{(unemploymentRate * 100).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 住宅カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">住宅状況</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">住宅容量</span>
+                    <span className="text-lg font-bold text-cyan-400">{housingCapacity.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">現在人口</span>
+                    <span className="text-lg font-bold text-blue-400">{population.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">空室率</span>
+                    <span className="text-lg font-bold text-green-400">{(vacancyRate * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">利用率</span>
+                    <span className={`text-lg font-bold ${(population / Math.max(1, housingCapacity)) > 1 ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {housingCapacity > 0 ? ((population / housingCapacity) * 100).toFixed(1) : '0.0'}%
+                    </span>
+                  </div>
+                  {housingCapacity > 0 && population / housingCapacity > 1 && (
+                    <div className="text-xs text-red-400 mt-1">⚠️ 過密状態（住宅容量超過）</div>
+                  )}
+                </div>
+              </div>
+
+              {/* 流入・流出係数カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">流入・流出係数</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">流入倍率</span>
+                    <span className="text-lg font-bold text-blue-400">{populationResult.details.inflowMultiplier.toFixed(2)}×</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">流出倍率</span>
+                    <span className="text-lg font-bold text-red-400">{populationResult.details.outflowMultiplier.toFixed(2)}×</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-600">
+                    <div className="mb-1">流入倍率の構成:</div>
+                    <div className="ml-2">• 魅力度: {(attractiveness * 1.2).toFixed(2)}</div>
+                    <div className="ml-2">• 雇用: {(employmentScore * 0.8).toFixed(2)}</div>
+                    <div className="ml-2">• 空室率: {(vacancyRate * 1.0).toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 前年度評価結果セクション */}
       {stats.previousYearEvaluation && (
