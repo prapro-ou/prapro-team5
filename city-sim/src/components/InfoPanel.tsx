@@ -75,7 +75,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = React.memo(({ onOpenSettings,
         <TimeControl />
         
         {/* 右側にボタンを配置 */}
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           {/* 実績ボタン */}
           <div className="relative">
             <button
