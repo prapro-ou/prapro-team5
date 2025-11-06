@@ -21,7 +21,6 @@
           "height": 79
         }
       ],
-      "satisfaction": 0,
       "baseAssetValue": 100,
       "infrastructureDemand": {
         "water": 50,
@@ -60,7 +59,6 @@
           "height": 120
         }
       ],
-      "satisfaction": 0,
       "baseAssetValue": 300,
       "infrastructureDemand": {
         "water": 200,
@@ -100,7 +98,6 @@
           "height": 59
         }
       ],
-      "satisfaction": 7,
       "attractiveness": 80,
       "workforceRequired": {
         "min": 3,
@@ -146,7 +143,6 @@
           "height": 135
         }
       ],
-      "satisfaction": 15,
       "attractiveness": 200,
       "workforceRequired": {
         "min": 100,
@@ -199,7 +195,6 @@
           "height": 91
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 80,
       "parameterContributions": {
         "environment": {
@@ -251,7 +246,6 @@
           "height": 52
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 80,
       "workforceRequired": {
         "min": 5,
@@ -297,7 +291,6 @@
           "height": 49
         }
       ],
-      "satisfaction": 0,
       "attractiveness": 0,
       "workforceRequired": {
         "min": 5,
@@ -368,7 +361,6 @@
           "height": 16
         }
       ],
-      "satisfaction": 0,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -389,7 +381,6 @@
           "height": 99
         }
       ],
-      "satisfaction": 10,
       "effectRadius": 21,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -411,7 +402,6 @@
           "height": 56
         }
       ],
-      "satisfaction": 5,
       "effectRadius": 13,
       "parameterContributions": {
         "entertainment": { "baseValue": 5, "radiusContribution": 2 },
@@ -437,7 +427,6 @@
           "height": 95
         }
       ],
-      "satisfaction": 12,
       "effectRadius": 25,
       "parameterContributions": {
         "security": { "baseValue": 0, "radiusContribution": 8, "requiresActive": true }
@@ -462,7 +451,6 @@
           "height": 108
         }
       ],
-      "satisfaction": 12,
       "effectRadius": 25,
       "parameterContributions": {
         "sanitation": { "baseValue": 0, "radiusContribution": 10, "requiresActive": true }
@@ -487,7 +475,6 @@
           "height": 112
         }
       ],
-      "satisfaction": 0,
       "attractiveness": 100,
       "infrastructureSupply": {
         "water": 0,
@@ -514,7 +501,6 @@
           "height": 83
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 70,
       "infrastructureSupply": {
         "water": 5000,
