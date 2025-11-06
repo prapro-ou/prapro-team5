@@ -214,7 +214,7 @@
         "baseProduction": 20,
         "baseConsumption": 0
       },
-      "baseAssetValue": 200,
+      "baseAssetValue": 400,
       "infrastructureDemand": {
         "water": 200,
         "electricity": 200

@@ -211,8 +211,22 @@ export function calculateTotalAssets(facilities: Facility[], satisfaction: numbe
 
 // 平均資産を計算
 export function calculateAverageAssets(facilities: Facility[], satisfaction: number): number {
-  const totalAssets = calculateTotalAssets(facilities, satisfaction);
-  return facilities.length > 0 ? Math.floor(totalAssets / facilities.length) : 0;
+  // 資産価値がある施設のみをフィルタリング
+  const facilitiesWithAssets = facilities.filter(facility => {
+    const facilityData = getFacilityRegistry()[facility.type];
+    return facilityData.baseAssetValue && facilityData.baseAssetValue > 0;
+  });
+  
+  if (facilitiesWithAssets.length === 0) {
+    return 0;
+  }
+  
+  // 資産価値がある施設のみで総資産を計算
+  const totalAssets = facilitiesWithAssets.reduce((total, facility) => {
+    return total + calculateFacilityAssetValue(facility, satisfaction);
+  }, 0);
+  
+  return Math.floor(totalAssets / facilitiesWithAssets.length);
 }
 
 // 各施設の利益を計算
@@ -241,7 +255,7 @@ export function calculateTotalProfit(facilities: Facility[], stats: GameStats): 
   }, 0);
 }
 
-// 平均利益を計算
+// 平均利益を計算（後方互換性のため残す）
 export function calculateAverageProfit(facilities: Facility[], stats: GameStats): number {
   const totalProfit = calculateTotalProfit(facilities, stats);
   const businessFacilities = facilities.filter(f => 
@@ -251,25 +265,44 @@ export function calculateAverageProfit(facilities: Facility[], stats: GameStats)
   return businessFacilities.length > 0 ? Math.floor(totalProfit / businessFacilities.length) : 0;
 }
 
+// 平均法人資産を計算（法人税用）
+export function calculateAverageBusinessAssets(facilities: Facility[], satisfaction: number): number {
+  // 商業・工業施設のみをフィルタリング
+  const businessFacilities = facilities.filter(f => 
+    f.type === 'commercial' || f.type === 'industrial'
+  );
+  
+  if (businessFacilities.length === 0) {
+    return 0;
+  }
+  
+  // 法人施設の資産価値を合計
+  const totalBusinessAssets = businessFacilities.reduce((total, facility) => {
+    return total + calculateFacilityAssetValue(facility, satisfaction);
+  }, 0);
+  
+  return Math.floor(totalBusinessAssets / businessFacilities.length);
+}
+
 // 市民税を計算
 export function calculateCitizenTax(population: number, averageAssets: number): number {
   const taxRates = getTaxRates();
   return Math.floor(population * averageAssets * taxRates.citizenTax);
 }
 
-// 法人税を計算
-export function calculateCorporateTax(businessCount: number, averageProfit: number): number {
+// 法人税を計算（資産ベース）
+export function calculateCorporateTax(businessCount: number, averageBusinessAssets: number): number {
   const taxRates = getTaxRates();
-  return Math.floor(businessCount * averageProfit * taxRates.corporateTax);
+  return Math.floor(businessCount * averageBusinessAssets * taxRates.corporateTax);
 }
 
 // 総税収を計算
 export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[]): number {
-  // 平均資産を計算
+  // 平均資産を計算（市民税用）
   const averageAssets = calculateAverageAssets(facilities, stats.satisfaction);
   
-  // 平均利益を計算
-  const averageProfit = calculateAverageProfit(facilities, stats);
+  // 平均法人資産を計算（法人税用）
+  const averageBusinessAssets = calculateAverageBusinessAssets(facilities, stats.satisfaction);
   
   // 企業数を計算（商業・工業施設）
   const businessCount = facilities.filter(f => 
@@ -279,15 +312,15 @@ export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[
   // 市民税
   const citizenTax = calculateCitizenTax(stats.population, averageAssets);
   
-  // 法人税
-  const corporateTax = calculateCorporateTax(businessCount, averageProfit);
+  // 法人税（資産ベース）
+  const corporateTax = calculateCorporateTax(businessCount, averageBusinessAssets);
   
   // 総税収
   const totalTaxRevenue = citizenTax + corporateTax;
   
   console.log(`=== 税収計算 ===`);
   console.log(`人口: ${stats.population}, 平均資産: ${averageAssets}`);
-  console.log(`企業数: ${businessCount}, 平均利益: ${averageProfit}`);
+  console.log(`企業数: ${businessCount}, 平均法人資産: ${averageBusinessAssets}`);
   console.log(`市民税: ${citizenTax} (税率: ${getTaxRates().citizenTax * 100}%)`);
   console.log(`法人税: ${corporateTax} (税率: ${getTaxRates().corporateTax * 100}%)`);
   console.log(`総税収: ${totalTaxRevenue}`);

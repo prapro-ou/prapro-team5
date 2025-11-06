@@ -6,7 +6,7 @@ import {
   calculateCitizenTax, 
   calculateCorporateTax,
   calculateAverageAssets,
-  calculateAverageProfit
+  calculateAverageBusinessAssets
 } from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
 import type { ProductType } from '../types/facility';
@@ -764,7 +764,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
     // 収入の詳細を計算
     const hasCityHall = facilities.some(f => f.type === 'city_hall');
     const averageAssets = calculateAverageAssets(facilities, stats.satisfaction);
-    const averageProfit = calculateAverageProfit(facilities, stats);
+    const averageBusinessAssets = calculateAverageBusinessAssets(facilities, stats.satisfaction);
     const businessCount = facilities.filter(f => 
       f.type === 'commercial' || f.type === 'industrial'
     ).length;
@@ -773,7 +773,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
       ? calculateCitizenTax(stats.population, averageAssets) 
       : 0;
     const corporateTax = hasCityHall && businessCount > 0 
-      ? calculateCorporateTax(businessCount, averageProfit) 
+      ? calculateCorporateTax(businessCount, averageBusinessAssets) 
       : 0;
     const totalTaxRevenue = citizenTax + corporateTax;
     
@@ -944,8 +944,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                       <span>{businessCount}社</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>平均利益:</span>
-                      <span>{averageProfit.toLocaleString()}円</span>
+                      <span>平均法人資産:</span>
+                      <span>{averageBusinessAssets.toLocaleString()}円</span>
                     </div>
                     <div className="flex justify-between">
                       <span>税率:</span>
