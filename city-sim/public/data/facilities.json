@@ -204,7 +204,6 @@
       "parameterContributions": {
         "environment": {
           "baseValue": -2,
-          "radius": 11,
           "radiusContribution": -1
         }
       },
@@ -415,8 +414,8 @@
       "satisfaction": 5,
       "effectRadius": 13,
       "parameterContributions": {
-        "entertainment": { "baseValue": 5, "radius": 13, "radiusContribution": 2 },
-        "environment": { "baseValue": 10, "radius": 13, "radiusContribution": 3 }
+        "entertainment": { "baseValue": 5, "radiusContribution": 2 },
+        "environment": { "baseValue": 10, "radiusContribution": 3 }
       },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -441,7 +440,7 @@
       "satisfaction": 12,
       "effectRadius": 25,
       "parameterContributions": {
-        "security": { "baseValue": 0, "radius": 25, "radiusContribution": 8, "requiresActive": true }
+        "security": { "baseValue": 0, "radiusContribution": 8, "requiresActive": true }
       },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -466,7 +465,7 @@
       "satisfaction": 12,
       "effectRadius": 25,
       "parameterContributions": {
-        "sanitation": { "baseValue": 0, "radius": 25, "radiusContribution": 10, "requiresActive": true }
+        "sanitation": { "baseValue": 0, "radiusContribution": 10, "requiresActive": true }
       },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
