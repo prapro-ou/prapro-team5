@@ -21,24 +21,23 @@
           "height": 79
         }
       ],
-      "satisfaction": 0,
       "baseAssetValue": 100,
       "infrastructureDemand": {
         "water": 50,
         "electricity": 50
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        10
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 10
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "basePopulation": 100,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -60,24 +59,23 @@
           "height": 120
         }
       ],
-      "satisfaction": 0,
       "baseAssetValue": 300,
       "infrastructureDemand": {
         "water": 200,
         "electricity": 200
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        100
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 100
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "basePopulation": 500,
       "effectRadius": 13,
       "unlockCondition": "initial",
@@ -100,7 +98,6 @@
           "height": 59
         }
       ],
-      "satisfaction": 7,
       "attractiveness": 80,
       "workforceRequired": {
         "min": 3,
@@ -113,18 +110,18 @@
         "water": 100,
         "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        10,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        10
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 10,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 10
+      },
       "effectRadius": 9,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -146,11 +143,10 @@
           "height": 135
         }
       ],
-      "satisfaction": 15,
       "attractiveness": 200,
       "workforceRequired": {
-        "min": 10,
-        "max": 50,
+        "min": 100,
+        "max": 500,
         "baseRevenue": 500,
         "baseConsumption": 20
       },
@@ -159,19 +155,26 @@
         "water": 300,
         "electricity": 300
       },
-      "productDemand": [
-        0,
-        0,
-        50,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        0,
-        100
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 50,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 100
+      },
       "effectRadius": 18,
+      "parameterContributions": {
+        "entertainment": {
+          "baseValue": 3,
+          "radius": 12,
+          "radiusContribution": 1
+        }
+      },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -192,31 +195,36 @@
           "height": 91
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 80,
+      "parameterContributions": {
+        "environment": {
+          "baseValue": -2,
+          "radiusContribution": -1
+        }
+      },
       "workforceRequired": {
-        "min": 5,
-        "max": 50,
+        "min": 50,
+        "max": 200,
         "baseProduction": 20,
         "baseConsumption": 0
       },
-      "baseAssetValue": 200,
+      "baseAssetValue": 400,
       "infrastructureDemand": {
         "water": 200,
         "electricity": 200
       },
-      "productDemand": [
-        10,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        0,
-        0,
-        20,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 20,
+        "service": 0
+      },
       "effectRadius": 11,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -238,31 +246,30 @@
           "height": 52
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 80,
       "workforceRequired": {
-        "min": 1,
-        "max": 10,
+        "min": 5,
+        "max": 20,
         "baseProduction": 10,
         "baseConsumption": 0
       },
       "baseAssetValue": 100,
       "infrastructureDemand": {
-        "water": 200,
-        "electricity": 200
+        "water": 100,
+        "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        10,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "effectRadius": 11,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -284,31 +291,30 @@
           "height": 49
         }
       ],
-      "satisfaction": 0,
       "attractiveness": 0,
       "workforceRequired": {
-        "min": 1,
-        "max": 10,
+        "min": 5,
+        "max": 20,
         "baseProduction": 10,
         "baseConsumption": 0
       },
       "baseAssetValue": 50,
       "infrastructureDemand": {
-        "water": 200,
-        "electricity": 200
+        "water": 100,
+        "electricity": 100
       },
-      "productDemand": [
-        0,
-        0,
-        0,
-        0
-      ],
-      "productProduction": [
-        10,
-        0,
-        0,
-        0
-      ],
+      "productDemand": {
+        "raw_material": 0,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
+      "productProduction": {
+        "raw_material": 10,
+        "intermediate_product": 0,
+        "final_product": 0,
+        "service": 0
+      },
       "effectRadius": 9,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -317,8 +323,8 @@
       "type": "road",
       "name": "道路",
       "size": 1,
-      "cost": 50,
-      "maintenanceCost": 10,
+      "cost": 10,
+      "maintenanceCost": 5,
       "description": "一般的な道路",
       "category": "infrastructure",
       "imgPaths": [
@@ -355,7 +361,6 @@
           "height": 16
         }
       ],
-      "satisfaction": 0,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -363,7 +368,7 @@
       "type": "city_hall",
       "name": "市役所",
       "size": 5,
-      "cost": 5000,
+      "cost": 1000,
       "maintenanceCost": 100,
       "description": "都市行政の中心となる",
       "category": "government",
@@ -376,7 +381,6 @@
           "height": 99
         }
       ],
-      "satisfaction": 10,
       "effectRadius": 21,
       "unlockCondition": "initial",
       "initiallyUnlocked": true
@@ -398,8 +402,11 @@
           "height": 56
         }
       ],
-      "satisfaction": 5,
       "effectRadius": 13,
+      "parameterContributions": {
+        "entertainment": { "baseValue": 5, "radiusContribution": 2 },
+        "environment": { "baseValue": 10, "radiusContribution": 3 }
+      },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -420,8 +427,10 @@
           "height": 95
         }
       ],
-      "satisfaction": 12,
       "effectRadius": 25,
+      "parameterContributions": {
+        "security": { "baseValue": 0, "radiusContribution": 8, "requiresActive": true }
+      },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -442,8 +451,10 @@
           "height": 108
         }
       ],
-      "satisfaction": 12,
       "effectRadius": 25,
+      "parameterContributions": {
+        "sanitation": { "baseValue": 0, "radiusContribution": 10, "requiresActive": true }
+      },
       "unlockCondition": "initial",
       "initiallyUnlocked": true
     },
@@ -464,7 +475,6 @@
           "height": 112
         }
       ],
-      "satisfaction": 0,
       "attractiveness": 100,
       "infrastructureSupply": {
         "water": 0,
@@ -491,7 +501,6 @@
           "height": 83
         }
       ],
-      "satisfaction": -5,
       "attractiveness": 70,
       "infrastructureSupply": {
         "water": 5000,

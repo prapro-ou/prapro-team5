@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Position, GridSize } from '../types/grid';
 import type { Facility, FacilityType } from '../types/facility';
-import { Application, Graphics, Container, Point, Texture } from 'pixi.js';
+import { Application, Graphics, Container, Point, Texture, Rectangle } from 'pixi.js';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../utils/coordinates';
 import { useTerrainStore } from '../stores/TerrainStore';
 import { useTimeControlStore } from '../stores/TimeControlStore';
@@ -12,6 +12,7 @@ import { useWheelZoom } from '../hooks/useWheelZoom';
 import { useFacilityTextures } from '../hooks/useFacilityTextures';
 import { useKeyboardPan } from '../hooks/useKeyboardPan';
 import { GRID_WIDTH, GRID_HEIGHT } from '../constants/gridConstants';
+import { useUIStore } from '../stores/UIStore';
 
 interface IsometricGridProps {
   size: GridSize;
@@ -50,6 +51,12 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
   const facilitiesRef = useRef<Facility[]>(facilities);
   const onReadyRef = useRef<(() => void) | undefined>(onReady);
   const readyNotifiedRef = useRef(false);
+
+  // UIストアからカメラ状態取得/保存
+  const cameraX = useUIStore(state => state.cameraX);
+  const cameraY = useUIStore(state => state.cameraY);
+  const cameraScaleFromStore = useUIStore(state => state.cameraScale);
+  const setCameraState = useUIStore(state => state.setCameraState);
 
   // オブジェクトプール
   const { getPooledGraphics, returnGraphics, clearPool } = useGraphicsPool();
@@ -174,17 +181,26 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const app = new Application();
       const width = Math.min(window.innerWidth, 1280);
       const height = Math.min(window.innerHeight, 720);
-      await app.init({ canvas, width, height, backgroundAlpha: 1, background: 0x111827 }); // gray-900
+      // PixiJSの最適化設定
+      await app.init({ 
+        canvas, 
+        width, 
+        height, 
+        backgroundAlpha: 1, 
+        background: 0x111827,
+        antialias: false, 
+        resolution: window.devicePixelRatio || 1,
+        autoDensity: true,
+        powerPreference: 'high-performance'
+      });
       
       appRef.current = app;
       didInit = true;
 
-      // キャンバスにフォーカス可能属性とポインター設定を付与
       const canvasEl = app.renderer.canvas as HTMLCanvasElement;
       canvasEl.tabIndex = 0;
       canvasEl.style.outline = 'none';
       canvasEl.style.pointerEvents = 'auto';
-      // 初回フォーカス＆クリック時に確実にフォーカス
       const ensureFocus = () => { try { canvasEl.focus(); } catch {} };
       ensureFocus();
 
@@ -221,6 +237,9 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       }
 
       // 初期カメラ適用
+      cameraRef.current.x = cameraX ?? 0;
+      cameraRef.current.y = cameraY ?? 0;
+      cameraRef.current.scale = cameraScaleFromStore ?? 1;
       world.position.set(cameraRef.current.x, cameraRef.current.y);
       world.scale.set(cameraRef.current.scale);
 
@@ -231,31 +250,45 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
 
       // 地形用レイヤ（最下層）
       const terrainLayer = new Container();
-      terrainLayer.sortableChildren = true;
+      terrainLayer.sortableChildren = false;
+      terrainLayer.interactiveChildren = false;
+      terrainLayer.cullable = true; // ビューポート外の自動カリングを有効化
+      terrainLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3); // カリング範囲を設定
       world.addChild(terrainLayer);
       terrainLayerRef.current = terrainLayer;
 
       // 施設用レイヤ
       const facilitiesLayer = new Container();
-      facilitiesLayer.sortableChildren = true;
+      facilitiesLayer.sortableChildren = false;
+      facilitiesLayer.interactiveChildren = false;
+      facilitiesLayer.cullable = true; // ビューポート外の自動カリングを有効化
+      facilitiesLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(facilitiesLayer);
       facilitiesLayerRef.current = facilitiesLayer;
 
       // プレビュー用レイヤ（施設レイヤーの上）
       const previewLayer = new Container();
       previewLayer.sortableChildren = true;
+      previewLayer.interactiveChildren = false;
+      previewLayer.cullable = true;
+      previewLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(previewLayer);
       previewLayerRef.current = previewLayer;
 
       // 効果範囲プレビュー用レイヤ（プレビューレイヤーの上）
       const effectPreviewLayer = new Container();
       effectPreviewLayer.sortableChildren = true;
+      effectPreviewLayer.interactiveChildren = false;
+      effectPreviewLayer.cullable = true;
+      effectPreviewLayer.cullArea = new Rectangle(-width, -height, width * 3, height * 3);
       world.addChild(effectPreviewLayer);
       effectPreviewLayerRef.current = effectPreviewLayer;
 
       // ホバー表示用レイヤ（最前面）
       const hoverLayer = new Container();
       hoverLayer.sortableChildren = true;
+      hoverLayer.interactiveChildren = false;
+      hoverLayer.cullable = false; // ホバーは常に表示するためカリングしない
       world.addChild(hoverLayer);
       const hoverG = new Graphics();
       hoverLayer.addChild(hoverG);
@@ -340,6 +373,21 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
         const w = Math.min(window.innerWidth, 1280);
         const h = Math.min(window.innerHeight, 720);
         app.renderer.resize(w, h);
+        
+        // カリングエリアを更新
+        const cullArea = new Rectangle(-w, -h, w * 3, h * 3);
+        if (terrainLayerRef.current) {
+          terrainLayerRef.current.cullArea = cullArea;
+        }
+        if (facilitiesLayerRef.current) {
+          facilitiesLayerRef.current.cullArea = cullArea;
+        }
+        if (previewLayerRef.current) {
+          previewLayerRef.current.cullArea = cullArea;
+        }
+        if (effectPreviewLayerRef.current) {
+          effectPreviewLayerRef.current.cullArea = cullArea;
+        }
       };
       window.addEventListener('resize', handleResize);
       
@@ -367,6 +415,9 @@ export const IsometricGrid: React.FC<IsometricGridProps> = React.memo(({ size, o
       const app = appRef.current;
       appRef.current = null;
       isInitializedRef.current = false;
+
+      // 現在のカメラ状態を保存
+      try { setCameraState(cameraRef.current.x, cameraRef.current.y, cameraRef.current.scale); } catch {}
       
       // init 完了していない場合は destroy を呼ばない
       if (didInit && app) {

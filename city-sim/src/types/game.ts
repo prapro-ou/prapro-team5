@@ -1,11 +1,12 @@
 import type { FactionType, SupportSystemState } from './support';
+import type { CityParameters } from './cityParameter';
 
 export interface GameStats {
   level: number; 
   money: number;
   population: number;
   satisfaction: number;
-  happinessPenalty?: number; // 満足度減少ペナルティ（警察署などの効果範囲外）
+  happinessPenalty?: number; // 満足度減少ペナルティ
   // 労働力配分情報
   workforceAllocations: {
     facilityId: string;
@@ -39,6 +40,9 @@ export interface GameStats {
     grade: 'S' | 'A' | 'B' | 'C' | 'D' | 'E'; // 評価等級
     subsidy: number;               // 補助金額
   } | null;
+  // 都市パラメータ
+  cityParameters?: CityParameters;
+
   // 年次統計データ
   yearlyStats: {
     year: number;
@@ -76,6 +80,24 @@ export interface GameStats {
     monthlyPopulation: number[];      // 月次人口の配列（12ヶ月分）
     monthlySatisfaction: number[];    // 月次満足度の配列（12ヶ月分）
     monthlySupportRatings: Record<FactionType, number[]>; // 月次支持率の配列（12ヶ月分）
+    // 都市パラメータの月次履歴
+    monthlyCityParameters?: CityParameters[];
+    // 人口増減の詳細
+    monthlyBirths?: number[];         // 月次出生数の配列（12ヶ月分）
+    monthlyDeaths?: number[];         // 月次死亡数の配列（12ヶ月分）
+    monthlyInflow?: number[];         // 月次転入数の配列（12ヶ月分）
+    monthlyOutflow?: number[];        // 月次転出数の配列（12ヶ月分）
+    monthlyDelta?: number[];          // 月次人口増減の配列（12ヶ月分）
+    monthlyHousingCapacity?: number[]; // 月次住宅容量の配列（12ヶ月分）
+  };
+  // 人口増減計算結果の一時保存（月次データ記録用）
+  lastPopulationChange?: {
+    births: number;
+    deaths: number;
+    inflow: number;
+    outflow: number;
+    delta: number;
+    housingCapacity: number;
   };
 }
 

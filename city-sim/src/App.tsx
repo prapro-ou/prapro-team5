@@ -20,7 +20,7 @@ import { TbCrane ,TbCraneOff, TbBulldozer, TbMessageCircle, TbChartBar, TbCheckl
 import CitizenFeed from "./components/CitizenFeed";
 import { useEffect, useState, useCallback } from 'react';
 
-import { useGameStore } from './stores/GameStore';
+import { useGameStore, INITIAL_STATS } from './stores/GameStore';
 import { useFacilityStore } from './stores/FacilityStore'
 import { useUIStore } from './stores/UIStore';
 import { useMissionStore } from './stores/MissionStore';
@@ -29,10 +29,10 @@ import { useAchievementStore } from './stores/AchievementStore';
 import { useInfrastructureStore } from './stores/InfrastructureStore';
 import { useTerrainStore } from './stores/TerrainStore';
 import { useTimeControlStore } from './stores/TimeControlStore';
-import { startHappinessDecayTask } from './stores/HappinessDecayTask';
 import { useSecretaryStore } from './stores/SecretaryStore';
 import { useSupportStore } from './stores/SupportStore';
 import { useYearlyEvaluationStore } from './stores/YearlyEvaluationStore';
+import { useCityParameterMapStore } from './stores/CityParameterMapStore';
 
 // SNSフィード表示用ボタンコンポーネント
 const SNSFeedButton = () => {
@@ -98,7 +98,7 @@ function App() {
   const [deleteMode, setDeleteMode] = useState(false);
 
   // ゲーム統計情報・レベルアップ通知
-  const { stats, spendMoney, advanceTime, addPopulation, recalculateSatisfaction, levelUpMessage, setLevelUpMessage } = useGameStore();
+  const { stats, spendMoney, advanceTime, addPopulation, levelUpMessage, setLevelUpMessage } = useGameStore();
   
   // 時間制御
   const { isPaused, getCurrentInterval, checkModalState } = useTimeControlStore();
@@ -195,11 +195,7 @@ function App() {
     updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
   }, [facilities.length, showStartScreen, showOpeningSequence, isInitializationComplete]);
 
-   useEffect(() => {
-     if (!isInitializationComplete) return;
-     if (showStartScreen || showOpeningSequence) return;
-     startHappinessDecayTask();
-   }, [showStartScreen, showOpeningSequence, facilities.length, isInitializationComplete]);
+  
   // 地形生成
   const { generateTerrain, generateHeightTerrain } = useTerrainStore();
 
@@ -221,32 +217,19 @@ function App() {
     addFacility(newFacility);
     // 設置音を鳴らす
     playBuildSound();
-    // もし設置した施設が住宅なら、道路接続状態をチェックして人口を増やす
+    // もし設置した施設が住宅なら、道路接続状態を更新（人口は月次で増減）
     if (facilityData.category === 'residential') {
       // 道路接続状態を更新
       const { updateRoadConnectivity } = useFacilityStore.getState();
       updateRoadConnectivity({ width: GRID_WIDTH, height: GRID_HEIGHT });
-      
-      // 更新された施設リストを取得
-      const updatedFacilities = useFacilityStore.getState().facilities;
-      const placedFacility = updatedFacilities.find(f => f.id === newFacility.id);
-      
-      // 道路に接続されている場合のみ人口を増やす
-      if (placedFacility && placedFacility.isConnected) {
-        if (typeof facilityData.basePopulation === 'number') {
-          addPopulation(facilityData.basePopulation);
-        }
-      }
     }
-    // 施設を設置した後に満足度を再計算する
-    // この時、更新後の施設リストを取得して渡す
-    recalculateSatisfaction(useFacilityStore.getState().facilities);
+    // 満足度は月次で再計算される
     console.log(`Placed ${facilityData.name} at (${position.x}, ${position.y})`);
 
     // インフラ状況を再計算
     const { calculateInfrastructure } = useInfrastructureStore.getState();
     calculateInfrastructure(useFacilityStore.getState().facilities);
-  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound, recalculateSatisfaction]);
+  }, [spendMoney, checkCanPlace, createFacility, addFacility, playBuildSound]);
 
   const handleTileClick = useCallback((position: Position) => {
     const correctedPosition = {
@@ -260,13 +243,7 @@ function App() {
           f.occupiedTiles.some(tile => tile.x === correctedPosition.x && tile.y === correctedPosition.y)
         );
         if (facility) {
-          // 住宅施設なら人口減算
-          const facilityData = getFacilityRegistry()[facility.type];
-          if (facilityData.category === 'residential' && typeof facilityData.basePopulation === 'number') {
-            addPopulation(-facilityData.basePopulation);
-          }
           removeFacility(facility.id);
-          // setDeleteMode(false); // 削除後も削除モードを維持
           return;
         }
       } else {
@@ -307,41 +284,7 @@ function App() {
           // ゲーム状態を初期化（SaveLoadRegistryの影響を回避するため強制初期化）
           // 副作用はクソ，何もわからん
           useGameStore.setState({
-            stats: {
-              level: 1,
-              money: 10000,
-              population: 0,
-              satisfaction: 50,
-              workforceAllocations: [],
-              date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
-              monthlyBalance: { income: 0, expense: 0, balance: 0 },
-              yearlyEvaluation: null,
-              yearlyStats: null,
-              previousYearStats: null,
-              previousYearEvaluation: null,
-              monthlyAccumulation: {
-                year: 2024,
-                monthlyTaxRevenue: new Array(12).fill(0),
-                monthlyMaintenanceCost: new Array(12).fill(0),
-                monthlyPopulation: new Array(12).fill(0),
-                monthlySatisfaction: new Array(12).fill(50),
-                monthlySupportRatings: {
-                  central_government: new Array(12).fill(50),
-                  citizens: new Array(12).fill(50),
-                  chamber_of_commerce: new Array(12).fill(50)
-                }
-              },
-              supportSystem: {
-                factionSupports: [
-                  { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
-                  { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
-                  { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
-                ],
-                monthlyHistory: [],
-                yearlyHistory: [],
-                lastCalculationDate: { year: 2024, month: 1 }
-              }
-            },
+            stats: INITIAL_STATS,
             levelUpMessage: null
           });
           
@@ -355,6 +298,7 @@ function App() {
           useSecretaryStore.getState().resetToInitial();
           useSupportStore.getState().resetToInitial();
           useYearlyEvaluationStore.getState().resetToInitial();
+          useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
           const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           if (generatedRoads.length > 0) {
@@ -371,12 +315,10 @@ function App() {
           generateHeightTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
           
           // オープニング状態を変更
-        // グリッド初期描画のローディングを開始
-        setIsGridLoading(true);
-        setGridLoadingStartedAt(Date.now());
-        setShowOpeningSequence(false);
-          
-          // 初期化完了フラグは既に有効化済み
+          // グリッド初期描画のローディングを開始
+          setIsGridLoading(true);
+          setGridLoadingStartedAt(Date.now());
+          setShowOpeningSequence(false);
         }}
       />
     );
@@ -399,41 +341,7 @@ function App() {
               
               // ゲーム状態を初期化
               useGameStore.setState({
-                stats: {
-                  level: 1,
-                  money: 10000,
-                  population: 0,
-                  satisfaction: 50,
-                  workforceAllocations: [],
-                  date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
-                  monthlyBalance: { income: 0, expense: 0, balance: 0 },
-                  yearlyEvaluation: null,
-                  yearlyStats: null,
-                  previousYearStats: null,
-                  previousYearEvaluation: null,
-                  monthlyAccumulation: {
-                    year: 2024,
-                    monthlyTaxRevenue: new Array(12).fill(0),
-                    monthlyMaintenanceCost: new Array(12).fill(0),
-                    monthlyPopulation: new Array(12).fill(0),
-                    monthlySatisfaction: new Array(12).fill(50),
-                    monthlySupportRatings: {
-                      central_government: new Array(12).fill(50),
-                      citizens: new Array(12).fill(50),
-                      chamber_of_commerce: new Array(12).fill(50)
-                    }
-                  },
-                  supportSystem: {
-                    factionSupports: [
-                      { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
-                      { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
-                      { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
-                    ],
-                    monthlyHistory: [],
-                    yearlyHistory: [],
-                    lastCalculationDate: { year: 2024, month: 1 }
-                  }
-                },
+                stats: INITIAL_STATS,
                 levelUpMessage: null
               });
               
@@ -447,6 +355,7 @@ function App() {
               useSecretaryStore.getState().resetToInitial();
               useSupportStore.getState().resetToInitial();
               useYearlyEvaluationStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
 
               // 地形生成と道路配置
               const generatedRoads = generateTerrain({ width: GRID_WIDTH, height: GRID_HEIGHT });
@@ -635,6 +544,7 @@ function App() {
               useInfrastructureStore.getState().resetToInitial();
               useAchievementStore.getState().resetToInitial();
               useMissionStore.getState().resetToInitial();
+              useCityParameterMapStore.getState().resetTo({ width: GRID_WIDTH, height: GRID_HEIGHT, chunkSize: 32 });
               
               // 設定パネルを閉じて、スタート画面を表示
               closeSettings();

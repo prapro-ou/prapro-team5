@@ -82,7 +82,6 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
   if (typeof obj.size !== 'number' || obj.size < 1 || obj.size % 2 === 0) return false;
   if (typeof obj.cost !== 'number' || obj.cost < 0) return false;
   if (typeof obj.maintenanceCost !== 'number' || obj.maintenanceCost < 0) return false;
-  if (typeof obj.satisfaction !== 'number') return false;
   if (typeof obj.initiallyUnlocked !== 'boolean') return false;
 
   // 任意フィールドの軽い整合性
@@ -99,10 +98,35 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
     if (w.baseConsumption !== undefined && typeof w.baseConsumption !== 'number') return false;
   }
 
-  if (obj.productDemand && !Array.isArray(obj.productDemand)) return false;
-  if (obj.productProduction && !Array.isArray(obj.productProduction)) return false;
+  if (obj.productDemand) {
+    if (typeof obj.productDemand !== 'object' || obj.productDemand === null || Array.isArray(obj.productDemand)) return false;
+    const productTypes = ['raw_material', 'intermediate_product', 'final_product', 'service'] as const;
+    for (const key of productTypes) {
+      if (typeof obj.productDemand[key] !== 'number') return false;
+    }
+  }
+  if (obj.productProduction) {
+    if (typeof obj.productProduction !== 'object' || obj.productProduction === null || Array.isArray(obj.productProduction)) return false;
+    const productTypes = ['raw_material', 'intermediate_product', 'final_product', 'service'] as const;
+    for (const key of productTypes) {
+      if (typeof obj.productProduction[key] !== 'number') return false;
+    }
+  }
 
   if (obj.effectRadius !== undefined && (typeof obj.effectRadius !== 'number' || obj.effectRadius <= 0)) return false;
+
+  // parameterContributions
+  if (obj.parameterContributions !== undefined) {
+    if (typeof obj.parameterContributions !== 'object' || obj.parameterContributions === null || Array.isArray(obj.parameterContributions)) return false;
+    for (const key of Object.keys(obj.parameterContributions)) {
+      const contrib = obj.parameterContributions[key];
+      if (typeof contrib !== 'object' || contrib === null) return false;
+      if (typeof contrib.baseValue !== 'number') return false;
+      if (contrib.radius !== undefined && (typeof contrib.radius !== 'number' || contrib.radius <= 0)) return false;
+      if (contrib.radiusContribution !== undefined && typeof contrib.radiusContribution !== 'number') return false;
+      if (contrib.requiresActive !== undefined && typeof contrib.requiresActive !== 'boolean') return false;
+    }
+  }
 
   return true;
 }

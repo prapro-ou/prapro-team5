@@ -51,6 +51,12 @@ export interface UIStore {
   selectedTile: Position | null;
   setSelectedTile: (tile: Position | null) => void;
   switchToCredits: () => void;
+
+  // カメラ状態
+  cameraX: number;
+  cameraY: number;
+  cameraScale: number;
+  setCameraState: (x: number, y: number, scale: number) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -65,6 +71,11 @@ export const useUIStore = create<UIStore>((set) => ({
   isYearlyEvaluationResultOpen: false,
   isMissionPanelOpen: false,
   showOpeningSequence: false, // デフォルトでオープニングなし
+
+  // カメラ初期状態
+  cameraX: 0,
+  cameraY: 0,
+  cameraScale: 1,
 
   togglePanel: () => {
     set((state) => {
@@ -146,4 +157,6 @@ export const useUIStore = create<UIStore>((set) => ({
   setShowOpeningSequence: (show) => {
     set({ showOpeningSequence: show });
   },
+
+  setCameraState: (x, y, scale) => set({ cameraX: x, cameraY: y, cameraScale: scale }),
 }));

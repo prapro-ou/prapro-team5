@@ -11,6 +11,7 @@ import { saveLoadRegistry } from './SaveLoadRegistry';
 import { isFacilityConnectedToValidRoadNetwork, clearConnectionCache } from '../utils/roadConnectivity';
 import { FacilityUnlockManager } from '../utils/facilityUnlockManager';
 import { playDeleatSound } from '../components/SoundSettings';
+import { useCityParameterMapStore } from './CityParameterMapStore';
 
 interface FacilityStore {
   facilities: Facility[];
@@ -58,9 +59,13 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
     }));
     // 施設が追加されたらキャッシュをクリア
     clearConnectionCache();
+    // 影響マップへ加算
+    useCityParameterMapStore.getState().applyFacility(facility.id, 'add');
   },
 
   removeFacility: (facilityId) => {
+    // 影響マップから減算
+    useCityParameterMapStore.getState().applyFacility(facilityId, 'sub');
     set(state => ({
       facilities: state.facilities.filter(f => f.id !== facilityId)
     }));
@@ -213,6 +218,16 @@ export const useFacilityStore = create<FacilityStore>((set, get) => ({
       };
     });
     
+    // 影響マップに反映
+    for (let i = 0; i < facilities.length; i++) {
+      const prev = facilities[i];
+      const next = updatedFacilities[i];
+      if (!prev || !next || prev.id !== next.id) continue;
+      if (prev.isActive !== next.isActive) {
+        useCityParameterMapStore.getState().applyFacility(next.id, next.isActive ? 'add' : 'sub');
+      }
+    }
+
     set({ facilities: updatedFacilities });
   },
 
