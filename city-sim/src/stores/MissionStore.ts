@@ -12,6 +12,7 @@ import { useFacilityStore } from './FacilityStore';
 import { useSupportStore } from './SupportStore';
 import { useInfrastructureStore } from './InfrastructureStore';
 import { useProductStore } from './ProductStore';
+import type { ProductType } from '../types/facility';
 import { calculateTotalTaxRevenue, getCurrentWorkforceAllocations, calculateMonthlyBalance } from './EconomyStore';
 import { loadMissionsFromJSON, getDefaultMissions } from '../utils/missionLoader';
 import { saveLoadRegistry } from './SaveLoadRegistry';
@@ -265,14 +266,19 @@ class ConditionEngine {
             try {
               const productStore = useProductStore.getState();
               const demand = productStore.calculateProductDemand(facilities);
-              const productIndex = parseInt(condition.target);
-              if (productIndex >= 0 && productIndex < 4) {
-                actualValue = demand[productIndex];
-                const productNames = ['原材料', '中間製品', '最終製品', 'サービス'];
-                message = `${productNames[productIndex]}需要: ${actualValue}/${condition.value}`;
+              const productType = condition.target as ProductType;
+              const productNames: Record<ProductType, string> = {
+                raw_material: '原材料',
+                intermediate_product: '中間製品',
+                final_product: '最終製品',
+                service: 'サービス'
+              };
+              if (productType in demand && productNames[productType]) {
+                actualValue = demand[productType];
+                message = `${productNames[productType]}需要: ${actualValue}/${condition.value}`;
               } else {
                 actualValue = 0;
-                message = `無効な製品インデックス: ${condition.target}`;
+                message = `無効な製品タイプ: ${condition.target}`;
               }
             } catch (error) {
               actualValue = 0;
@@ -280,7 +286,7 @@ class ConditionEngine {
             }
           } else {
             actualValue = 0;
-            message = '製品需要の取得には製品インデックス（0:原材料, 1:中間製品, 2:最終製品, 3:サービス）の指定が必要です';
+            message = '製品需要の取得には製品タイプ（raw_material, intermediate_product, final_product, service）の指定が必要です';
           }
           break;
           
@@ -289,14 +295,19 @@ class ConditionEngine {
             try {
               const productStore = useProductStore.getState();
               const production = productStore.calculateProductProduction(facilities);
-              const productIndex = parseInt(condition.target);
-              if (productIndex >= 0 && productIndex < 4) {
-                actualValue = production[productIndex];
-                const productNames = ['原材料', '中間製品', '最終製品', 'サービス'];
-                message = `${productNames[productIndex]}生産: ${actualValue}/${condition.value}`;
+              const productType = condition.target as ProductType;
+              const productNames: Record<ProductType, string> = {
+                raw_material: '原材料',
+                intermediate_product: '中間製品',
+                final_product: '最終製品',
+                service: 'サービス'
+              };
+              if (productType in production && productNames[productType]) {
+                actualValue = production[productType];
+                message = `${productNames[productType]}生産: ${actualValue}/${condition.value}`;
               } else {
                 actualValue = 0;
-                message = `無効な製品インデックス: ${condition.target}`;
+                message = `無効な製品タイプ: ${condition.target}`;
               }
             } catch (error) {
               actualValue = 0;
@@ -304,7 +315,7 @@ class ConditionEngine {
             }
           } else {
             actualValue = 0;
-            message = '製品生産の取得には製品インデックス（0:原材料, 1:中間製品, 2:最終製品, 3:サービス）の指定が必要です';
+            message = '製品生産の取得には製品タイプ（raw_material, intermediate_product, final_product, service）の指定が必要です';
           }
           break;
           

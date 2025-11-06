@@ -199,7 +199,7 @@
       "category": "tutorial",
       "priority": 13,
       "conditions": [
-        { "type": "product_production", "op": ">=", "value": 100, "target": "0" }
+        { "type": "product_production", "op": ">=", "value": 100, "target": "raw_material" }
       ],
       "effects": [
         { "type": "money", "value": 3000 },
@@ -219,7 +219,7 @@
       "category": "economic",
       "priority": 14,
       "conditions": [
-        { "type": "product_production", "op": ">=", "value": 15, "target": "2" }
+        { "type": "product_production", "op": ">=", "value": 15, "target": "final_product" }
       ],
       "effects": [
         { "type": "money", "value": 6000 },
@@ -239,7 +239,7 @@
       "category": "economic",
       "priority": 15,
       "conditions": [
-        { "type": "product_production", "op": ">=", "value": 25, "target": "3" }
+        { "type": "product_production", "op": ">=", "value": 25, "target": "service" }
       ],
       "effects": [
         { "type": "money", "value": 8000 },

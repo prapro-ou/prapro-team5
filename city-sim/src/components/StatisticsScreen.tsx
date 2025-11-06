@@ -1,14 +1,31 @@
 import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge, TbBulb, TbX } from 'react-icons/tb';
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/GameStore';
-import { useEconomyStore } from '../stores/EconomyStore';
+import { 
+  useEconomyStore, 
+  calculateCitizenTax, 
+  calculateCorporateTax,
+  calculateAverageAssets,
+  calculateAverageBusinessAssets
+} from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
+import type { ProductType } from '../types/facility';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useSupportStore } from '../stores/SupportStore';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
 import { getSeasonalMessages } from '../stores/SecretaryStore';
+import { 
+  calculatePopulationChange, 
+  calculateAttractiveness, 
+  calculateHealthIndex, 
+  calculateEmploymentScore, 
+  calculateHousingCapacity,
+  calculateVacancyRate,
+  type InfraFactors 
+} from '../utils/populationCalculation';
 
 interface StatisticsPanelProps {
   onClose: () => void;
@@ -261,7 +278,390 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         })()}
       </div>
 
-      
+      {/* 人口詳細セクション */}
+      {(() => {
+        // 人口計算に必要なデータを準備
+        const infraStatus = getInfrastructureStatus();
+        const infraFactors: InfraFactors = {
+          waterDemand: infraStatus.water.demand,
+          waterSupply: infraStatus.water.supply,
+          electricityDemand: infraStatus.electricity.demand,
+          electricitySupply: infraStatus.electricity.supply,
+        };
+
+        const population = stats.population || 0;
+        const workforce = Math.floor(population * 0.6);
+        const employed = stats.workforceAllocations.reduce((acc, a) => acc + (a.assignedWorkforce || 0), 0);
+        const unemploymentRate = workforce > 0 ? Math.max(0, (workforce - employed) / workforce) : 0;
+
+        // 人口増減を計算
+        const populationResult = calculatePopulationChange({
+          population,
+          satisfaction: stats.satisfaction,
+          unemploymentRate,
+          facilities,
+          cityParameters: stats.cityParameters,
+          infra: infraFactors,
+        });
+
+        // 各パラメータを計算
+        const attractiveness = calculateAttractiveness(stats.satisfaction);
+        const healthIndex = calculateHealthIndex(stats.cityParameters, infraFactors);
+        const employmentScore = calculateEmploymentScore(unemploymentRate);
+        const housingCapacity = calculateHousingCapacity(facilities);
+        const vacancyRate = calculateVacancyRate(population, housingCapacity);
+
+        return (
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-cyan-300 flex items-center gap-2">
+              <TbUsers className="text-cyan-400" />
+              人口詳細
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 人口増減カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">月次人口増減</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">出生</span>
+                    <span className="text-lg font-bold text-green-400">+{populationResult.births.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">死亡</span>
+                    <span className="text-lg font-bold text-red-400">-{populationResult.deaths.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">転入</span>
+                    <span className="text-lg font-bold text-blue-400">+{populationResult.inflow.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">転出</span>
+                    <span className="text-lg font-bold text-orange-400">-{populationResult.outflow.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-gray-600 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-200 font-semibold">月次増減</span>
+                      <span className={`text-xl font-bold ${populationResult.delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {populationResult.delta >= 0 ? '+' : ''}{populationResult.delta.toLocaleString()}
+                      </span>
+                    </div>
+                    {populationResult.appliedHousingCap && (
+                      <div className="text-xs text-yellow-400 mt-1">⚠️ 住宅容量制限により制限されています</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 人口パラメータカード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口パラメータ</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">魅力度</span>
+                    <span className="text-lg font-bold text-purple-400">{(attractiveness * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">健康指数</span>
+                    <span className="text-lg font-bold text-green-400">{(healthIndex * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">雇用スコア</span>
+                    <span className="text-lg font-bold text-blue-400">{(employmentScore * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">失業率</span>
+                    <span className="text-lg font-bold text-red-400">{(unemploymentRate * 100).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 住宅カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">住宅状況</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">住宅容量</span>
+                    <span className="text-lg font-bold text-cyan-400">{housingCapacity.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">現在人口</span>
+                    <span className="text-lg font-bold text-blue-400">{population.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">空室率</span>
+                    <span className="text-lg font-bold text-green-400">{(vacancyRate * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">利用率</span>
+                    <span className={`text-lg font-bold ${(population / Math.max(1, housingCapacity)) > 1 ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {housingCapacity > 0 ? ((population / housingCapacity) * 100).toFixed(1) : '0.0'}%
+                    </span>
+                  </div>
+                  {housingCapacity > 0 && population / housingCapacity > 1 && (
+                    <div className="text-xs text-red-400 mt-1">⚠️ 過密状態（住宅容量超過）</div>
+                  )}
+                </div>
+              </div>
+
+              {/* 流入・流出係数カード */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">流入・流出係数</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">流入倍率</span>
+                    <span className="text-lg font-bold text-blue-400">{populationResult.details.inflowMultiplier.toFixed(2)}×</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-300 text-sm">流出倍率</span>
+                    <span className="text-lg font-bold text-red-400">{populationResult.details.outflowMultiplier.toFixed(2)}×</span>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-600">
+                    <div className="mb-1">流入倍率の構成:</div>
+                    <div className="ml-2">• 魅力度: {(attractiveness * 1.2).toFixed(2)}</div>
+                    <div className="ml-2">• 雇用: {(employmentScore * 0.8).toFixed(2)}</div>
+                    <div className="ml-2">• 空室率: {(vacancyRate * 1.0).toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 人口増減グラフセクション */}
+      {(() => {
+        const acc = stats.monthlyAccumulation;
+        const monthIdx = Math.max(0, (stats.date.month - 1) | 0);
+        
+        // 12ヶ月のロール配列を構築（右端が最新）
+        const buildRolling = (arr: number[] | undefined) => {
+          if (!arr || arr.length === 0) return new Array(12).fill(0);
+          const idx = monthIdx;
+          const out: number[] = [];
+          for (let i = 11; i >= 0; i--) {
+            const k = (idx - i + 12) % 12;
+            out.push(arr[k] ?? 0);
+          }
+          return out;
+        };
+
+        const births = buildRolling(acc.monthlyBirths);
+        const deaths = buildRolling(acc.monthlyDeaths);
+        const inflow = buildRolling(acc.monthlyInflow);
+        const outflow = buildRolling(acc.monthlyOutflow);
+        const delta = buildRolling(acc.monthlyDelta);
+        const housingCapacity = buildRolling(acc.monthlyHousingCapacity);
+        const population = buildRolling(acc.monthlyPopulation);
+
+        // 最大値を見つけてスケーリング用に使用（deltaは絶対値で比較）
+        const maxDelta = Math.max(...delta.map(d => Math.abs(d)));
+
+        // グラフコンポーネント
+        type LineChartProps = {
+          data: number[];
+          maxValue: number;
+          width?: number;
+          height?: number;
+          color: string;
+          label: string;
+        };
+
+        const LineChart = ({ data, maxValue, width = 300, height = 80, color, label }: LineChartProps) => {
+          const pad = 4;
+          const w = width - pad * 2;
+          const h = height - pad * 2 - 20; // ラベル用のスペース
+          const n = Math.max(1, data.length);
+          const sx = w / Math.max(1, n - 1);
+          
+          const toY = (v: number) => {
+            if (maxValue === 0) return h / 2;
+            const normalized = Math.max(0, Math.min(1, v / maxValue));
+            return pad + h * (1 - normalized);
+          };
+          const toX = (i: number) => pad + sx * i;
+          
+          const path = data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(v)}`).join(' ');
+          const areaPath = path + ` L${toX(data.length - 1)},${pad + h} L${pad},${pad + h} Z`;
+          
+          return (
+            <div className="space-y-1">
+              <div className="text-xs text-gray-400">{label}</div>
+              <svg width={width} height={height}>
+                <defs>
+                  <linearGradient id={`gradient-${label}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+                  </linearGradient>
+                </defs>
+                <path d={areaPath} fill={`url(#gradient-${label})`} />
+                <path d={path} fill="none" stroke={color} strokeWidth={2} />
+                {data.map((v, i) => (
+                  <circle key={i} cx={toX(i)} cy={toY(v)} r={2} fill={color} />
+                ))}
+              </svg>
+              <div className="text-xs text-gray-500">
+                {maxValue > 0 ? `最大: ${maxValue.toLocaleString()}` : 'データなし'}
+              </div>
+            </div>
+          );
+        };
+
+        // 複数系列のグラフ
+        type MultiLineChartProps = {
+          series: Array<{ data: number[]; color: string; label: string }>;
+          maxValue: number;
+          width?: number;
+          height?: number;
+        };
+
+        const MultiLineChart = ({ series, maxValue, width = 300, height = 120, }: MultiLineChartProps) => {
+          const pad = 4;
+          const w = width - pad * 2;
+          const h = height - pad * 2 - 20;
+          const n = Math.max(1, series[0]?.data.length || 0);
+          const sx = w / Math.max(1, n - 1);
+          
+          const toY = (v: number) => {
+            if (maxValue === 0) return h / 2;
+            const normalized = Math.max(0, Math.min(1, v / maxValue));
+            return pad + h * (1 - normalized);
+          };
+          const toX = (i: number) => pad + sx * i;
+          
+          return (
+            <div className="space-y-2">
+              <div className="text-xs text-gray-400 mb-2">月次推移（過去12ヶ月）</div>
+              <svg width={width} height={height}>
+                {series.map((s, idx) => {
+                  const path = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(v)}`).join(' ');
+                  return (
+                    <g key={idx}>
+                      <path d={path} fill="none" stroke={s.color} strokeWidth={2} strokeDasharray={idx === 0 ? '0' : '4,2'} />
+                      {s.data.map((v, i) => (
+                        <circle key={i} cx={toX(i)} cy={toY(v)} r={1.5} fill={s.color} />
+                      ))}
+                    </g>
+                  );
+                })}
+              </svg>
+              <div className="flex flex-wrap gap-3 text-xs">
+                {series.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    <div className={`w-3 h-3 rounded ${idx === 0 ? 'bg-current' : ''}`} style={{ 
+                      backgroundColor: s.color,
+                      borderStyle: idx === 0 ? 'none' : 'dashed',
+                      borderWidth: idx === 0 ? 0 : 1,
+                    }}></div>
+                    <span className="text-gray-400">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-cyan-300 flex items-center gap-2">
+              <TbChartBar className="text-cyan-400" />
+              人口増減グラフ（過去12ヶ月）
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 人口増減内訳グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口増減内訳</h4>
+                <MultiLineChart
+                  series={[
+                    { data: births, color: '#10b981', label: '出生' },
+                    { data: deaths, color: '#ef4444', label: '死亡' },
+                    { data: inflow, color: '#3b82f6', label: '転入' },
+                    { data: outflow, color: '#f97316', label: '転出' },
+                  ]}
+                  maxValue={Math.max(...births, ...deaths, ...inflow, ...outflow, 1)}
+                  width={300}
+                  height={140}
+                />
+              </div>
+
+              {/* 月次増減グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">月次人口増減</h4>
+                <LineChart
+                  data={delta}
+                  maxValue={Math.max(maxDelta, 1)}
+                  width={300}
+                  height={100}
+                  color={delta[delta.length - 1] >= 0 ? '#10b981' : '#ef4444'}
+                  label="増減"
+                />
+              </div>
+
+              {/* 人口と住宅容量グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口と住宅容量</h4>
+                <MultiLineChart
+                  series={[
+                    { data: population, color: '#3b82f6', label: '人口' },
+                    { data: housingCapacity, color: '#8b5cf6', label: '住宅容量' },
+                  ]}
+                  maxValue={Math.max(...population, ...housingCapacity, 1)}
+                  width={300}
+                  height={140}
+                />
+              </div>
+
+              {/* 統計情報 */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">統計情報</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均出生数/月</span>
+                    <span className="font-bold text-green-400">
+                      {births.reduce((a, b) => a + b, 0) > 0 
+                        ? Math.round(births.reduce((a, b) => a + b, 0) / births.filter(b => b > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均死亡数/月</span>
+                    <span className="font-bold text-red-400">
+                      {deaths.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(deaths.reduce((a, b) => a + b, 0) / deaths.filter(d => d > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均転入数/月</span>
+                    <span className="font-bold text-blue-400">
+                      {inflow.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(inflow.reduce((a, b) => a + b, 0) / inflow.filter(i => i > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均転出数/月</span>
+                    <span className="font-bold text-orange-400">
+                      {outflow.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(outflow.reduce((a, b) => a + b, 0) / outflow.filter(o => o > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-600 pt-2 mt-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-200 font-semibold">総人口増加</span>
+                      <span className={`font-bold ${delta.reduce((a, b) => a + b, 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {delta.reduce((a, b) => a + b, 0) >= 0 ? '+' : ''}{delta.reduce((a, b) => a + b, 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 前年度評価結果セクション */}
       {stats.previousYearEvaluation && (
@@ -360,45 +760,75 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   );
 
   // 経済タブのコンテンツ
-  const renderEconomyTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* 収支詳細カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
-          <TbCash className="text-green-400" />
-          収支詳細
-        </h3>
-        <div className="space-y-3">
-          {/* 月次収入 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次収入</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-green-400">+{stats.monthlyBalance.income.toLocaleString()}</span>
-              <span className="text-xs text-gray-400">円</span>
+  const renderEconomyTab = () => {
+    // 収入の詳細を計算
+    const hasCityHall = facilities.some(f => f.type === 'city_hall');
+    const averageAssets = calculateAverageAssets(facilities, stats.satisfaction);
+    const averageBusinessAssets = calculateAverageBusinessAssets(facilities, stats.satisfaction);
+    const businessCount = facilities.filter(f => 
+      f.type === 'commercial' || f.type === 'industrial'
+    ).length;
+    
+    const citizenTax = hasCityHall && stats.population > 0 
+      ? calculateCitizenTax(stats.population, averageAssets) 
+      : 0;
+    const corporateTax = hasCityHall && businessCount > 0 
+      ? calculateCorporateTax(businessCount, averageBusinessAssets) 
+      : 0;
+    const totalTaxRevenue = citizenTax + corporateTax;
+    
+    // 維持費の内訳
+    const maintenanceCostByCategory = facilities.reduce((acc, facility) => {
+      if (!facility.isActive) return acc;
+      const facilityData = getFacilityRegistry()[facility.type];
+      const cost = facilityData.maintenanceCost || 0;
+      const category = facilityData.category || 'others';
+      acc[category] = (acc[category] || 0) + cost;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const totalMaintenanceCost = Object.values(maintenanceCostByCategory).reduce((sum, cost) => sum + cost, 0);
+    
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* 収支詳細カード */}
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+              <TbCash className="text-green-400" />
+              収支詳細
+            </h3>
+            <div className="space-y-3">
+              {/* 月次収入 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次収入</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-green-400">+{stats.monthlyBalance.income.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
+              
+              {/* 月次支出 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次支出</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-red-400">-{stats.monthlyBalance.expense.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
+              
+              {/* 月次収支 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次収支</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-lg font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* 月次支出 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次支出</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-red-400">-{stats.monthlyBalance.expense.toLocaleString()}</span>
-              <span className="text-xs text-gray-400">円</span>
-            </div>
-          </div>
-          
-          {/* 月次収支 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次収支</span>
-            <div className="flex items-center gap-2">
-              <span className={`text-lg font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
-              </span>
-              <span className="text-xs text-gray-400">円</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 税率・資金管理カード */}
       <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
@@ -459,16 +889,148 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           </div>
         </div>
       </div>
-    </div>
-  );
+        </div>
+
+        {/* 収入詳細カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+            <TbChartBar className="text-green-400" />
+            収入詳細
+          </h3>
+          <div className="space-y-3">
+            {!hasCityHall ? (
+              <div className="bg-gray-700 rounded-lg p-3 text-center">
+                <span className="text-gray-400 text-sm">市役所が必要です</span>
+              </div>
+            ) : (
+              <>
+                {/* 市民税 */}
+                <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300">市民税</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-green-400">+{citizenTax.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <div className="flex justify-between">
+                      <span>人口:</span>
+                      <span>{stats.population.toLocaleString()}人</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>平均資産:</span>
+                      <span>{averageAssets.toLocaleString()}円</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>税率:</span>
+                      <span>{(taxRates.citizenTax * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 法人税 */}
+                <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300">法人税</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-green-400">+{corporateTax.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <div className="flex justify-between">
+                      <span>企業数:</span>
+                      <span>{businessCount}社</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>平均法人資産:</span>
+                      <span>{averageBusinessAssets.toLocaleString()}円</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>税率:</span>
+                      <span>{(taxRates.corporateTax * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 合計税収 */}
+                <div className="border-t border-gray-600 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-200 font-semibold">合計税収</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-green-400">+{totalTaxRevenue.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 支出詳細カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-red-300 flex items-center gap-2">
+            <TbChartBar className="text-red-400" />
+            支出詳細（維持費）
+          </h3>
+          <div className="space-y-3">
+            {totalMaintenanceCost === 0 ? (
+              <div className="bg-gray-700 rounded-lg p-3 text-center">
+                <span className="text-gray-400 text-sm">維持費なし</span>
+              </div>
+            ) : (
+              <>
+                {Object.entries(maintenanceCostByCategory).map(([category, cost]) => {
+                  const categoryNames: Record<string, string> = {
+                    residential: '住宅',
+                    commercial: '商業',
+                    industrial: '工業',
+                    infrastructure: 'インフラ',
+                    government: '公共',
+                    others: 'その他'
+                  };
+                  return (
+                    <div key={category} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                      <span className="text-gray-300">{categoryNames[category] || category}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-red-400">-{cost.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400">円</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="border-t border-gray-600 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-200 font-semibold">合計維持費</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-red-400">-{totalMaintenanceCost.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // 産業タブのコンテンツ
   const renderIndustryTab = () => {
     // 製品の需給状況を取得
     const { demand, production, efficiency } = getProductSupplyDemandStatus(facilities);
     
-    // 製品カテゴリ名
-    const productCategories = ['原材料', '中間製品', '最終製品', 'サービス'];
+    // 製品カテゴリの定義
+    const productTypes: ProductType[] = ['raw_material', 'intermediate_product', 'final_product', 'service'];
+    const productNames: Record<ProductType, string> = {
+      raw_material: '原材料',
+      intermediate_product: '中間製品',
+      final_product: '最終製品',
+      service: 'サービス'
+    };
     
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -554,19 +1116,19 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
             </div>
             
             {/* 製品カテゴリ別の需給 */}
-            {productCategories.map((category, index) => (
-              <div key={index} className="bg-gray-700 rounded-lg p-3">
+            {productTypes.map((productType) => (
+              <div key={productType} className="bg-gray-700 rounded-lg p-3">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-gray-300">{category}</span>
+                  <span className="text-gray-300">{productNames[productType]}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-blue-400">需要:</span>
-                    <span className="text-blue-400">{demand[index]}</span>
+                    <span className="text-blue-400">{demand[productType]}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-green-400">供給:</span>
-                    <span className="text-green-400">{production[index]}</span>
+                    <span className="text-green-400">{production[productType]}</span>
                   </div>
                 </div>
               </div>

@@ -98,8 +98,20 @@ export function validateFacilityInfo(obj: any): obj is FacilityInfo {
     if (w.baseConsumption !== undefined && typeof w.baseConsumption !== 'number') return false;
   }
 
-  if (obj.productDemand && !Array.isArray(obj.productDemand)) return false;
-  if (obj.productProduction && !Array.isArray(obj.productProduction)) return false;
+  if (obj.productDemand) {
+    if (typeof obj.productDemand !== 'object' || obj.productDemand === null || Array.isArray(obj.productDemand)) return false;
+    const productTypes = ['raw_material', 'intermediate_product', 'final_product', 'service'] as const;
+    for (const key of productTypes) {
+      if (typeof obj.productDemand[key] !== 'number') return false;
+    }
+  }
+  if (obj.productProduction) {
+    if (typeof obj.productProduction !== 'object' || obj.productProduction === null || Array.isArray(obj.productProduction)) return false;
+    const productTypes = ['raw_material', 'intermediate_product', 'final_product', 'service'] as const;
+    for (const key of productTypes) {
+      if (typeof obj.productProduction[key] !== 'number') return false;
+    }
+  }
 
   if (obj.effectRadius !== undefined && (typeof obj.effectRadius !== 'number' || obj.effectRadius <= 0)) return false;
 
