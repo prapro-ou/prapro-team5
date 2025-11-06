@@ -18,10 +18,9 @@ interface EconomyStore {
   resetTaxRates: () => void;
 }
 
-// 初期税率
 const INITIAL_TAX_RATES: TaxRates = {
-  citizenTax: 0.03,      // 市民税率: 3%
-  corporateTax: 0.08,    // 法人税率: 8%
+  citizenTax: 0.025, 
+  corporateTax: 0.12,
 };
 
 // EconomyStoreの作成
