@@ -542,7 +542,7 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
   }
 }
 
-const INITIAL_STATS: GameStats = {
+export const INITIAL_STATS: GameStats = {
     level: 1, 
     money: 10000,
     population: 100,
