@@ -82,6 +82,22 @@ export interface GameStats {
     monthlySupportRatings: Record<FactionType, number[]>; // 月次支持率の配列（12ヶ月分）
     // 都市パラメータの月次履歴
     monthlyCityParameters?: CityParameters[];
+    // 人口増減の詳細
+    monthlyBirths?: number[];         // 月次出生数の配列（12ヶ月分）
+    monthlyDeaths?: number[];         // 月次死亡数の配列（12ヶ月分）
+    monthlyInflow?: number[];         // 月次転入数の配列（12ヶ月分）
+    monthlyOutflow?: number[];        // 月次転出数の配列（12ヶ月分）
+    monthlyDelta?: number[];          // 月次人口増減の配列（12ヶ月分）
+    monthlyHousingCapacity?: number[]; // 月次住宅容量の配列（12ヶ月分）
+  };
+  // 人口増減計算結果の一時保存（月次データ記録用）
+  lastPopulationChange?: {
+    births: number;
+    deaths: number;
+    inflow: number;
+    outflow: number;
+    delta: number;
+    housingCapacity: number;
   };
 }
 

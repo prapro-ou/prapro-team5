@@ -422,6 +422,240 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         );
       })()}
 
+      {/* 人口増減グラフセクション */}
+      {(() => {
+        const acc = stats.monthlyAccumulation;
+        const monthIdx = Math.max(0, (stats.date.month - 1) | 0);
+        
+        // 12ヶ月のロール配列を構築（右端が最新）
+        const buildRolling = (arr: number[] | undefined) => {
+          if (!arr || arr.length === 0) return new Array(12).fill(0);
+          const idx = monthIdx;
+          const out: number[] = [];
+          for (let i = 11; i >= 0; i--) {
+            const k = (idx - i + 12) % 12;
+            out.push(arr[k] ?? 0);
+          }
+          return out;
+        };
+
+        const births = buildRolling(acc.monthlyBirths);
+        const deaths = buildRolling(acc.monthlyDeaths);
+        const inflow = buildRolling(acc.monthlyInflow);
+        const outflow = buildRolling(acc.monthlyOutflow);
+        const delta = buildRolling(acc.monthlyDelta);
+        const housingCapacity = buildRolling(acc.monthlyHousingCapacity);
+        const population = buildRolling(acc.monthlyPopulation);
+
+        // 最大値を見つけてスケーリング用に使用（deltaは絶対値で比較）
+        const maxDelta = Math.max(...delta.map(d => Math.abs(d)));
+
+        // グラフコンポーネント
+        type LineChartProps = {
+          data: number[];
+          maxValue: number;
+          width?: number;
+          height?: number;
+          color: string;
+          label: string;
+        };
+
+        const LineChart = ({ data, maxValue, width = 300, height = 80, color, label }: LineChartProps) => {
+          const pad = 4;
+          const w = width - pad * 2;
+          const h = height - pad * 2 - 20; // ラベル用のスペース
+          const n = Math.max(1, data.length);
+          const sx = w / Math.max(1, n - 1);
+          
+          const toY = (v: number) => {
+            if (maxValue === 0) return h / 2;
+            const normalized = Math.max(0, Math.min(1, v / maxValue));
+            return pad + h * (1 - normalized);
+          };
+          const toX = (i: number) => pad + sx * i;
+          
+          const path = data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(v)}`).join(' ');
+          const areaPath = path + ` L${toX(data.length - 1)},${pad + h} L${pad},${pad + h} Z`;
+          
+          return (
+            <div className="space-y-1">
+              <div className="text-xs text-gray-400">{label}</div>
+              <svg width={width} height={height}>
+                <defs>
+                  <linearGradient id={`gradient-${label}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+                    <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+                  </linearGradient>
+                </defs>
+                <path d={areaPath} fill={`url(#gradient-${label})`} />
+                <path d={path} fill="none" stroke={color} strokeWidth={2} />
+                {data.map((v, i) => (
+                  <circle key={i} cx={toX(i)} cy={toY(v)} r={2} fill={color} />
+                ))}
+              </svg>
+              <div className="text-xs text-gray-500">
+                {maxValue > 0 ? `最大: ${maxValue.toLocaleString()}` : 'データなし'}
+              </div>
+            </div>
+          );
+        };
+
+        // 複数系列のグラフ
+        type MultiLineChartProps = {
+          series: Array<{ data: number[]; color: string; label: string }>;
+          maxValue: number;
+          width?: number;
+          height?: number;
+        };
+
+        const MultiLineChart = ({ series, maxValue, width = 300, height = 120, }: MultiLineChartProps) => {
+          const pad = 4;
+          const w = width - pad * 2;
+          const h = height - pad * 2 - 20;
+          const n = Math.max(1, series[0]?.data.length || 0);
+          const sx = w / Math.max(1, n - 1);
+          
+          const toY = (v: number) => {
+            if (maxValue === 0) return h / 2;
+            const normalized = Math.max(0, Math.min(1, v / maxValue));
+            return pad + h * (1 - normalized);
+          };
+          const toX = (i: number) => pad + sx * i;
+          
+          return (
+            <div className="space-y-2">
+              <div className="text-xs text-gray-400 mb-2">月次推移（過去12ヶ月）</div>
+              <svg width={width} height={height}>
+                {series.map((s, idx) => {
+                  const path = s.data.map((v, i) => `${i === 0 ? 'M' : 'L'}${toX(i)},${toY(v)}`).join(' ');
+                  return (
+                    <g key={idx}>
+                      <path d={path} fill="none" stroke={s.color} strokeWidth={2} strokeDasharray={idx === 0 ? '0' : '4,2'} />
+                      {s.data.map((v, i) => (
+                        <circle key={i} cx={toX(i)} cy={toY(v)} r={1.5} fill={s.color} />
+                      ))}
+                    </g>
+                  );
+                })}
+              </svg>
+              <div className="flex flex-wrap gap-3 text-xs">
+                {series.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-1">
+                    <div className={`w-3 h-3 rounded ${idx === 0 ? 'bg-current' : ''}`} style={{ 
+                      backgroundColor: s.color,
+                      borderStyle: idx === 0 ? 'none' : 'dashed',
+                      borderWidth: idx === 0 ? 0 : 1,
+                    }}></div>
+                    <span className="text-gray-400">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-cyan-300 flex items-center gap-2">
+              <TbChartBar className="text-cyan-400" />
+              人口増減グラフ（過去12ヶ月）
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* 人口増減内訳グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口増減内訳</h4>
+                <MultiLineChart
+                  series={[
+                    { data: births, color: '#10b981', label: '出生' },
+                    { data: deaths, color: '#ef4444', label: '死亡' },
+                    { data: inflow, color: '#3b82f6', label: '転入' },
+                    { data: outflow, color: '#f97316', label: '転出' },
+                  ]}
+                  maxValue={Math.max(...births, ...deaths, ...inflow, ...outflow, 1)}
+                  width={300}
+                  height={140}
+                />
+              </div>
+
+              {/* 月次増減グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">月次人口増減</h4>
+                <LineChart
+                  data={delta}
+                  maxValue={Math.max(maxDelta, 1)}
+                  width={300}
+                  height={100}
+                  color={delta[delta.length - 1] >= 0 ? '#10b981' : '#ef4444'}
+                  label="増減"
+                />
+              </div>
+
+              {/* 人口と住宅容量グラフ */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">人口と住宅容量</h4>
+                <MultiLineChart
+                  series={[
+                    { data: population, color: '#3b82f6', label: '人口' },
+                    { data: housingCapacity, color: '#8b5cf6', label: '住宅容量' },
+                  ]}
+                  maxValue={Math.max(...population, ...housingCapacity, 1)}
+                  width={300}
+                  height={140}
+                />
+              </div>
+
+              {/* 統計情報 */}
+              <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                <h4 className="text-md font-bold mb-3 text-gray-200">統計情報</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均出生数/月</span>
+                    <span className="font-bold text-green-400">
+                      {births.reduce((a, b) => a + b, 0) > 0 
+                        ? Math.round(births.reduce((a, b) => a + b, 0) / births.filter(b => b > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均死亡数/月</span>
+                    <span className="font-bold text-red-400">
+                      {deaths.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(deaths.reduce((a, b) => a + b, 0) / deaths.filter(d => d > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均転入数/月</span>
+                    <span className="font-bold text-blue-400">
+                      {inflow.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(inflow.reduce((a, b) => a + b, 0) / inflow.filter(i => i > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">平均転出数/月</span>
+                    <span className="font-bold text-orange-400">
+                      {outflow.reduce((a, b) => a + b, 0) > 0
+                        ? Math.round(outflow.reduce((a, b) => a + b, 0) / outflow.filter(o => o > 0).length || 1)
+                        : 0}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-600 pt-2 mt-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-200 font-semibold">総人口増加</span>
+                      <span className={`font-bold ${delta.reduce((a, b) => a + b, 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {delta.reduce((a, b) => a + b, 0) >= 0 ? '+' : ''}{delta.reduce((a, b) => a + b, 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 前年度評価結果セクション */}
       {stats.previousYearEvaluation && (
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-600 shadow-lg">

@@ -93,7 +93,7 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
 };
 
 // 人口を新モデルで増減させるタスク
-const adjustPopulationByGrowth: MonthlyTask = (get) => {
+const adjustPopulationByGrowth: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
 
@@ -120,6 +120,22 @@ const adjustPopulationByGrowth: MonthlyTask = (get) => {
     facilities,
     cityParameters: stats.cityParameters,
     infra: infraFactors,
+  });
+
+  // 計算結果を一時保存（月次データ記録用）
+  const currentStats = get().stats;
+  set({
+    stats: {
+      ...currentStats,
+      lastPopulationChange: {
+        births: result.births,
+        deaths: result.deaths,
+        inflow: result.inflow,
+        outflow: result.outflow,
+        delta: result.delta,
+        housingCapacity: result.details.housingCapacity,
+      }
+    }
   });
 
   if (result.delta !== 0) {
@@ -355,7 +371,13 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
             chamber_of_commerce: new Array(12).fill(50)
-          }
+          },
+          monthlyBirths: new Array(12).fill(0),
+          monthlyDeaths: new Array(12).fill(0),
+          monthlyInflow: new Array(12).fill(0),
+          monthlyOutflow: new Array(12).fill(0),
+          monthlyDelta: new Array(12).fill(0),
+          monthlyHousingCapacity: new Array(12).fill(0),
         }
       }
     });
@@ -363,6 +385,26 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
   
   // 現在の月次データを累積
   const newAccumulation = { ...stats.monthlyAccumulation };
+  
+  // 配列が初期化されていない場合は初期化
+  if (!newAccumulation.monthlyBirths) {
+    newAccumulation.monthlyBirths = new Array(12).fill(0);
+  }
+  if (!newAccumulation.monthlyDeaths) {
+    newAccumulation.monthlyDeaths = new Array(12).fill(0);
+  }
+  if (!newAccumulation.monthlyInflow) {
+    newAccumulation.monthlyInflow = new Array(12).fill(0);
+  }
+  if (!newAccumulation.monthlyOutflow) {
+    newAccumulation.monthlyOutflow = new Array(12).fill(0);
+  }
+  if (!newAccumulation.monthlyDelta) {
+    newAccumulation.monthlyDelta = new Array(12).fill(0);
+  }
+  if (!newAccumulation.monthlyHousingCapacity) {
+    newAccumulation.monthlyHousingCapacity = new Array(12).fill(0);
+  }
   
   // 税収を累積（市庁舎がある場合のみ）
   const facilities = useFacilityStore.getState().facilities;
@@ -388,10 +430,21 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
   newAccumulation.monthlyPopulation[currentMonth] = stats.population;
   newAccumulation.monthlySatisfaction[currentMonth] = stats.satisfaction;
   
+  // 人口増減の詳細を累積（前回の計算結果から）
+  if (stats.lastPopulationChange) {
+    newAccumulation.monthlyBirths![currentMonth] = stats.lastPopulationChange.births;
+    newAccumulation.monthlyDeaths![currentMonth] = stats.lastPopulationChange.deaths;
+    newAccumulation.monthlyInflow![currentMonth] = stats.lastPopulationChange.inflow;
+    newAccumulation.monthlyOutflow![currentMonth] = stats.lastPopulationChange.outflow;
+    newAccumulation.monthlyDelta![currentMonth] = stats.lastPopulationChange.delta;
+    newAccumulation.monthlyHousingCapacity![currentMonth] = stats.lastPopulationChange.housingCapacity;
+  }
+  
   set({
     stats: {
       ...stats,
-      monthlyAccumulation: newAccumulation
+      monthlyAccumulation: newAccumulation,
+      lastPopulationChange: undefined // 記録後にクリア
     }
   });
   
@@ -533,7 +586,14 @@ const INITIAL_STATS: GameStats = {
         education: 50,
         disaster_prevention: 50,
         tourism: 50
-      }))
+      })),
+      // 人口増減の詳細
+      monthlyBirths: new Array(12).fill(0),
+      monthlyDeaths: new Array(12).fill(0),
+      monthlyInflow: new Array(12).fill(0),
+      monthlyOutflow: new Array(12).fill(0),
+      monthlyDelta: new Array(12).fill(0),
+      monthlyHousingCapacity: new Array(12).fill(0),
     },
     supportSystem: {
       factionSupports: [
@@ -580,8 +640,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     processMonthlyBalance,
     processYearlyEvaluation,
     updateCityParametersFromMaps,
-    accumulateMonthlyData,
     adjustPopulationByGrowth,
+    accumulateMonthlyData,
     citizenFeedTask,
     updateSupportRatings,
     checkMissionConditions,
@@ -710,12 +770,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
           disaster_prevention: 50,
           tourism: 50
         },
-        monthlyAccumulation: savedStats.monthlyAccumulation || {
+        monthlyAccumulation: savedStats.monthlyAccumulation ? {
+          ...savedStats.monthlyAccumulation,
+          monthlyBirths: savedStats.monthlyAccumulation.monthlyBirths || new Array(12).fill(0),
+          monthlyDeaths: savedStats.monthlyAccumulation.monthlyDeaths || new Array(12).fill(0),
+          monthlyInflow: savedStats.monthlyAccumulation.monthlyInflow || new Array(12).fill(0),
+          monthlyOutflow: savedStats.monthlyAccumulation.monthlyOutflow || new Array(12).fill(0),
+          monthlyDelta: savedStats.monthlyAccumulation.monthlyDelta || new Array(12).fill(0),
+          monthlyHousingCapacity: savedStats.monthlyAccumulation.monthlyHousingCapacity || new Array(12).fill(0),
+        } : {
           year: savedStats.date?.year || 2024,
           monthlyTaxRevenue: new Array(12).fill(0),
           monthlyMaintenanceCost: new Array(12).fill(0),
           monthlyPopulation: new Array(12).fill(0),
           monthlySatisfaction: new Array(12).fill(50),
+          monthlySupportRatings: {
+            central_government: new Array(12).fill(50),
+            citizens: new Array(12).fill(50),
+            chamber_of_commerce: new Array(12).fill(50)
+          },
           monthlyCityParameters: new Array(12).fill(null).map(() => ({
             entertainment: 50,
             security: 50,
@@ -725,7 +798,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
             education: 50,
             disaster_prevention: 50,
             tourism: 50
-          }))
+          })),
+          monthlyBirths: new Array(12).fill(0),
+          monthlyDeaths: new Array(12).fill(0),
+          monthlyInflow: new Array(12).fill(0),
+          monthlyOutflow: new Array(12).fill(0),
+          monthlyDelta: new Array(12).fill(0),
+          monthlyHousingCapacity: new Array(12).fill(0),
         }
       };
       
