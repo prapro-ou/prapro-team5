@@ -243,13 +243,7 @@ function App() {
           f.occupiedTiles.some(tile => tile.x === correctedPosition.x && tile.y === correctedPosition.y)
         );
         if (facility) {
-          // 住宅施設でも人口の即時減算は行わない（住宅容量のみ減る）
-          const facilityData = getFacilityRegistry()[facility.type];
-          if (facilityData.category === 'residential') {
-            // no-op: 人口は月次計算で反映
-          }
           removeFacility(facility.id);
-          // setDeleteMode(false); // 削除後も削除モードを維持
           return;
         }
       } else {

@@ -29,10 +29,10 @@ export interface PopulationConfig {
 }
 
 export const POPULATION_CONFIG: PopulationConfig = {
-  birthBase: 0.0008,
-  deathBase: 0.0009,
-  baseInRate: 0.0005,
-  baseOutRate: 0.0004,
+  birthBase: 0.008,
+  deathBase: 0.009,
+  baseInRate: 0.005,
+  baseOutRate: 0.004,
   maxInflowMultiplier: 3.0,
   maxOutflowMultiplier: 5.0,
   sanitationWeight: 0.7,
