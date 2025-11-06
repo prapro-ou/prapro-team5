@@ -293,7 +293,7 @@ function App() {
             stats: {
               level: 1,
               money: 10000,
-              population: 0,
+              population: 100,
               satisfaction: 50,
               workforceAllocations: [],
               date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
@@ -386,7 +386,7 @@ function App() {
                 stats: {
                   level: 1,
                   money: 10000,
-                  population: 0,
+                  population: 100,
                   satisfaction: 50,
                   workforceAllocations: [],
                   date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },

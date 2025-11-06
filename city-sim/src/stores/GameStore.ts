@@ -545,11 +545,11 @@ function checkLevelUp(stats: GameStats, set: (partial: Partial<GameStore>) => vo
 const INITIAL_STATS: GameStats = {
     level: 1, 
     money: 10000,
-    population: 0,
+    population: 100,
     satisfaction: 50,
-    workforceAllocations: [], // 労働力配分情報（初期値は空配列）
+    workforceAllocations: [], 
     date: { year: 2024, month: 1, week: 1, totalWeeks: 1 },
-    monthlyBalance: { income: 0, expense: 0, balance: 0 }, // 月次収支の初期値
+    monthlyBalance: { income: 0, expense: 0, balance: 0 }, 
     // 都市パラメータ初期値
     cityParameters: {
       entertainment: 50,
