@@ -1,11 +1,18 @@
 import { TbArrowLeft, TbUsers, TbBolt, TbBuilding, TbChartBar, TbCash, TbCalendar, TbStar, TbDroplet, TbFlag, TbScale, TbTrophy, TbIdBadge, TbBulb, TbX } from 'react-icons/tb';
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/GameStore';
-import { useEconomyStore } from '../stores/EconomyStore';
+import { 
+  useEconomyStore, 
+  calculateCitizenTax, 
+  calculateCorporateTax,
+  calculateAverageAssets,
+  calculateAverageProfit
+} from '../stores/EconomyStore';
 import { useProductStore } from '../stores/ProductStore';
 import type { ProductType } from '../types/facility';
 import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
+import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useSupportStore } from '../stores/SupportStore';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
@@ -753,45 +760,75 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   );
 
   // 経済タブのコンテンツ
-  const renderEconomyTab = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* 収支詳細カード */}
-      <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
-        <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
-          <TbCash className="text-green-400" />
-          収支詳細
-        </h3>
-        <div className="space-y-3">
-          {/* 月次収入 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次収入</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-green-400">+{stats.monthlyBalance.income.toLocaleString()}</span>
-              <span className="text-xs text-gray-400">円</span>
+  const renderEconomyTab = () => {
+    // 収入の詳細を計算
+    const hasCityHall = facilities.some(f => f.type === 'city_hall');
+    const averageAssets = calculateAverageAssets(facilities, stats.satisfaction);
+    const averageProfit = calculateAverageProfit(facilities, stats);
+    const businessCount = facilities.filter(f => 
+      f.type === 'commercial' || f.type === 'industrial'
+    ).length;
+    
+    const citizenTax = hasCityHall && stats.population > 0 
+      ? calculateCitizenTax(stats.population, averageAssets) 
+      : 0;
+    const corporateTax = hasCityHall && businessCount > 0 
+      ? calculateCorporateTax(businessCount, averageProfit) 
+      : 0;
+    const totalTaxRevenue = citizenTax + corporateTax;
+    
+    // 維持費の内訳
+    const maintenanceCostByCategory = facilities.reduce((acc, facility) => {
+      if (!facility.isActive) return acc;
+      const facilityData = getFacilityRegistry()[facility.type];
+      const cost = facilityData.maintenanceCost || 0;
+      const category = facilityData.category || 'others';
+      acc[category] = (acc[category] || 0) + cost;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const totalMaintenanceCost = Object.values(maintenanceCostByCategory).reduce((sum, cost) => sum + cost, 0);
+    
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* 収支詳細カード */}
+          <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+            <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+              <TbCash className="text-green-400" />
+              収支詳細
+            </h3>
+            <div className="space-y-3">
+              {/* 月次収入 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次収入</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-green-400">+{stats.monthlyBalance.income.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
+              
+              {/* 月次支出 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次支出</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold text-red-400">-{stats.monthlyBalance.expense.toLocaleString()}</span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
+              
+              {/* 月次収支 */}
+              <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                <span className="text-gray-300">月次収支</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-lg font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-400">円</span>
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* 月次支出 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次支出</span>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-red-400">-{stats.monthlyBalance.expense.toLocaleString()}</span>
-              <span className="text-xs text-gray-400">円</span>
-            </div>
-          </div>
-          
-          {/* 月次収支 */}
-          <div className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
-            <span className="text-gray-300">月次収支</span>
-            <div className="flex items-center gap-2">
-              <span className={`text-lg font-bold ${stats.monthlyBalance.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {stats.monthlyBalance.balance >= 0 ? '+' : ''}{stats.monthlyBalance.balance.toLocaleString()}
-              </span>
-              <span className="text-xs text-gray-400">円</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* 税率・資金管理カード */}
       <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
@@ -852,8 +889,134 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           </div>
         </div>
       </div>
-    </div>
-  );
+        </div>
+
+        {/* 収入詳細カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-green-300 flex items-center gap-2">
+            <TbChartBar className="text-green-400" />
+            収入詳細
+          </h3>
+          <div className="space-y-3">
+            {!hasCityHall ? (
+              <div className="bg-gray-700 rounded-lg p-3 text-center">
+                <span className="text-gray-400 text-sm">市役所が必要です</span>
+              </div>
+            ) : (
+              <>
+                {/* 市民税 */}
+                <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300">市民税</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-green-400">+{citizenTax.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <div className="flex justify-between">
+                      <span>人口:</span>
+                      <span>{stats.population.toLocaleString()}人</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>平均資産:</span>
+                      <span>{averageAssets.toLocaleString()}円</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>税率:</span>
+                      <span>{(taxRates.citizenTax * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 法人税 */}
+                <div className="bg-gray-700 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300">法人税</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-green-400">+{corporateTax.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <div className="flex justify-between">
+                      <span>企業数:</span>
+                      <span>{businessCount}社</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>平均利益:</span>
+                      <span>{averageProfit.toLocaleString()}円</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>税率:</span>
+                      <span>{(taxRates.corporateTax * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 合計税収 */}
+                <div className="border-t border-gray-600 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-200 font-semibold">合計税収</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-green-400">+{totalTaxRevenue.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 支出詳細カード */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-700">
+          <h3 className="text-lg font-bold mb-3 text-red-300 flex items-center gap-2">
+            <TbChartBar className="text-red-400" />
+            支出詳細（維持費）
+          </h3>
+          <div className="space-y-3">
+            {totalMaintenanceCost === 0 ? (
+              <div className="bg-gray-700 rounded-lg p-3 text-center">
+                <span className="text-gray-400 text-sm">維持費なし</span>
+              </div>
+            ) : (
+              <>
+                {Object.entries(maintenanceCostByCategory).map(([category, cost]) => {
+                  const categoryNames: Record<string, string> = {
+                    residential: '住宅',
+                    commercial: '商業',
+                    industrial: '工業',
+                    infrastructure: 'インフラ',
+                    government: '公共',
+                    others: 'その他'
+                  };
+                  return (
+                    <div key={category} className="flex items-center justify-between bg-gray-700 rounded-lg p-3">
+                      <span className="text-gray-300">{categoryNames[category] || category}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-red-400">-{cost.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400">円</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="border-t border-gray-600 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-200 font-semibold">合計維持費</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-red-400">-{totalMaintenanceCost.toLocaleString()}</span>
+                      <span className="text-xs text-gray-400">円</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // 産業タブのコンテンツ
   const renderIndustryTab = () => {
