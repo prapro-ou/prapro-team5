@@ -40,7 +40,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const { getProductSupplyDemandStatus } = useProductStore();
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
-  const { getAllFactionSupports, getActiveEffects } = useSupportStore();
+  const { getAllFactionSupports, getActiveEffects, getActiveSupportEffectDefinition } = useSupportStore();
   
   // 秘書ストア
   const {
@@ -1333,6 +1333,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {factionSupports.map((factionSupport) => {
               const activeEffects = getActiveEffects(factionSupport.type);
+              const activeEffectDefinition = getActiveSupportEffectDefinition(factionSupport.type);
               
               const getFactionName = (type: string) => {
                 switch (type) {
@@ -1359,6 +1360,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   <h4 className={`text-lg font-bold mb-3 ${getFactionColor(factionSupport.type)}`}>
                     {getFactionName(factionSupport.type)}
                   </h4>
+                  {activeEffectDefinition && (
+                    <div className="text-sm text-yellow-300 font-semibold mb-2">
+                      {activeEffectDefinition.title}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {hasEffects ? (
                       Object.entries(activeEffects).map(([effectKey, effectValue]) => {
