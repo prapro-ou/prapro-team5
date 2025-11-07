@@ -81,12 +81,15 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
     }
   });
   
-  if (totalCost > 0) {
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const adjustedTotalCost = Math.floor(totalCost * supportEffects.maintenanceCostMultiplier);
+  
+  if (adjustedTotalCost > 0) {
     const currentMoney = get().stats.money;
     set({
       stats: {
         ...stats,
-        money: currentMoney - totalCost
+        money: currentMoney - adjustedTotalCost
       }
     });
   }
@@ -99,11 +102,13 @@ const adjustPopulationByGrowth: MonthlyTask = (get, set) => {
 
   // インフラ状況を取得
   const infraStatus = useInfrastructureStore.getState().getInfrastructureStatus();
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const infraBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   const infraFactors = {
     waterDemand: infraStatus.water.demand,
-    waterSupply: infraStatus.water.supply,
+    waterSupply: infraStatus.water.supply * infraBonusMultiplier,
     electricityDemand: infraStatus.electricity.demand,
-    electricitySupply: infraStatus.electricity.supply,
+    electricitySupply: infraStatus.electricity.supply * infraBonusMultiplier,
   };
 
   // 失業率を算出（労働力=人口の60%ベース）
@@ -245,11 +250,13 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
   // インフラ要素の取得
   const { getInfrastructureStatus } = useInfrastructureStore.getState();
   const infraStatus = getInfrastructureStatus();
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const infraBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   const infraFactors = {
     waterDemand: infraStatus.water.demand,
-    waterSupply: infraStatus.water.supply,
+    waterSupply: infraStatus.water.supply * infraBonusMultiplier,
     electricityDemand: infraStatus.electricity.demand,
-    electricitySupply: infraStatus.electricity.supply,
+    electricitySupply: infraStatus.electricity.supply * infraBonusMultiplier,
   };
 
   // 経済要素の取得（住民税・失業率）
@@ -264,7 +271,8 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
   };
 
   // 満足度を再合成
-  const newSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+  const rawSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+  const newSatisfaction = Math.max(0, Math.min(100, Math.round(rawSatisfaction + supportEffects.satisfactionDelta)));
 
   // 月次履歴に反映
   const currentMonth = stats.date.month - 1;

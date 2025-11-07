@@ -7,7 +7,8 @@ import type {
   YearlySupportHistory,
   CityStateForSupport,
   SupportCalculationResult,
-  SupportLevelEffect
+  SupportLevelEffect,
+  CombinedSupportEffects
 } from '../types/support';
 import { FACTION_DATA, SUPPORT_LEVEL_EFFECTS } from '../types/support';
 import { saveLoadRegistry } from './SaveLoadRegistry';
@@ -34,6 +35,8 @@ interface SupportStore {
   getSupportLevel: (rating: number) => 'very_low' | 'low' | 'neutral' | 'high' | 'very_high';
   getActiveEffects: (factionType: FactionType) => SupportLevelEffect['effects'];
   getAllActiveEffects: () => Record<FactionType, SupportLevelEffect['effects']>;
+  getActiveSupportEffectDefinition: (factionType: FactionType) => SupportLevelEffect | undefined;
+  getCombinedEffects: () => CombinedSupportEffects;
   
   // 履歴の管理
   recordMonthlyHistory: (year: number, month: number) => void;
@@ -209,14 +212,8 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
 
   // 特定の派閥のアクティブな効果を取得
   getActiveEffects: (factionType: FactionType) => {
-    const factionSupport = get().getFactionSupport(factionType);
-    if (!factionSupport) return {};
-    
-    const level = get().getSupportLevel(factionSupport.currentRating);
-    const levelEffects = SUPPORT_LEVEL_EFFECTS[factionType];
-    
-    const activeEffect = levelEffects.find(effect => effect.level === level);
-    return activeEffect ? activeEffect.effects : {};
+    const effectDefinition = get().getActiveSupportEffectDefinition(factionType);
+    return effectDefinition ? effectDefinition.effects : {};
   },
 
   // 全派閥のアクティブな効果を取得
@@ -228,6 +225,77 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     });
     
     return allEffects;
+  },
+
+  // アクティブな効果定義を取得
+  getActiveSupportEffectDefinition: (factionType: FactionType) => {
+    const factionSupport = get().getFactionSupport(factionType);
+    if (!factionSupport) return undefined;
+
+    const level = get().getSupportLevel(factionSupport.currentRating);
+    const levelEffects = SUPPORT_LEVEL_EFFECTS[factionType];
+    
+    return levelEffects.find(effect => effect.level === level);
+  },
+
+  // 派閥効果の合算
+  getCombinedEffects: () => {
+    const combined: CombinedSupportEffects = {
+      taxMultiplier: 1,
+      subsidyMultiplier: 1,
+      constructionCostMultiplier: 1,
+      maintenanceCostMultiplier: 1,
+      populationGrowthMultiplier: 1,
+      populationOutflowRate: 0,
+      facilityEfficiencyMultiplier: 1,
+      infrastructureEfficiencyBonus: 0,
+      workforceEfficiencyBonus: 0,
+      satisfactionDelta: 0,
+    };
+
+    Object.keys(FACTION_DATA).forEach(factionKey => {
+      const factionType = factionKey as FactionType;
+      const effectDefinition = get().getActiveSupportEffectDefinition(factionType);
+      if (!effectDefinition) return;
+
+      const effects = effectDefinition.effects;
+
+      if (effects.taxMultiplier !== undefined) {
+        combined.taxMultiplier *= effects.taxMultiplier;
+      }
+      if (effects.subsidyMultiplier !== undefined) {
+        combined.subsidyMultiplier *= effects.subsidyMultiplier;
+      }
+      if (effects.constructionCostMultiplier !== undefined) {
+        combined.constructionCostMultiplier *= effects.constructionCostMultiplier;
+      }
+      if (effects.maintenanceCostMultiplier !== undefined) {
+        combined.maintenanceCostMultiplier *= effects.maintenanceCostMultiplier;
+      }
+      if (effects.facilityEfficiencyMultiplier !== undefined) {
+        combined.facilityEfficiencyMultiplier *= effects.facilityEfficiencyMultiplier;
+      }
+      if (effects.populationGrowthMultiplier !== undefined) {
+        combined.populationGrowthMultiplier *= effects.populationGrowthMultiplier;
+      }
+      if (effects.populationOutflowRate !== undefined) {
+        combined.populationOutflowRate += effects.populationOutflowRate;
+      }
+      if (effects.infrastructureEfficiencyBonus !== undefined) {
+        combined.infrastructureEfficiencyBonus += effects.infrastructureEfficiencyBonus;
+      }
+      if (effects.workforceEfficiencyBonus !== undefined) {
+        combined.workforceEfficiencyBonus += effects.workforceEfficiencyBonus;
+      }
+      if (effects.satisfactionBonus !== undefined) {
+        combined.satisfactionDelta += effects.satisfactionBonus;
+      }
+      if (effects.satisfactionPenalty !== undefined) {
+        combined.satisfactionDelta += effects.satisfactionPenalty;
+      }
+    });
+
+    return combined;
   },
 
   // 月次履歴を記録

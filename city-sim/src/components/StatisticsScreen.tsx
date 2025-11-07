@@ -40,7 +40,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const { getProductSupplyDemandStatus } = useProductStore();
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
-  const { getAllFactionSupports, getActiveEffects, getActiveSupportEffectDefinition } = useSupportStore();
+  const { getAllFactionSupports, getActiveEffects, getActiveSupportEffectDefinition, getCombinedEffects } = useSupportStore();
+  const supportEffects = getCombinedEffects();
+  const infrastructureBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   
   // 秘書ストア
   const {
@@ -284,9 +286,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         const infraStatus = getInfrastructureStatus();
         const infraFactors: InfraFactors = {
           waterDemand: infraStatus.water.demand,
-          waterSupply: infraStatus.water.supply,
+          waterSupply: infraStatus.water.supply * infrastructureBonusMultiplier,
           electricityDemand: infraStatus.electricity.demand,
-          electricitySupply: infraStatus.electricity.supply,
+          electricitySupply: infraStatus.electricity.supply * infrastructureBonusMultiplier,
         };
 
         const population = stats.population || 0;
