@@ -1254,6 +1254,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
                   case 'conglomerate': return '財閥';
+                  case 'environmental_group': return '環境団体';
+                  case 'labor_union': return '労働組合';
                   default: return type;
                 }
               };
@@ -1264,6 +1266,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
                   case 'conglomerate': return 'text-amber-400';
+                  case 'environmental_group': return 'text-teal-300';
+                  case 'labor_union': return 'text-red-400';
                   default: return 'text-gray-400';
                 }
               };
@@ -1345,6 +1349,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
                   case 'conglomerate': return '財閥';
+                  case 'environmental_group': return '環境団体';
+                  case 'labor_union': return '労働組合';
                   default: return type;
                 }
               };
@@ -1355,6 +1361,8 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
                   case 'conglomerate': return 'text-amber-400';
+                  case 'environmental_group': return 'text-teal-300';
+                  case 'labor_union': return 'text-red-400';
                   default: return 'text-gray-400';
                 }
               };

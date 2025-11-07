@@ -1,5 +1,11 @@
 // 派閥の種類
-export type FactionType = 'central_government' | 'citizens' | 'chamber_of_commerce' | 'conglomerate';
+export type FactionType =
+  | 'central_government'
+  | 'citizens'
+  | 'chamber_of_commerce'
+  | 'conglomerate'
+  | 'environmental_group'
+  | 'labor_union';
 
 // 派閥の基本情報
 export interface FactionInfo {
@@ -94,6 +100,42 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
       industrialActivity: 20,  // 工業活動（20%）
       workforceEfficiency: 10, // 労働力効率（10%）
       infrastructureSurplus: 0, // インフラ余剰（0%）
+    }
+  },
+  environmental_group: {
+    type: 'environmental_group',
+    name: '環境団体',
+    description: '環境保全と持続可能な都市運営を求める団体。緑地の拡充とインフラの余裕、住民満足度の向上を重視する。',
+    priorities: {
+      taxStability: 0,
+      infrastructure: 15,
+      development: 0,
+      fiscalBalance: 0,
+      satisfaction: 15,
+      parksAndGreenery: 40,
+      populationGrowth: 5,
+      commercialActivity: 0,
+      industrialActivity: 0,
+      workforceEfficiency: 0,
+      infrastructureSurplus: 25,
+    }
+  },
+  labor_union: {
+    type: 'labor_union',
+    name: '労働組合',
+    description: '労働者の権利と雇用安定を守る組織。職場環境と雇用率、住民満足度の改善を求める。',
+    priorities: {
+      taxStability: 0,
+      infrastructure: 0,
+      development: 0,
+      fiscalBalance: 0,
+      satisfaction: 20,
+      parksAndGreenery: 0,
+      populationGrowth: 10,
+      commercialActivity: 10,
+      industrialActivity: 20,
+      workforceEfficiency: 30,
+      infrastructureSurplus: 10,
     }
   }
 };
@@ -444,6 +486,121 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
         maintenanceCostMultiplier: 0.9,   // 維持費10%減少
         workforceEfficiencyBonus: 0.1,    // 労働力効率10%向上
         populationGrowthMultiplier: 1.1,  // 人口増加10%増加
+      }
+    }
+  ],
+  environmental_group: [
+    {
+      level: 'very_low',
+      title: '環境危機',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        populationGrowthMultiplier: 0.9,  // 人口増加10%減少
+        satisfactionPenalty: -15,         // 満足度15減少
+        facilityEfficiencyMultiplier: 0.9, // 施設効率10%減少
+        maintenanceCostMultiplier: 1.1,   // 維持費10%増加
+      }
+    },
+    {
+      level: 'low',
+      title: '抗議運動',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        populationGrowthMultiplier: 0.95, // 人口増加5%減少
+        satisfactionPenalty: -8,          // 満足度8減少
+        maintenanceCostMultiplier: 1.05,  // 維持費5%増加
+      }
+    },
+    {
+      level: 'neutral',
+      title: '現状静観',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      title: '環境協働',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        satisfactionBonus: 10,             // 満足度10増加
+        maintenanceCostMultiplier: 0.95,   // 維持費5%減少
+        facilityEfficiencyMultiplier: 1.05, // 施設効率5%向上
+      }
+    },
+    {
+      level: 'very_high',
+      title: 'グリーン都市モデル',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        satisfactionBonus: 18,             // 満足度18増加
+        maintenanceCostMultiplier: 0.9,    // 維持費10%減少
+        facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
+        populationGrowthMultiplier: 1.05,  // 人口増加5%増加
+        infrastructureEfficiencyBonus: 0.05, // インフラ効率5%向上
+      }
+    }
+  ],
+  labor_union: [
+    {
+      level: 'very_low',
+      title: 'ストライキ連発',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        facilityEfficiencyMultiplier: 0.8,  // 施設効率20%減少
+        workforceEfficiencyBonus: -0.2,     // 労働力効率20%減少
+        populationOutflowRate: 0.08,        // 人口8%流出
+      }
+    },
+    {
+      level: 'low',
+      title: '労使対立',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        facilityEfficiencyMultiplier: 0.9,  // 施設効率10%減少
+        workforceEfficiencyBonus: -0.1,     // 労働力効率10%減少
+        populationOutflowRate: 0.04,        // 人口4%流出
+      }
+    },
+    {
+      level: 'neutral',
+      title: '労使協議',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      title: '労使協調',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        facilityEfficiencyMultiplier: 1.05, // 施設効率5%向上
+        workforceEfficiencyBonus: 0.05,     // 労働力効率5%向上
+        satisfactionBonus: 8,               // 満足度8増加
+      }
+    },
+    {
+      level: 'very_high',
+      title: '模範的労使関係',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        facilityEfficiencyMultiplier: 1.1,  // 施設効率10%向上
+        workforceEfficiencyBonus: 0.1,      // 労働力効率10%向上
+        satisfactionBonus: 15,              // 満足度15増加
+        populationGrowthMultiplier: 1.08,   // 人口増加8%増加
+        maintenanceCostMultiplier: 0.95,    // 維持費5%減少
       }
     }
   ]

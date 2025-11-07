@@ -379,7 +379,9 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
             chamber_of_commerce: new Array(12).fill(50),
-            conglomerate: new Array(12).fill(50)
+            conglomerate: new Array(12).fill(50),
+            environmental_group: new Array(12).fill(50),
+            labor_union: new Array(12).fill(50)
           } as Record<FactionType, number[]>,
           monthlyBirths: new Array(12).fill(0),
           monthlyDeaths: new Array(12).fill(0),
@@ -584,7 +586,9 @@ export const INITIAL_STATS: GameStats = {
         central_government: new Array(12).fill(50),
         citizens: new Array(12).fill(50),
         chamber_of_commerce: new Array(12).fill(50),
-        conglomerate: new Array(12).fill(50)
+        conglomerate: new Array(12).fill(50),
+        environmental_group: new Array(12).fill(50),
+        labor_union: new Array(12).fill(50)
       } as Record<FactionType, number[]>,
       // 都市パラメータの月次履歴
       monthlyCityParameters: new Array(12).fill(null).map(() => ({
@@ -798,8 +802,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
           monthlySupportRatings: {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
-            chamber_of_commerce: new Array(12).fill(50)
-          },
+            chamber_of_commerce: new Array(12).fill(50),
+            conglomerate: new Array(12).fill(50),
+            environmental_group: new Array(12).fill(50),
+            labor_union: new Array(12).fill(50)
+          } as Record<FactionType, number[]>,
           monthlyCityParameters: new Array(12).fill(null).map(() => ({
             entertainment: 50,
             security: 50,
