@@ -15,7 +15,7 @@ import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
 import { useUIStore } from './UIStore';
 import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
-import type { CityStateForSupport } from '../types/support';
+import type { CityStateForSupport, FactionType } from '../types/support';
 import { useMissionStore } from './MissionStore';
 import { useCityParameterMapStore } from './CityParameterMapStore';
 import { calculateSatisfactionWithFactors } from '../utils/satisfaction';
@@ -378,8 +378,9 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
           monthlySupportRatings: {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
-            chamber_of_commerce: new Array(12).fill(50)
-          },
+            chamber_of_commerce: new Array(12).fill(50),
+            conglomerate: new Array(12).fill(50)
+          } as Record<FactionType, number[]>,
           monthlyBirths: new Array(12).fill(0),
           monthlyDeaths: new Array(12).fill(0),
           monthlyInflow: new Array(12).fill(0),
@@ -582,8 +583,9 @@ export const INITIAL_STATS: GameStats = {
       monthlySupportRatings: {
         central_government: new Array(12).fill(50),
         citizens: new Array(12).fill(50),
-        chamber_of_commerce: new Array(12).fill(50)
-      },
+        chamber_of_commerce: new Array(12).fill(50),
+        conglomerate: new Array(12).fill(50)
+      } as Record<FactionType, number[]>,
       // 都市パラメータの月次履歴
       monthlyCityParameters: new Array(12).fill(null).map(() => ({
         entertainment: 50,
@@ -607,7 +609,8 @@ export const INITIAL_STATS: GameStats = {
       factionSupports: [
         { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
         { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
-        { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+        { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 },
+        { type: 'conglomerate', currentRating: 50, previousRating: 50, change: 0 }
       ],
       monthlyHistory: [],
       yearlyHistory: [],

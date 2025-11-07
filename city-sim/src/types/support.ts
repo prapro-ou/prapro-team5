@@ -1,5 +1,5 @@
 // 派閥の種類
-export type FactionType = 'central_government' | 'citizens' | 'chamber_of_commerce';
+export type FactionType = 'central_government' | 'citizens' | 'chamber_of_commerce' | 'conglomerate';
 
 // 派閥の基本情報
 export interface FactionInfo {
@@ -76,6 +76,24 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
       industrialActivity: 0,   // 工業活動（0%）
       workforceEfficiency: 20, // 労働力効率（20%）
       infrastructureSurplus: 15, // インフラ余剰（15%）
+    }
+  },
+  conglomerate: {
+    type: 'conglomerate',
+    name: '財閥',
+    description: '大規模資本を擁する財閥グループ。産業基盤と投資環境を重視し、法人税の削減と企業活動の活性化を求める。',
+    priorities: {
+      taxStability: 5,        // 税収の安定性（5%）
+      infrastructure: 0,       // インフラ整備（0%）
+      development: 20,         // 都市の発展度（20%）
+      fiscalBalance: 15,       // 財政バランス（15%）
+      satisfaction: 0,         // 満足度（0%）
+      parksAndGreenery: 0,     // 公園・緑地（0%）
+      populationGrowth: 0,     // 人口増加（0%）
+      commercialActivity: 25,  // 商業活動（25%）
+      industrialActivity: 20,  // 工業活動（20%）
+      workforceEfficiency: 10, // 労働力効率（10%）
+      infrastructureSurplus: 0, // インフラ余剰（0%）
     }
   }
 };
@@ -368,6 +386,64 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
         facilityEfficiencyMultiplier: 1.2, // 施設効率20%向上
         workforceEfficiencyBonus: 0.2, // 労働力効率20%向上
         maintenanceCostMultiplier: 0.85, // 維持費15%減少
+      }
+    }
+  ],
+  conglomerate: [
+    {
+      level: 'very_low',
+      title: '資本逃避',
+      minRating: 0,
+      maxRating: 19,
+      effects: {
+        taxMultiplier: 0.85,              // 税収15%減少
+        facilityEfficiencyMultiplier: 0.85, // 施設効率15%減少
+        maintenanceCostMultiplier: 1.1,   // 維持費10%増加
+      }
+    },
+    {
+      level: 'low',
+      title: '投資停滞',
+      minRating: 20,
+      maxRating: 39,
+      effects: {
+        taxMultiplier: 0.95,              // 税収5%減少
+        facilityEfficiencyMultiplier: 0.95, // 施設効率5%減少
+      }
+    },
+    {
+      level: 'neutral',
+      title: '通常運用',
+      minRating: 40,
+      maxRating: 59,
+      effects: {
+        // 標準効果（変更なし）
+      }
+    },
+    {
+      level: 'high',
+      title: '基本的支援',
+      minRating: 60,
+      maxRating: 79,
+      effects: {
+        taxMultiplier: 1.15,              // 税収15%増加
+        facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
+        constructionCostMultiplier: 0.95, // 建設コスト5%減少
+        workforceEfficiencyBonus: 0.05,   // 労働力効率5%向上
+      }
+    },
+    {
+      level: 'very_high',
+      title: '積極的投資',
+      minRating: 80,
+      maxRating: 100,
+      effects: {
+        taxMultiplier: 1.3,               // 税収30%増加
+        facilityEfficiencyMultiplier: 1.2, // 施設効率20%向上
+        constructionCostMultiplier: 0.9,  // 建設コスト10%減少
+        maintenanceCostMultiplier: 0.9,   // 維持費10%減少
+        workforceEfficiencyBonus: 0.1,    // 労働力効率10%向上
+        populationGrowthMultiplier: 1.1,  // 人口増加10%増加
       }
     }
   ]

@@ -159,7 +159,8 @@ export type MissionCategory =
 export type FactionType = 
   | 'central_government'  // 中央政府
   | 'citizens'            // 市民
-  | 'chamber_of_commerce'; // 商工会議所
+  | 'chamber_of_commerce' // 商工会議所
+  | 'conglomerate';       // 財閥
 
 
 // 目標インターフェース

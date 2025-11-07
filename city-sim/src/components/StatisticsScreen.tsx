@@ -1253,6 +1253,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return '中央政府';
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
+                  case 'conglomerate': return '財閥';
                   default: return type;
                 }
               };
@@ -1262,6 +1263,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return 'text-blue-400';
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
+                  case 'conglomerate': return 'text-amber-400';
                   default: return 'text-gray-400';
                 }
               };
@@ -1342,6 +1344,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return '中央政府';
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
+                  case 'conglomerate': return '財閥';
                   default: return type;
                 }
               };
@@ -1351,6 +1354,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return 'text-blue-400';
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
+                  case 'conglomerate': return 'text-amber-400';
                   default: return 'text-gray-400';
                 }
               };
