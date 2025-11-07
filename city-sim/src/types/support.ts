@@ -157,6 +157,7 @@ export type SupportLevel = 'very_low' | 'low' | 'neutral' | 'high' | 'very_high'
 // 支持率レベルに応じた効果の定義
 export interface SupportLevelEffect {
   level: SupportLevel;
+  title: string;                   // 効果名
   minRating: number;               // 最小支持率
   maxRating: number;               // 最大支持率
   effects: {
@@ -187,11 +188,25 @@ export interface SupportLevelEffect {
   };
 }
 
+export interface CombinedSupportEffects {
+  taxMultiplier: number;
+  subsidyMultiplier: number;
+  constructionCostMultiplier: number;
+  maintenanceCostMultiplier: number;
+  populationGrowthMultiplier: number;
+  populationOutflowRate: number;
+  facilityEfficiencyMultiplier: number;
+  infrastructureEfficiencyBonus: number;
+  workforceEfficiencyBonus: number;
+  satisfactionDelta: number;
+}
+
 // 各派閥の支持率レベル効果定義（要調整）
 export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = {
   central_government: [
     {
       level: 'very_low',
+      title: '緊縮監査',
       minRating: 0,
       maxRating: 19,
       effects: {
@@ -202,6 +217,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'low',
+      title: '財政再建プログラム',
       minRating: 20,
       maxRating: 39,
       effects: {
@@ -212,6 +228,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'neutral',
+      title: '標準評価',
       minRating: 40,
       maxRating: 59,
       effects: {
@@ -220,6 +237,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'high',
+      title: '重点支援枠',
       minRating: 60,
       maxRating: 79,
       effects: {
@@ -230,6 +248,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'very_high',
+      title: '特別連携枠',
       minRating: 80,
       maxRating: 100,
       effects: {
@@ -243,26 +262,29 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
   citizens: [
     {
       level: 'very_low',
+      title: 'ボイコット',
       minRating: 0,
       maxRating: 19,
       effects: {
-        populationOutflowRate: 0.1,   // 人口10%流出
-        satisfactionPenalty: -20,     // 満足度20減少
+        populationOutflowRate: 0.2,        // 人口20%流出
+        satisfactionPenalty: -20,          // 満足度20減少
         facilityEfficiencyMultiplier: 0.8, // 施設効率20%減少
       }
     },
     {
       level: 'low',
+      title: '生活不安',
       minRating: 20,
       maxRating: 39,
       effects: {
-        populationOutflowRate: 0.05,  // 人口5%流出
-        satisfactionPenalty: -10,     // 満足度10減少
+        populationOutflowRate: 0.1,        // 人口10%流出
+        satisfactionPenalty: -10,          // 満足度10減少
         facilityEfficiencyMultiplier: 0.9, // 施設効率10%減少
       }
     },
     {
       level: 'neutral',
+      title: '現状維持',
       minRating: 40,
       maxRating: 59,
       effects: {
@@ -271,6 +293,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'high',
+      title: '地域活性化',
       minRating: 60,
       maxRating: 79,
       effects: {
@@ -281,19 +304,21 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'very_high',
+      title: '市民協働モデル',
       minRating: 80,
       maxRating: 100,
       effects: {
-        populationGrowthMultiplier: 1.5, // 人口増加50%増加
-        satisfactionBonus: 20,        // 満足度20増加
+        populationGrowthMultiplier: 1.5,   // 人口増加50%増加
+        satisfactionBonus: 20,             // 満足度20増加
         facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
-        maintenanceCostMultiplier: 0.9, // 維持費10%減少
+        maintenanceCostMultiplier: 0.9,    // 維持費10%減少
       }
     }
   ],
   chamber_of_commerce: [
     {
       level: 'very_low',
+      title: '取引停止',
       minRating: 0,
       maxRating: 19,
       effects: {
@@ -304,6 +329,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'low',
+      title: '業界不信',
       minRating: 20,
       maxRating: 39,
       effects: {
@@ -314,6 +340,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'neutral',
+      title: '通常取引',
       minRating: 40,
       maxRating: 59,
       effects: {
@@ -322,6 +349,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'high',
+      title: '商工協調',
       minRating: 60,
       maxRating: 79,
       effects: {
@@ -332,6 +360,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'very_high',
+      title: '戦略的連携',
       minRating: 80,
       maxRating: 100,
       effects: {
