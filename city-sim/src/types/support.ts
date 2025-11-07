@@ -1,3 +1,5 @@
+import type { CityParameters } from './cityParameter';
+
 // 派閥の種類
 export type FactionType =
   | 'central_government'
@@ -189,6 +191,7 @@ export interface CityStateForSupport {
   totalFacilityCount: number;      // 総施設数
   fiscalBalance: number;           // 財政バランス（収入-支出）
   workforceEfficiency: number;     // 労働力効率（0-1）
+  cityParameters?: CityParameters; // 都市パラメータ
 }
 
 // 支持率の計算結果

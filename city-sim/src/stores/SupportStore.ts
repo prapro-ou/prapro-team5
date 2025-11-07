@@ -10,6 +10,7 @@ import type {
   SupportLevelEffect,
   CombinedSupportEffects
 } from '../types/support';
+import type { CityParameters } from '../types/cityParameter';
 import { FACTION_DATA, SUPPORT_LEVEL_EFFECTS } from '../types/support';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
@@ -72,6 +73,32 @@ const createInitialState = (): SupportSystemState => {
 const calculateFactorScore = (value: number, min: number, max: number): number => {
   if (max === min) return 50; // 変化がない場合は50点
   return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+};
+
+const clampValue = (value: number, min: number, max: number) => {
+  if (Number.isNaN(value)) return min;
+  return Math.max(min, Math.min(max, value));
+};
+
+const getCityParameterValue = (
+  params: CityParameters | undefined,
+  key: keyof CityParameters,
+  defaultValue = 50
+): number => {
+  if (!params) return defaultValue;
+  const value = params[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) return defaultValue;
+  return clampValue(value, 0, 100);
+};
+
+const getCityParameterAverage = (
+  params: CityParameters | undefined,
+  keys: (keyof CityParameters)[],
+  defaultValue = 50
+): number => {
+  if (!params || keys.length === 0) return defaultValue;
+  const total = keys.reduce((sum, key) => sum + getCityParameterValue(params, key, defaultValue), 0);
+  return total / keys.length;
 };
 
 // 支持率レベルを判定するヘルパー関数
@@ -171,20 +198,51 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
   calculateFactionSupport: (factionType: FactionType, cityState: CityStateForSupport): SupportCalculationResult => {
     const factionInfo = FACTION_DATA[factionType];
     const priorities = factionInfo.priorities;
+    const cityParams = cityState.cityParameters;
+
+    const infrastructureParamAvg = getCityParameterAverage(cityParams, ['transit', 'sanitation', 'security']);
+    const developmentParamAvg = getCityParameterAverage(cityParams, ['entertainment', 'education', 'tourism']);
+    const satisfactionParamAvg = getCityParameterAverage(cityParams, ['environment', 'entertainment', 'education']);
+    const commercialParamAvg = getCityParameterAverage(cityParams, ['entertainment', 'tourism']);
+    const industrialParamAvg = getCityParameterAverage(cityParams, ['disaster_prevention', 'sanitation']);
+    const workforceParamValue = getCityParameterValue(cityParams, 'education');
+    const environmentParamValue = getCityParameterValue(cityParams, 'environment');
+
+    const taxStabilityScore = calculateFactorScore(cityState.taxRevenueGrowth, -50, 100);
+    const infrastructureScore = calculateFactorScore(
+      Math.round(cityState.infrastructureEfficiency * 100 * 0.6 + infrastructureParamAvg * 0.4),
+      0,
+      100
+    );
+    const developmentScore = calculateFactorScore(Math.round(developmentParamAvg), 0, 100);
+    const fiscalBalanceScore = calculateFactorScore(cityState.fiscalBalance, -10000, 10000);
+    const satisfactionComposite = Math.round(cityState.satisfaction * 0.7 + satisfactionParamAvg * 0.3);
+    const satisfactionScore = calculateFactorScore(satisfactionComposite, 0, 100);
+    const parksAndGreeneryScore = calculateFactorScore(environmentParamValue, 0, 100);
+    const populationGrowthScore = calculateFactorScore(cityState.populationGrowth, -100, 500);
+    const commercialFacilityScore = calculateFactorScore(cityState.commercialFacilityCount, 0, 50);
+    const commercialParamScore = calculateFactorScore(Math.round(commercialParamAvg), 0, 100);
+    const commercialActivityScore = Math.round((commercialFacilityScore + commercialParamScore) / 2);
+    const industrialFacilityScore = calculateFactorScore(cityState.industrialFacilityCount, 0, 30);
+    const industrialParamScore = calculateFactorScore(Math.round(industrialParamAvg), 0, 100);
+    const industrialActivityScore = Math.round((industrialFacilityScore + industrialParamScore) / 2);
+    const workforceComposite = Math.round(cityState.workforceEfficiency * 100 * 0.6 + workforceParamValue * 0.4);
+    const workforceEfficiencyScore = calculateFactorScore(workforceComposite, 0, 100);
+    const infrastructureSurplusScore = calculateFactorScore(cityState.infrastructureSurplus, -100, 100);
     
     // 各要素のスコアを計算
     const factors = {
-      taxStability: calculateFactorScore(cityState.taxRevenueGrowth, -50, 100), // 税収成長率
-      infrastructure: calculateFactorScore(cityState.infrastructureEfficiency, 0, 1), // インフラ効率
-      development: calculateFactorScore(cityState.totalFacilityCount, 0, 100), // 施設数
-      fiscalBalance: calculateFactorScore(cityState.fiscalBalance, -10000, 10000), // 財政バランス
-      satisfaction: cityState.satisfaction, // 満足度（そのまま使用）
-      parksAndGreenery: calculateFactorScore(cityState.parkCount, 0, 20), // 公園数
-      populationGrowth: calculateFactorScore(cityState.populationGrowth, -100, 500), // 人口増加
-      commercialActivity: calculateFactorScore(cityState.commercialFacilityCount, 0, 50), // 商業施設数
-      industrialActivity: calculateFactorScore(cityState.industrialFacilityCount, 0, 30), // 工業施設数
-      workforceEfficiency: cityState.workforceEfficiency * 100, // 労働力効率
-      infrastructureSurplus: calculateFactorScore(cityState.infrastructureSurplus, -100, 100) // インフラ余剰
+      taxStability: taxStabilityScore,
+      infrastructure: infrastructureScore,
+      development: developmentScore,
+      fiscalBalance: fiscalBalanceScore,
+      satisfaction: satisfactionScore,
+      parksAndGreenery: parksAndGreeneryScore,
+      populationGrowth: populationGrowthScore,
+      commercialActivity: commercialActivityScore,
+      industrialActivity: industrialActivityScore,
+      workforceEfficiency: workforceEfficiencyScore,
+      infrastructureSurplus: infrastructureSurplusScore,
     };
     
     // 重み付けで総合スコアを計算

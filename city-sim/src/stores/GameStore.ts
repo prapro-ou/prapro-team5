@@ -312,22 +312,55 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
   const { calculateSupportRatings, recordMonthlyHistory } = useSupportStore.getState();
+  const infraStatus = useInfrastructureStore.getState().getInfrastructureStatus();
   
   // 都市の状態データを構築
+  const totalSupply = infraStatus.water.supply + infraStatus.electricity.supply;
+  const totalDemand = infraStatus.water.demand + infraStatus.electricity.demand;
+  const infrastructureEfficiency = totalDemand > 0 ? Math.min(1, totalSupply / totalDemand) : 1;
+  const infrastructureSurplus = infraStatus.water.balance + infraStatus.electricity.balance;
+
+  const workforceAllocations = stats.workforceAllocations;
+  let workforceEfficiency = 0;
+  if (workforceAllocations.length > 0) {
+    const totalAssigned = workforceAllocations.reduce((sum, allocation) => sum + (allocation.assignedWorkforce || 0), 0);
+    if (totalAssigned > 0) {
+      const weightedEfficiency = workforceAllocations.reduce((sum, allocation) => sum + (allocation.efficiency * (allocation.assignedWorkforce || 0)), 0);
+      workforceEfficiency = weightedEfficiency / totalAssigned;
+    } else {
+      workforceEfficiency = workforceAllocations.reduce((sum, allocation) => sum + allocation.efficiency, 0) / workforceAllocations.length;
+    }
+  }
+
+  workforceEfficiency = Math.max(0, Math.min(1, workforceEfficiency));
+
+  const currentMonthIndex = Math.max(0, stats.date.month - 1);
+  const monthlyTaxRevenue = stats.monthlyAccumulation.monthlyTaxRevenue || [];
+  const currentTaxRevenue = monthlyTaxRevenue[currentMonthIndex] ?? stats.monthlyBalance.income;
+  const previousTaxRevenue = currentMonthIndex > 0
+    ? monthlyTaxRevenue[currentMonthIndex - 1] ?? currentTaxRevenue
+    : currentTaxRevenue;
+  const taxRevenueGrowth = currentTaxRevenue - previousTaxRevenue;
+
+  const populationGrowth = stats.monthlyAccumulation.monthlyDelta
+    ? stats.monthlyAccumulation.monthlyDelta[currentMonthIndex] ?? 0
+    : 0;
+
   const cityState: CityStateForSupport = {
     satisfaction: stats.satisfaction,
     population: stats.population,
-    populationGrowth: 0, // 前月比の人口増加（後で計算）
-    taxRevenue: stats.monthlyBalance.income,
-    taxRevenueGrowth: 0, // 前月比の税収成長（後で計算）
-    infrastructureEfficiency: 0, // インフラ効率（後で計算）
-    infrastructureSurplus: 0, // インフラ余剰（後で計算）
+    populationGrowth,
+    taxRevenue: currentTaxRevenue,
+    taxRevenueGrowth,
+    infrastructureEfficiency,
+    infrastructureSurplus,
     commercialFacilityCount: facilities.filter(f => f.type === 'commercial').length,
     industrialFacilityCount: facilities.filter(f => f.type === 'industrial').length,
     parkCount: facilities.filter(f => f.type === 'park').length,
     totalFacilityCount: facilities.length,
     fiscalBalance: stats.monthlyBalance.balance,
-    workforceEfficiency: 0.8 // 仮の値（後で実際の計算に置き換え）
+    workforceEfficiency,
+    cityParameters: stats.cityParameters,
   };
   
   // 支持率を計算
