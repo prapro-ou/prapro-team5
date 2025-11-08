@@ -207,14 +207,20 @@ function App() {
       console.warn(`施設を配置できません`);
       return;
     }
-    if (!spendMoney(facilityData.cost)) {
-      console.warn(`資金が不足しています: ¥${facilityData.cost}`);
+    const supportEffects = useSupportStore.getState().getCombinedEffects();
+    const adjustedCost = Math.max(0, Math.floor(facilityData.cost * supportEffects.constructionCostMultiplier));
+
+    if (!spendMoney(adjustedCost)) {
+      console.warn(`資金が不足しています: ¥${adjustedCost}`);
       return;
     }
 
     // 施設の配置
     const newFacility = createFacility(position, type);
     addFacility(newFacility);
+    if (facilityData.cost !== adjustedCost) {
+      console.log(`建設コスト補正: 基礎¥${facilityData.cost.toLocaleString()} → 適用後¥${adjustedCost.toLocaleString()}`);
+    }
     // 設置音を鳴らす
     playBuildSound();
     // もし設置した施設が住宅なら、道路接続状態を更新（人口は月次で増減）

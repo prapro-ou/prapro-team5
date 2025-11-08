@@ -7,8 +7,10 @@ import type {
   YearlySupportHistory,
   CityStateForSupport,
   SupportCalculationResult,
-  SupportLevelEffect
+  SupportLevelEffect,
+  CombinedSupportEffects
 } from '../types/support';
+import type { CityParameters } from '../types/cityParameter';
 import { FACTION_DATA, SUPPORT_LEVEL_EFFECTS } from '../types/support';
 import { saveLoadRegistry } from './SaveLoadRegistry';
 
@@ -34,6 +36,8 @@ interface SupportStore {
   getSupportLevel: (rating: number) => 'very_low' | 'low' | 'neutral' | 'high' | 'very_high';
   getActiveEffects: (factionType: FactionType) => SupportLevelEffect['effects'];
   getAllActiveEffects: () => Record<FactionType, SupportLevelEffect['effects']>;
+  getActiveSupportEffectDefinition: (factionType: FactionType) => SupportLevelEffect | undefined;
+  getCombinedEffects: () => CombinedSupportEffects;
   
   // 履歴の管理
   recordMonthlyHistory: (year: number, month: number) => void;
@@ -69,6 +73,32 @@ const createInitialState = (): SupportSystemState => {
 const calculateFactorScore = (value: number, min: number, max: number): number => {
   if (max === min) return 50; // 変化がない場合は50点
   return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+};
+
+const clampValue = (value: number, min: number, max: number) => {
+  if (Number.isNaN(value)) return min;
+  return Math.max(min, Math.min(max, value));
+};
+
+const getCityParameterValue = (
+  params: CityParameters | undefined,
+  key: keyof CityParameters,
+  defaultValue = 50
+): number => {
+  if (!params) return defaultValue;
+  const value = params[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) return defaultValue;
+  return clampValue(value, 0, 100);
+};
+
+const getCityParameterAverage = (
+  params: CityParameters | undefined,
+  keys: (keyof CityParameters)[],
+  defaultValue = 50
+): number => {
+  if (!params || keys.length === 0) return defaultValue;
+  const total = keys.reduce((sum, key) => sum + getCityParameterValue(params, key, defaultValue), 0);
+  return total / keys.length;
 };
 
 // 支持率レベルを判定するヘルパー関数
@@ -168,31 +198,76 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
   calculateFactionSupport: (factionType: FactionType, cityState: CityStateForSupport): SupportCalculationResult => {
     const factionInfo = FACTION_DATA[factionType];
     const priorities = factionInfo.priorities;
+    const cityParams = cityState.cityParameters;
+
+    const infrastructureParamAvg = getCityParameterAverage(cityParams, ['transit', 'sanitation', 'security']);
+    const developmentParamAvg = getCityParameterAverage(cityParams, ['entertainment', 'education', 'tourism']);
+    const satisfactionParamAvg = getCityParameterAverage(cityParams, ['environment', 'entertainment', 'education']);
+    const commercialParamAvg = getCityParameterAverage(cityParams, ['entertainment', 'tourism']);
+    const industrialParamAvg = getCityParameterAverage(cityParams, ['disaster_prevention', 'sanitation']);
+    const workforceParamValue = getCityParameterValue(cityParams, 'education');
+
+    const taxStabilityScore = calculateFactorScore(cityState.taxRevenueGrowth, -50, 100);
+    const infrastructureScore = calculateFactorScore(
+      Math.round(cityState.infrastructureEfficiency * 100 * 0.6 + infrastructureParamAvg * 0.4),
+      0,
+      100
+    );
+    const developmentFacilityScore = calculateFactorScore(cityState.totalFacilityCount, 0, 100);
+    const developmentParamScore = calculateFactorScore(Math.round(developmentParamAvg), 0, 100);
+    const developmentScore = Math.round((developmentFacilityScore + developmentParamScore) / 2);
+    const fiscalBalanceScore = calculateFactorScore(cityState.fiscalBalance, -10000, 10000);
+    const satisfactionComposite = Math.round(cityState.satisfaction * 0.7 + satisfactionParamAvg * 0.3);
+    const satisfactionScore = calculateFactorScore(satisfactionComposite, 0, 100);
+    const populationGrowthScore = calculateFactorScore(cityState.populationGrowth, -100, 500);
+    const commercialFacilityScore = calculateFactorScore(cityState.commercialFacilityCount, 0, 50);
+    const commercialParamScore = calculateFactorScore(Math.round(commercialParamAvg), 0, 100);
+    const commercialActivityScore = Math.round((commercialFacilityScore + commercialParamScore) / 2);
+    const industrialFacilityScore = calculateFactorScore(cityState.industrialFacilityCount, 0, 30);
+    const industrialParamScore = calculateFactorScore(Math.round(industrialParamAvg), 0, 100);
+    const industrialActivityScore = Math.round((industrialFacilityScore + industrialParamScore) / 2);
+    const workforceComposite = Math.round(cityState.workforceEfficiency * 100 * 0.6 + workforceParamValue * 0.4);
+    const workforceEfficiencyScore = calculateFactorScore(workforceComposite, 0, 100);
+    const infrastructureSurplusScore = calculateFactorScore(cityState.infrastructureSurplus, -100, 100);
     
     // 各要素のスコアを計算
     const factors = {
-      taxStability: calculateFactorScore(cityState.taxRevenueGrowth, -50, 100), // 税収成長率
-      infrastructure: calculateFactorScore(cityState.infrastructureEfficiency, 0, 1), // インフラ効率
-      development: calculateFactorScore(cityState.totalFacilityCount, 0, 100), // 施設数
-      fiscalBalance: calculateFactorScore(cityState.fiscalBalance, -10000, 10000), // 財政バランス
-      satisfaction: cityState.satisfaction, // 満足度（そのまま使用）
-      parksAndGreenery: calculateFactorScore(cityState.parkCount, 0, 20), // 公園数
-      populationGrowth: calculateFactorScore(cityState.populationGrowth, -100, 500), // 人口増加
-      commercialActivity: calculateFactorScore(cityState.commercialFacilityCount, 0, 50), // 商業施設数
-      industrialActivity: calculateFactorScore(cityState.industrialFacilityCount, 0, 30), // 工業施設数
-      workforceEfficiency: cityState.workforceEfficiency * 100, // 労働力効率
-      infrastructureSurplus: calculateFactorScore(cityState.infrastructureSurplus, -100, 100) // インフラ余剰
+      taxStability: taxStabilityScore,
+      infrastructure: infrastructureScore,
+      development: developmentScore,
+      fiscalBalance: fiscalBalanceScore,
+      satisfaction: satisfactionScore,
+      populationGrowth: populationGrowthScore,
+      commercialActivity: commercialActivityScore,
+      industrialActivity: industrialActivityScore,
+      workforceEfficiency: workforceEfficiencyScore,
+      infrastructureSurplus: infrastructureSurplusScore,
     };
     
     // 重み付けで総合スコアを計算
     let totalScore = 0;
+    let totalWeight = 0;
+
     Object.entries(priorities).forEach(([key, weight]) => {
+      if (key === 'cityParameters') return;
+      if (typeof weight !== 'number' || weight === 0) return;
       const factorKey = key as keyof typeof factors;
-      totalScore += factors[factorKey] * (weight / 100);
+      const factorValue = factors[factorKey] ?? 50;
+      totalScore += factorValue * weight;
+      totalWeight += weight;
     });
-    
-    // スコアを0-100の範囲に制限
-    const calculatedRating = Math.max(0, Math.min(100, Math.round(totalScore)));
+
+    if (priorities.cityParameters) {
+      Object.entries(priorities.cityParameters).forEach(([paramKey, weight]) => {
+        if (typeof weight !== 'number' || weight === 0) return;
+        const paramValue = getCityParameterValue(cityParams, paramKey as keyof CityParameters);
+        totalScore += paramValue * weight;
+        totalWeight += weight;
+      });
+    }
+
+    const averageScore = totalWeight > 0 ? totalScore / totalWeight : 50;
+    const calculatedRating = Math.max(0, Math.min(100, Math.round(averageScore)));
     
     return {
       factionType,
@@ -209,14 +284,8 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
 
   // 特定の派閥のアクティブな効果を取得
   getActiveEffects: (factionType: FactionType) => {
-    const factionSupport = get().getFactionSupport(factionType);
-    if (!factionSupport) return {};
-    
-    const level = get().getSupportLevel(factionSupport.currentRating);
-    const levelEffects = SUPPORT_LEVEL_EFFECTS[factionType];
-    
-    const activeEffect = levelEffects.find(effect => effect.level === level);
-    return activeEffect ? activeEffect.effects : {};
+    const effectDefinition = get().getActiveSupportEffectDefinition(factionType);
+    return effectDefinition ? effectDefinition.effects : {};
   },
 
   // 全派閥のアクティブな効果を取得
@@ -228,6 +297,77 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     });
     
     return allEffects;
+  },
+
+  // アクティブな効果定義を取得
+  getActiveSupportEffectDefinition: (factionType: FactionType) => {
+    const factionSupport = get().getFactionSupport(factionType);
+    if (!factionSupport) return undefined;
+
+    const level = get().getSupportLevel(factionSupport.currentRating);
+    const levelEffects = SUPPORT_LEVEL_EFFECTS[factionType];
+    
+    return levelEffects.find(effect => effect.level === level);
+  },
+
+  // 派閥効果の合算
+  getCombinedEffects: () => {
+    const combined: CombinedSupportEffects = {
+      taxMultiplier: 1,
+      subsidyMultiplier: 1,
+      constructionCostMultiplier: 1,
+      maintenanceCostMultiplier: 1,
+      populationGrowthMultiplier: 1,
+      populationOutflowRate: 0,
+      facilityEfficiencyMultiplier: 1,
+      infrastructureEfficiencyBonus: 0,
+      workforceEfficiencyBonus: 0,
+      satisfactionDelta: 0,
+    };
+
+    Object.keys(FACTION_DATA).forEach(factionKey => {
+      const factionType = factionKey as FactionType;
+      const effectDefinition = get().getActiveSupportEffectDefinition(factionType);
+      if (!effectDefinition) return;
+
+      const effects = effectDefinition.effects;
+
+      if (effects.taxMultiplier !== undefined) {
+        combined.taxMultiplier *= effects.taxMultiplier;
+      }
+      if (effects.subsidyMultiplier !== undefined) {
+        combined.subsidyMultiplier *= effects.subsidyMultiplier;
+      }
+      if (effects.constructionCostMultiplier !== undefined) {
+        combined.constructionCostMultiplier *= effects.constructionCostMultiplier;
+      }
+      if (effects.maintenanceCostMultiplier !== undefined) {
+        combined.maintenanceCostMultiplier *= effects.maintenanceCostMultiplier;
+      }
+      if (effects.facilityEfficiencyMultiplier !== undefined) {
+        combined.facilityEfficiencyMultiplier *= effects.facilityEfficiencyMultiplier;
+      }
+      if (effects.populationGrowthMultiplier !== undefined) {
+        combined.populationGrowthMultiplier *= effects.populationGrowthMultiplier;
+      }
+      if (effects.populationOutflowRate !== undefined) {
+        combined.populationOutflowRate += effects.populationOutflowRate;
+      }
+      if (effects.infrastructureEfficiencyBonus !== undefined) {
+        combined.infrastructureEfficiencyBonus += effects.infrastructureEfficiencyBonus;
+      }
+      if (effects.workforceEfficiencyBonus !== undefined) {
+        combined.workforceEfficiencyBonus += effects.workforceEfficiencyBonus;
+      }
+      if (effects.satisfactionBonus !== undefined) {
+        combined.satisfactionDelta += effects.satisfactionBonus;
+      }
+      if (effects.satisfactionPenalty !== undefined) {
+        combined.satisfactionDelta += effects.satisfactionPenalty;
+      }
+    });
+
+    return combined;
   },
 
   // 月次履歴を記録

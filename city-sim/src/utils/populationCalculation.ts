@@ -1,10 +1,16 @@
 import type { CityParameters } from '../types/cityParameter';
 import type { Facility } from '../types/facility';
+import type { CombinedSupportEffects } from '../types/support';
 import { getFacilityRegistry } from './facilityLoader';
+import { useSupportStore } from '../stores/SupportStore';
 
 function clamp(value: number, min: number, max: number): number {
   if (Number.isNaN(value)) return min;
   return Math.max(min, Math.min(max, value));
+}
+
+function getSupportEffects(): CombinedSupportEffects {
+  return useSupportStore.getState().getCombinedEffects();
 }
 
 export interface InfraFactors {
@@ -135,6 +141,7 @@ export function calculatePopulationChange(
   cfg?: Partial<PopulationConfig>
 ): PopulationChangeResult {
   const config = { ...POPULATION_CONFIG, ...cfg } as PopulationConfig;
+  const supportEffects = getSupportEffects();
 
   const population = Math.max(0, Math.floor(inputs.population));
   const attractiveness = calculateAttractiveness(inputs.satisfaction);
@@ -168,7 +175,13 @@ export function calculatePopulationChange(
   );
   const outflow = Math.floor(population * config.baseOutRate * outflowMultiplier);
 
-  let delta = (births + inflow) - (deaths + outflow);
+  const growthMultiplier = supportEffects.populationGrowthMultiplier;
+  const adjustedBirths = Math.floor(births * growthMultiplier);
+  const adjustedInflow = Math.floor(inflow * growthMultiplier);
+  const extraOutflowFromSupport = Math.floor(population * supportEffects.populationOutflowRate);
+  const adjustedOutflow = Math.max(0, Math.floor(outflow + extraOutflowFromSupport));
+
+  let delta = (adjustedBirths + adjustedInflow) - (deaths + adjustedOutflow);
   let appliedHousingCap = false;
   if (housingCapacity > 0 && population + delta > housingCapacity) {
     delta = housingCapacity - population;
@@ -177,10 +190,10 @@ export function calculatePopulationChange(
 
   return {
     delta,
-    births,
+    births: adjustedBirths,
     deaths,
-    inflow,
-    outflow,
+    inflow: adjustedInflow,
+    outflow: adjustedOutflow,
     appliedHousingCap,
     details: {
       attractiveness,

@@ -4,6 +4,7 @@ import type { GameStats } from '../types/game';
 import { allocateWorkforce, type WorkforceAllocation } from '../hooks/useWorkforce';
 import { useProductStore } from './ProductStore';
 import { create } from 'zustand';
+import { useSupportStore } from './SupportStore';
 
 // 税率の型定義
 interface TaxRates {
@@ -41,6 +42,11 @@ export const useEconomyStore = create<EconomyStore>((set) => ({
 // 税率を取得する関数
 function getTaxRates(): TaxRates {
   return useEconomyStore.getState().taxRates;
+}
+
+function clamp01(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
 }
 
 // 労働力配分を更新・実行
@@ -103,20 +109,23 @@ export function calculateFinalFacilityEfficiency(
   // 1. 労働力効率を取得
   const workforceAllocation = getFacilityWorkforceAllocation(facility.id, stats);
   const workforceEfficiency = workforceAllocation ? workforceAllocation.efficiency : 0;
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const adjustedWorkforceEfficiency = clamp01(workforceEfficiency + supportEffects.workforceEfficiencyBonus);
   
   // 2. 製品効率を計算
   const { getProductSupplyDemandStatus } = useProductStore.getState();
   const { efficiency: productEfficiency } = getProductSupplyDemandStatus(facilities);
   
   // 3. 最終効率 = 労働力効率 × 製品効率
-  const finalEfficiency = workforceEfficiency * productEfficiency;
+  const baseEfficiency = adjustedWorkforceEfficiency * productEfficiency;
+  const finalEfficiency = baseEfficiency * supportEffects.facilityEfficiencyMultiplier;
   
   // デバッグ用ログ（効率が0より大きい場合のみ）
   if (finalEfficiency > 0) {
-    console.log(`効率計算: ${facility.type} - 労働力:${(workforceEfficiency*100).toFixed(1)}%, 製品:${(productEfficiency*100).toFixed(1)}%, 最終:${(finalEfficiency*100).toFixed(1)}%`);
+    console.log(`効率計算: ${facility.type} - 労働力:${(adjustedWorkforceEfficiency*100).toFixed(1)}%, 製品:${(productEfficiency*100).toFixed(1)}%, 最終:${(finalEfficiency*100).toFixed(1)}%`);
   }
   
-  return finalEfficiency;
+  return Math.max(0, finalEfficiency);
 }
 
 /**
@@ -316,16 +325,20 @@ export function calculateTotalTaxRevenue(stats: GameStats, facilities: Facility[
   
   // 総税収
   const totalTaxRevenue = citizenTax + corporateTax;
+
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const adjustedTaxRevenue = Math.floor(totalTaxRevenue * supportEffects.taxMultiplier);
   
   console.log(`=== 税収計算 ===`);
   console.log(`人口: ${stats.population}, 平均資産: ${averageAssets}`);
   console.log(`企業数: ${businessCount}, 平均法人資産: ${averageBusinessAssets}`);
   console.log(`市民税: ${citizenTax} (税率: ${getTaxRates().citizenTax * 100}%)`);
   console.log(`法人税: ${corporateTax} (税率: ${getTaxRates().corporateTax * 100}%)`);
-  console.log(`総税収: ${totalTaxRevenue}`);
+  console.log(`派閥補正: x${supportEffects.taxMultiplier.toFixed(2)}`);
+  console.log(`総税収: ${adjustedTaxRevenue}`);
   console.log(`================`);
   
-  return totalTaxRevenue;
+  return adjustedTaxRevenue;
 }
 
 // 月次収支を計算
@@ -335,10 +348,13 @@ export function calculateMonthlyBalance(stats: GameStats, facilities: Facility[]
   const taxRevenue = hasCityHall && stats.population > 0 ? calculateTotalTaxRevenue(stats, facilities) : 0;
   
   // 維持費（全施設の維持費合計）
-  const maintenanceCost = facilities.reduce((total, facility) => {
+  const maintenanceBase = facilities.reduce((total, facility) => {
     const facilityData = getFacilityRegistry()[facility.type];
     return total + (facilityData.maintenanceCost || 0);
   }, 0);
+
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const maintenanceCost = Math.floor(maintenanceBase * supportEffects.maintenanceCostMultiplier);
   
   const income = taxRevenue;
   const expense = maintenanceCost;
@@ -346,7 +362,9 @@ export function calculateMonthlyBalance(stats: GameStats, facilities: Facility[]
   
   console.log(`=== 月次収支計算 ===`);
   console.log(`税収: +${income}`);
-  console.log(`維持費: -${expense}`);
+  console.log(`維持費(基礎): -${maintenanceBase}`);
+  console.log(`派閥補正: x${supportEffects.maintenanceCostMultiplier.toFixed(2)}`);
+  console.log(`維持費(適用後): -${expense}`);
   console.log(`純利益: ${balance >= 0 ? '+' : ''}${balance}`);
   console.log(`====================`);
   

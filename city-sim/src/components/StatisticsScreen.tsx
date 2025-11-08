@@ -14,6 +14,7 @@ import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useSupportStore } from '../stores/SupportStore';
+import { FACTION_DATA } from '../types/support';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
 import { getSeasonalMessages } from '../stores/SecretaryStore';
@@ -40,7 +41,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
   const { getProductSupplyDemandStatus } = useProductStore();
   const facilities = useFacilityStore(state => state.facilities);
   const { getInfrastructureStatus, getInfrastructureShortage, getInfrastructureSurplus } = useInfrastructureStore();
-  const { getAllFactionSupports, getActiveEffects } = useSupportStore();
+  const { getAllFactionSupports, getActiveEffects, getActiveSupportEffectDefinition, getCombinedEffects } = useSupportStore();
+  const supportEffects = getCombinedEffects();
+  const infrastructureBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   
   // 秘書ストア
   const {
@@ -284,9 +287,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
         const infraStatus = getInfrastructureStatus();
         const infraFactors: InfraFactors = {
           waterDemand: infraStatus.water.demand,
-          waterSupply: infraStatus.water.supply,
+          waterSupply: infraStatus.water.supply * infrastructureBonusMultiplier,
           electricityDemand: infraStatus.electricity.demand,
-          electricitySupply: infraStatus.electricity.supply,
+          electricitySupply: infraStatus.electricity.supply * infrastructureBonusMultiplier,
         };
 
         const population = stats.population || 0;
@@ -1246,11 +1249,15 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {factionSupports.map((factionSupport) => {
+              const factionInfo = FACTION_DATA[factionSupport.type];
               const getFactionName = (type: string) => {
                 switch (type) {
                   case 'central_government': return '中央政府';
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
+                  case 'conglomerate': return '財閥';
+                  case 'environmental_group': return '環境団体';
+                  case 'labor_union': return '労働組合';
                   default: return type;
                 }
               };
@@ -1260,6 +1267,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return 'text-blue-400';
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
+                  case 'conglomerate': return 'text-amber-400';
+                  case 'environmental_group': return 'text-teal-300';
+                  case 'labor_union': return 'text-red-400';
                   default: return 'text-gray-400';
                 }
               };
@@ -1289,6 +1299,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   <h4 className={`text-lg font-bold mb-3 ${getFactionColor(factionSupport.type)}`}>
                     {getFactionName(factionSupport.type)}
                   </h4>
+                  {factionInfo && (
+                    <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                      {factionInfo.description}
+                    </p>
+                  )}
                   <div className="space-y-3">
                     {/* 現在の支持率 */}
                     <div className="text-center">
@@ -1333,12 +1348,16 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {factionSupports.map((factionSupport) => {
               const activeEffects = getActiveEffects(factionSupport.type);
+              const activeEffectDefinition = getActiveSupportEffectDefinition(factionSupport.type);
               
               const getFactionName = (type: string) => {
                 switch (type) {
                   case 'central_government': return '中央政府';
                   case 'citizens': return '市民';
                   case 'chamber_of_commerce': return '商工会';
+                  case 'conglomerate': return '財閥';
+                  case 'environmental_group': return '環境団体';
+                  case 'labor_union': return '労働組合';
                   default: return type;
                 }
               };
@@ -1348,6 +1367,9 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   case 'central_government': return 'text-blue-400';
                   case 'citizens': return 'text-green-400';
                   case 'chamber_of_commerce': return 'text-purple-400';
+                  case 'conglomerate': return 'text-amber-400';
+                  case 'environmental_group': return 'text-teal-300';
+                  case 'labor_union': return 'text-red-400';
                   default: return 'text-gray-400';
                 }
               };
@@ -1359,6 +1381,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   <h4 className={`text-lg font-bold mb-3 ${getFactionColor(factionSupport.type)}`}>
                     {getFactionName(factionSupport.type)}
                   </h4>
+                  {activeEffectDefinition && (
+                    <div className="text-sm text-yellow-300 font-semibold mb-2">
+                      {activeEffectDefinition.title}
+                    </div>
+                  )}
                   <div className="space-y-2">
                     {hasEffects ? (
                       Object.entries(activeEffects).map(([effectKey, effectValue]) => {
