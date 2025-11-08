@@ -21,12 +21,21 @@ export interface FactionInfo {
     development: number;         // 都市の発展度
     fiscalBalance: number;       // 財政バランス
     satisfaction: number;        // 満足度
-    parksAndGreenery: number;    // 公園・緑地
     populationGrowth: number;    // 人口増加
     commercialActivity: number;  // 商業活動
     industrialActivity: number;  // 工業活動
     workforceEfficiency: number; // 労働力効率
     infrastructureSurplus: number; // インフラ余剰
+    cityParameters?: {
+      environment?: number;          // 環境
+      education?: number;            // 教育
+      transit?: number;              // 交通利便性
+      security?: number;             // 治安
+      sanitation?: number;           // 衛生
+      entertainment?: number;        // 娯楽
+      tourism?: number;              // 観光
+      disaster_prevention?: number;  // 防災
+    };
   };
 }
 
@@ -37,17 +46,20 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
     name: '中央政府',
     description: '都市の行政と政策を評価する中央政府。税収の安定性、インフラ整備、都市の発展度を重視する。',
     priorities: {
-      taxStability: 30,      // 税収の安定性（30%）
-      infrastructure: 25,     // インフラ整備（25%）
-      development: 25,        // 都市の発展度（25%）
-      fiscalBalance: 20,      // 財政バランス（20%）
-      satisfaction: 0,        // 満足度（0%）
-      parksAndGreenery: 0,    // 公園・緑地（0%）
-      populationGrowth: 0,    // 人口増加（0%）
-      commercialActivity: 0,  // 商業活動（0%）
-      industrialActivity: 0,  // 工業活動（0%）
-      workforceEfficiency: 0, // 労働力効率（0%）
-      infrastructureSurplus: 0, // インフラ余剰（0%）
+      taxStability: 25,
+      infrastructure: 20,
+      development: 20,
+      fiscalBalance: 15,
+      satisfaction: 0,
+      populationGrowth: 0,
+      commercialActivity: 0,
+      industrialActivity: 0,
+      workforceEfficiency: 0,
+      infrastructureSurplus: 0,
+      cityParameters: {
+        security: 10,
+        transit: 10,
+      },
     }
   },
   citizens: {
@@ -55,17 +67,22 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
     name: '市民',
     description: '都市に住む一般市民。満足度、公園・緑地の充実度、インフラの安定供給を重視する。',
     priorities: {
-      taxStability: 0,        // 税収の安定性（0%）
-      infrastructure: 20,      // インフラ整備（20%）
-      development: 0,          // 都市の発展度（0%）
-      fiscalBalance: 0,        // 財政バランス（0%）
-      satisfaction: 40,        // 満足度（40%）
-      parksAndGreenery: 25,    // 公園・緑地（25%）
-      populationGrowth: 15,    // 人口増加（15%）
-      commercialActivity: 0,   // 商業活動（0%）
-      industrialActivity: 0,   // 工業活動（0%）
-      workforceEfficiency: 0,  // 労働力効率（0%）
-      infrastructureSurplus: 0, // インフラ余剰（0%）
+      taxStability: 0,
+      infrastructure: 10,
+      development: 0,
+      fiscalBalance: 0,
+      satisfaction: 25,
+      populationGrowth: 10,
+      commercialActivity: 0,
+      industrialActivity: 0,
+      workforceEfficiency: 0,
+      infrastructureSurplus: 5,
+      cityParameters: {
+        environment: 35,
+        entertainment: 5,
+        education: 5,
+        transit: 5,
+      },
     }
   },
   chamber_of_commerce: {
@@ -73,17 +90,21 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
     name: '商工会',
     description: '地域の商業・工業の利益を代表する団体。商業・工業施設の稼働率、経済成長率、労働力効率を重視する。',
     priorities: {
-      taxStability: 0,        // 税収の安定性（0%）
-      infrastructure: 0,       // インフラ整備（0%）
-      development: 0,          // 都市の発展度（0%）
-      fiscalBalance: 0,        // 財政バランス（0%）
-      satisfaction: 0,         // 満足度（0%）
-      parksAndGreenery: 0,     // 公園・緑地（0%）
-      populationGrowth: 0,     // 人口増加（0%）
-      commercialActivity: 35,  // 商業活動（35%）
-      industrialActivity: 0,   // 工業活動（0%）
-      workforceEfficiency: 20, // 労働力効率（20%）
-      infrastructureSurplus: 15, // インフラ余剰（15%）
+      taxStability: 8,
+      infrastructure: 0,
+      development: 12,
+      fiscalBalance: 0,
+      satisfaction: 0,
+      populationGrowth: 0,
+      commercialActivity: 25,
+      industrialActivity: 10,
+      workforceEfficiency: 20,
+      infrastructureSurplus: 5,
+      cityParameters: {
+        transit: 10,
+        environment: 5,
+        education: 5,
+      },
     }
   },
   conglomerate: {
@@ -91,17 +112,21 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
     name: '財閥',
     description: '大規模資本を擁する財閥グループ。産業基盤と投資環境を重視し、法人税の削減と企業活動の活性化を求める。',
     priorities: {
-      taxStability: 5,        // 税収の安定性（5%）
-      infrastructure: 0,       // インフラ整備（0%）
-      development: 20,         // 都市の発展度（20%）
-      fiscalBalance: 15,       // 財政バランス（15%）
-      satisfaction: 0,         // 満足度（0%）
-      parksAndGreenery: 0,     // 公園・緑地（0%）
-      populationGrowth: 0,     // 人口増加（0%）
-      commercialActivity: 25,  // 商業活動（25%）
-      industrialActivity: 20,  // 工業活動（20%）
-      workforceEfficiency: 10, // 労働力効率（10%）
-      infrastructureSurplus: 0, // インフラ余剰（0%）
+      taxStability: 5,
+      infrastructure: 0,
+      development: 13,
+      fiscalBalance: 10,
+      satisfaction: 0,
+      populationGrowth: 0,
+      commercialActivity: 18,
+      industrialActivity: 18,
+      workforceEfficiency: 10,
+      infrastructureSurplus: 6,
+      cityParameters: {
+        transit: 10,
+        education: 5,
+        environment: 5,
+      },
     }
   },
   environmental_group: {
@@ -114,12 +139,14 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
       development: 0,
       fiscalBalance: 0,
       satisfaction: 15,
-      parksAndGreenery: 40,
       populationGrowth: 5,
       commercialActivity: 0,
       industrialActivity: 0,
       workforceEfficiency: 0,
-      infrastructureSurplus: 25,
+      infrastructureSurplus: 15,
+      cityParameters: {
+        environment: 50,
+      },
     }
   },
   labor_union: {
@@ -131,13 +158,18 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
       infrastructure: 0,
       development: 0,
       fiscalBalance: 0,
-      satisfaction: 20,
-      parksAndGreenery: 0,
-      populationGrowth: 10,
-      commercialActivity: 10,
-      industrialActivity: 20,
-      workforceEfficiency: 30,
-      infrastructureSurplus: 10,
+      satisfaction: 15,
+      populationGrowth: 5,
+      commercialActivity: 8,
+      industrialActivity: 15,
+      workforceEfficiency: 22,
+      infrastructureSurplus: 5,
+      cityParameters: {
+        education: 20,
+        sanitation: 5,
+        security: 3,
+        transit: 2,
+      },
     }
   }
 };
@@ -204,7 +236,6 @@ export interface SupportCalculationResult {
     development: number;
     fiscalBalance: number;
     satisfaction: number;
-    parksAndGreenery: number;
     populationGrowth: number;
     commercialActivity: number;
     industrialActivity: number;
@@ -495,11 +526,10 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
   environmental_group: [
     {
       level: 'very_low',
-      title: '環境危機',
+      title: '徹底抗戦',
       minRating: 0,
       maxRating: 19,
       effects: {
-        populationGrowthMultiplier: 0.9,  // 人口増加10%減少
         satisfactionPenalty: -15,         // 満足度15減少
         facilityEfficiencyMultiplier: 0.9, // 施設効率10%減少
         maintenanceCostMultiplier: 1.1,   // 維持費10%増加
@@ -511,7 +541,6 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
       minRating: 20,
       maxRating: 39,
       effects: {
-        populationGrowthMultiplier: 0.95, // 人口増加5%減少
         satisfactionPenalty: -8,          // 満足度8減少
         maintenanceCostMultiplier: 1.05,  // 維持費5%増加
       }
@@ -538,14 +567,13 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
     },
     {
       level: 'very_high',
-      title: 'グリーン都市モデル',
+      title: '国際評価',
       minRating: 80,
       maxRating: 100,
       effects: {
         satisfactionBonus: 18,             // 満足度18増加
         maintenanceCostMultiplier: 0.9,    // 維持費10%減少
         facilityEfficiencyMultiplier: 1.1, // 施設効率10%向上
-        populationGrowthMultiplier: 1.05,  // 人口増加5%増加
         infrastructureEfficiencyBonus: 0.05, // インフラ効率5%向上
       }
     }
@@ -553,7 +581,7 @@ export const SUPPORT_LEVEL_EFFECTS: Record<FactionType, SupportLevelEffect[]> = 
   labor_union: [
     {
       level: 'very_low',
-      title: 'ストライキ連発',
+      title: 'ゼネスト',
       minRating: 0,
       maxRating: 19,
       effects: {

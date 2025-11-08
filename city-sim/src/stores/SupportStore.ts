@@ -206,7 +206,6 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     const commercialParamAvg = getCityParameterAverage(cityParams, ['entertainment', 'tourism']);
     const industrialParamAvg = getCityParameterAverage(cityParams, ['disaster_prevention', 'sanitation']);
     const workforceParamValue = getCityParameterValue(cityParams, 'education');
-    const environmentParamValue = getCityParameterValue(cityParams, 'environment');
 
     const taxStabilityScore = calculateFactorScore(cityState.taxRevenueGrowth, -50, 100);
     const infrastructureScore = calculateFactorScore(
@@ -214,11 +213,12 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
       0,
       100
     );
-    const developmentScore = calculateFactorScore(Math.round(developmentParamAvg), 0, 100);
+    const developmentFacilityScore = calculateFactorScore(cityState.totalFacilityCount, 0, 100);
+    const developmentParamScore = calculateFactorScore(Math.round(developmentParamAvg), 0, 100);
+    const developmentScore = Math.round((developmentFacilityScore + developmentParamScore) / 2);
     const fiscalBalanceScore = calculateFactorScore(cityState.fiscalBalance, -10000, 10000);
     const satisfactionComposite = Math.round(cityState.satisfaction * 0.7 + satisfactionParamAvg * 0.3);
     const satisfactionScore = calculateFactorScore(satisfactionComposite, 0, 100);
-    const parksAndGreeneryScore = calculateFactorScore(environmentParamValue, 0, 100);
     const populationGrowthScore = calculateFactorScore(cityState.populationGrowth, -100, 500);
     const commercialFacilityScore = calculateFactorScore(cityState.commercialFacilityCount, 0, 50);
     const commercialParamScore = calculateFactorScore(Math.round(commercialParamAvg), 0, 100);
@@ -237,7 +237,6 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
       development: developmentScore,
       fiscalBalance: fiscalBalanceScore,
       satisfaction: satisfactionScore,
-      parksAndGreenery: parksAndGreeneryScore,
       populationGrowth: populationGrowthScore,
       commercialActivity: commercialActivityScore,
       industrialActivity: industrialActivityScore,
@@ -247,13 +246,28 @@ export const useSupportStore = create<SupportStore>((set, get) => ({
     
     // 重み付けで総合スコアを計算
     let totalScore = 0;
+    let totalWeight = 0;
+
     Object.entries(priorities).forEach(([key, weight]) => {
+      if (key === 'cityParameters') return;
+      if (typeof weight !== 'number' || weight === 0) return;
       const factorKey = key as keyof typeof factors;
-      totalScore += factors[factorKey] * (weight / 100);
+      const factorValue = factors[factorKey] ?? 50;
+      totalScore += factorValue * weight;
+      totalWeight += weight;
     });
-    
-    // スコアを0-100の範囲に制限
-    const calculatedRating = Math.max(0, Math.min(100, Math.round(totalScore)));
+
+    if (priorities.cityParameters) {
+      Object.entries(priorities.cityParameters).forEach(([paramKey, weight]) => {
+        if (typeof weight !== 'number' || weight === 0) return;
+        const paramValue = getCityParameterValue(cityParams, paramKey as keyof CityParameters);
+        totalScore += paramValue * weight;
+        totalWeight += weight;
+      });
+    }
+
+    const averageScore = totalWeight > 0 ? totalScore / totalWeight : 50;
+    const calculatedRating = Math.max(0, Math.min(100, Math.round(averageScore)));
     
     return {
       factionType,
