@@ -14,6 +14,7 @@ import { useFacilityStore } from '../stores/FacilityStore';
 import { useInfrastructureStore } from '../stores/InfrastructureStore';
 import { getFacilityRegistry } from '../utils/facilityLoader';
 import { useSupportStore } from '../stores/SupportStore';
+import { FACTION_DATA } from '../types/support';
 import { CharacterDisplay } from './CharacterDisplay';
 import { useSecretaryStore } from '../stores/SecretaryStore';
 import { getSeasonalMessages } from '../stores/SecretaryStore';
@@ -1248,6 +1249,7 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {factionSupports.map((factionSupport) => {
+              const factionInfo = FACTION_DATA[factionSupport.type];
               const getFactionName = (type: string) => {
                 switch (type) {
                   case 'central_government': return '中央政府';
@@ -1297,6 +1299,11 @@ export function StatisticsPanel({ onClose }: StatisticsPanelProps) {
                   <h4 className={`text-lg font-bold mb-3 ${getFactionColor(factionSupport.type)}`}>
                     {getFactionName(factionSupport.type)}
                   </h4>
+                  {factionInfo && (
+                    <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                      {factionInfo.description}
+                    </p>
+                  )}
                   <div className="space-y-3">
                     {/* 現在の支持率 */}
                     <div className="text-center">

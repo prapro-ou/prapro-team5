@@ -65,7 +65,7 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
   citizens: {
     type: 'citizens',
     name: '市民',
-    description: '都市に住む一般市民。満足度、公園・緑地の充実度、インフラの安定供給を重視する。',
+    description: '都市に住む一般市民。満足度、各種インフラの安定供給を重視する。',
     priorities: {
       taxStability: 0,
       infrastructure: 10,
@@ -132,7 +132,7 @@ export const FACTION_DATA: Record<FactionType, FactionInfo> = {
   environmental_group: {
     type: 'environmental_group',
     name: '環境団体',
-    description: '環境保全と持続可能な都市運営を求める団体。緑地の拡充とインフラの余裕、住民満足度の向上を重視する。',
+    description: '環境保全と持続可能な都市運営を求める団体。緑地の拡充を重視する。',
     priorities: {
       taxStability: 0,
       infrastructure: 15,
