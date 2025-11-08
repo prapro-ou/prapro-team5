@@ -15,7 +15,7 @@ import { useYearlyEvaluationStore } from './YearlyEvaluationStore';
 import { useUIStore } from './UIStore';
 import { useTimeControlStore } from './TimeControlStore';
 import { useSupportStore } from './SupportStore';
-import type { CityStateForSupport } from '../types/support';
+import type { CityStateForSupport, FactionType } from '../types/support';
 import { useMissionStore } from './MissionStore';
 import { useCityParameterMapStore } from './CityParameterMapStore';
 import { calculateSatisfactionWithFactors } from '../utils/satisfaction';
@@ -81,12 +81,15 @@ const payMaintenanceCost: MonthlyTask = (get, set) => {
     }
   });
   
-  if (totalCost > 0) {
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const adjustedTotalCost = Math.floor(totalCost * supportEffects.maintenanceCostMultiplier);
+  
+  if (adjustedTotalCost > 0) {
     const currentMoney = get().stats.money;
     set({
       stats: {
         ...stats,
-        money: currentMoney - totalCost
+        money: currentMoney - adjustedTotalCost
       }
     });
   }
@@ -99,11 +102,13 @@ const adjustPopulationByGrowth: MonthlyTask = (get, set) => {
 
   // インフラ状況を取得
   const infraStatus = useInfrastructureStore.getState().getInfrastructureStatus();
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const infraBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   const infraFactors = {
     waterDemand: infraStatus.water.demand,
-    waterSupply: infraStatus.water.supply,
+    waterSupply: infraStatus.water.supply * infraBonusMultiplier,
     electricityDemand: infraStatus.electricity.demand,
-    electricitySupply: infraStatus.electricity.supply,
+    electricitySupply: infraStatus.electricity.supply * infraBonusMultiplier,
   };
 
   // 失業率を算出（労働力=人口の60%ベース）
@@ -245,11 +250,13 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
   // インフラ要素の取得
   const { getInfrastructureStatus } = useInfrastructureStore.getState();
   const infraStatus = getInfrastructureStatus();
+  const supportEffects = useSupportStore.getState().getCombinedEffects();
+  const infraBonusMultiplier = 1 + supportEffects.infrastructureEfficiencyBonus;
   const infraFactors = {
     waterDemand: infraStatus.water.demand,
-    waterSupply: infraStatus.water.supply,
+    waterSupply: infraStatus.water.supply * infraBonusMultiplier,
     electricityDemand: infraStatus.electricity.demand,
-    electricitySupply: infraStatus.electricity.supply,
+    electricitySupply: infraStatus.electricity.supply * infraBonusMultiplier,
   };
 
   // 経済要素の取得（住民税・失業率）
@@ -264,7 +271,8 @@ const updateCityParametersFromMaps: MonthlyTask = (get, set) => {
   };
 
   // 満足度を再合成
-  const newSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+  const rawSatisfaction = calculateSatisfactionWithFactors(newParams, infraFactors, economyFactors, stats.happinessPenalty);
+  const newSatisfaction = Math.max(0, Math.min(100, Math.round(rawSatisfaction + supportEffects.satisfactionDelta)));
 
   // 月次履歴に反映
   const currentMonth = stats.date.month - 1;
@@ -304,22 +312,55 @@ const updateSupportRatings: MonthlyTask = (get, set) => {
   const { stats } = get();
   const facilities = useFacilityStore.getState().facilities;
   const { calculateSupportRatings, recordMonthlyHistory } = useSupportStore.getState();
+  const infraStatus = useInfrastructureStore.getState().getInfrastructureStatus();
   
   // 都市の状態データを構築
+  const totalSupply = infraStatus.water.supply + infraStatus.electricity.supply;
+  const totalDemand = infraStatus.water.demand + infraStatus.electricity.demand;
+  const infrastructureEfficiency = totalDemand > 0 ? Math.min(1, totalSupply / totalDemand) : 1;
+  const infrastructureSurplus = infraStatus.water.balance + infraStatus.electricity.balance;
+
+  const workforceAllocations = stats.workforceAllocations;
+  let workforceEfficiency = 0;
+  if (workforceAllocations.length > 0) {
+    const totalAssigned = workforceAllocations.reduce((sum, allocation) => sum + (allocation.assignedWorkforce || 0), 0);
+    if (totalAssigned > 0) {
+      const weightedEfficiency = workforceAllocations.reduce((sum, allocation) => sum + (allocation.efficiency * (allocation.assignedWorkforce || 0)), 0);
+      workforceEfficiency = weightedEfficiency / totalAssigned;
+    } else {
+      workforceEfficiency = workforceAllocations.reduce((sum, allocation) => sum + allocation.efficiency, 0) / workforceAllocations.length;
+    }
+  }
+
+  workforceEfficiency = Math.max(0, Math.min(1, workforceEfficiency));
+
+  const currentMonthIndex = Math.max(0, stats.date.month - 1);
+  const monthlyTaxRevenue = stats.monthlyAccumulation.monthlyTaxRevenue || [];
+  const currentTaxRevenue = monthlyTaxRevenue[currentMonthIndex] ?? stats.monthlyBalance.income;
+  const previousTaxRevenue = currentMonthIndex > 0
+    ? monthlyTaxRevenue[currentMonthIndex - 1] ?? currentTaxRevenue
+    : currentTaxRevenue;
+  const taxRevenueGrowth = currentTaxRevenue - previousTaxRevenue;
+
+  const populationGrowth = stats.monthlyAccumulation.monthlyDelta
+    ? stats.monthlyAccumulation.monthlyDelta[currentMonthIndex] ?? 0
+    : 0;
+
   const cityState: CityStateForSupport = {
     satisfaction: stats.satisfaction,
     population: stats.population,
-    populationGrowth: 0, // 前月比の人口増加（後で計算）
-    taxRevenue: stats.monthlyBalance.income,
-    taxRevenueGrowth: 0, // 前月比の税収成長（後で計算）
-    infrastructureEfficiency: 0, // インフラ効率（後で計算）
-    infrastructureSurplus: 0, // インフラ余剰（後で計算）
+    populationGrowth,
+    taxRevenue: currentTaxRevenue,
+    taxRevenueGrowth,
+    infrastructureEfficiency,
+    infrastructureSurplus,
     commercialFacilityCount: facilities.filter(f => f.type === 'commercial').length,
     industrialFacilityCount: facilities.filter(f => f.type === 'industrial').length,
     parkCount: facilities.filter(f => f.type === 'park').length,
     totalFacilityCount: facilities.length,
     fiscalBalance: stats.monthlyBalance.balance,
-    workforceEfficiency: 0.8 // 仮の値（後で実際の計算に置き換え）
+    workforceEfficiency,
+    cityParameters: stats.cityParameters,
   };
   
   // 支持率を計算
@@ -370,8 +411,11 @@ const accumulateMonthlyData: MonthlyTask = (get, set) => {
           monthlySupportRatings: {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
-            chamber_of_commerce: new Array(12).fill(50)
-          },
+            chamber_of_commerce: new Array(12).fill(50),
+            conglomerate: new Array(12).fill(50),
+            environmental_group: new Array(12).fill(50),
+            labor_union: new Array(12).fill(50)
+          } as Record<FactionType, number[]>,
           monthlyBirths: new Array(12).fill(0),
           monthlyDeaths: new Array(12).fill(0),
           monthlyInflow: new Array(12).fill(0),
@@ -574,8 +618,11 @@ export const INITIAL_STATS: GameStats = {
       monthlySupportRatings: {
         central_government: new Array(12).fill(50),
         citizens: new Array(12).fill(50),
-        chamber_of_commerce: new Array(12).fill(50)
-      },
+        chamber_of_commerce: new Array(12).fill(50),
+        conglomerate: new Array(12).fill(50),
+        environmental_group: new Array(12).fill(50),
+        labor_union: new Array(12).fill(50)
+      } as Record<FactionType, number[]>,
       // 都市パラメータの月次履歴
       monthlyCityParameters: new Array(12).fill(null).map(() => ({
         entertainment: 50,
@@ -599,7 +646,8 @@ export const INITIAL_STATS: GameStats = {
       factionSupports: [
         { type: 'central_government', currentRating: 50, previousRating: 50, change: 0 },
         { type: 'citizens', currentRating: 50, previousRating: 50, change: 0 },
-        { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 }
+        { type: 'chamber_of_commerce', currentRating: 50, previousRating: 50, change: 0 },
+        { type: 'conglomerate', currentRating: 50, previousRating: 50, change: 0 }
       ],
       monthlyHistory: [],
       yearlyHistory: [],
@@ -787,8 +835,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
           monthlySupportRatings: {
             central_government: new Array(12).fill(50),
             citizens: new Array(12).fill(50),
-            chamber_of_commerce: new Array(12).fill(50)
-          },
+            chamber_of_commerce: new Array(12).fill(50),
+            conglomerate: new Array(12).fill(50),
+            environmental_group: new Array(12).fill(50),
+            labor_union: new Array(12).fill(50)
+          } as Record<FactionType, number[]>,
           monthlyCityParameters: new Array(12).fill(null).map(() => ({
             entertainment: 50,
             security: 50,

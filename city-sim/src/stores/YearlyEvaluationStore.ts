@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameStats } from '../types/game';
 import type { Facility } from '../types/facility';
 import { saveLoadRegistry } from './SaveLoadRegistry';
+import { useSupportStore } from './SupportStore';
 
 // 年次統計データの型定義
 export interface YearlyStats {
@@ -182,7 +183,10 @@ export const useYearlyEvaluationStore = create<YearlyEvaluationStore>((_set, get
     // 人口補正（人口が多いほど補助金が増加）
     const populationMultiplier = 1 + Math.min(population / 10000, 1) * 0.5;
     
-    return Math.floor(baseSubsidy * levelMultiplier * populationMultiplier);
+    const supportEffects = useSupportStore.getState().getCombinedEffects();
+    const subsidyMultiplier = supportEffects.subsidyMultiplier;
+    
+    return Math.floor(baseSubsidy * levelMultiplier * populationMultiplier * subsidyMultiplier);
   },
   
   // 年末評価の実行
